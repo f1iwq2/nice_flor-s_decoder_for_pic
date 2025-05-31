@@ -998,7 +998,7 @@ void uart1_champ(char* message,int valeur)
 // I2C écrit 1 octet eprom ext adresse et valeur
 // adresse : adresse de 0 à 0x1ffff
 // I2C write 1 byte to ext eprom
-void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur) //zizi
+void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
 {
   int err ; 
   uint32_t mask;
