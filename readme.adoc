@@ -7,7 +7,7 @@ L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprise
 L'eprom externe de 128Ko contient le fichier codes.bin
 Le platine électronique est faite en Kicad, répertoire Kicad.
 Le logiciel est fait avec MPLAB XIDE, repertoire telecommande.X.
-Utiliser la directive fravais pour basculer en français pour le dialogues UART (230400 bauds par défaut)
+Utiliser la directive francais pour basculer en français pour le dialogues UART (230400 bauds par défaut)
 Taper ? [enter] dans le terminal pour afficher le menu.
 
 pic program to decode Nice-florS remote devices.
@@ -21,7 +21,7 @@ Type in ? [enter] to display the menu.
 
 The projet a été inspiré par :
 This project was inspired from :
-:lien: https://github.com/Jev1337/NiceFlor-Encoder
+https://github.com/Jev1337/NiceFlor-Encoder
 
 image::telecommande.jpg[]
 
