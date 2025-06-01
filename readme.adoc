@@ -5,7 +5,7 @@ Programme pic pour décoder le protocole des télécommandes Nice-florS.
 Le projet est composé d'un PIC 18F26K80 à 16 MHz (x4 par pll = 64 MHz)
 L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprises.
 L'eprom externe de 128Ko contient le fichier codes.bin
-Le platine électronique est faite en Kicad, répertoire Kicad.
+Le platine électronique est faite en Kicad, répertoire telecommande.
 Le logiciel est fait avec MPLAB XIDE, repertoire telecommande.X.
 Utiliser la directive francais pour basculer en français pour le dialogues UART (230400 bauds par défaut)
 Taper ? [enter] dans le terminal pour afficher le menu.
