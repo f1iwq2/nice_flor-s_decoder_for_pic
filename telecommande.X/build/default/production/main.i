@@ -21211,8 +21211,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       }
     }
 
-fin:
-    __nop();
+    fin:
+
     INTCONbits.RBIF=0;
   }
 }
@@ -21450,10 +21450,13 @@ void recoit_xmodem(int mode)
 {
    uint8_t b,ancienpak,delta;
    uint16_t padr;
+   _Bool demande=1;
+
    RC0=1;
    ancienpak=0;padr=0;pak=0;pakcom=0;
    INTCONbits.GIE=0;
-   _Bool demande=1;
+    _delay((unsigned long)((500)*(64000000U/4000.0)));
+
    trame=0;
    do
    {
@@ -21474,7 +21477,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 619 "main.c"
+# 622 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -21614,6 +21617,14 @@ void affiche_enregistrement()
 }
 
 
+
+
+void Affiche5(uint32_t codex)
+{
+  uint32_t p=codex & 0xFFFFFFFF;
+  printf("%08lX",p);
+}
+
 void UART_ExecuteCommand(char *command)
 {
     if(strcmp(command,"?") == 0)
@@ -21633,31 +21644,29 @@ void UART_ExecuteCommand(char *command)
         pvitesse++;
         if (pvitesse==2) pvitesse=0;
         printf("Vitesse UART=%lu bauds ",vitesse[pvitesse]);
-        if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;printf("pour transfert xmodem\r\n");}
-        if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;printf("pour debug\r\n");}
+        if (pvitesse==0) {printf("pour transfert xmodem\r\n");SPBRGH1=0x06;SPBRG1=0x82;}
+        if (pvitesse==1) {printf("pour debug\r\n");SPBRGH1=0x00;SPBRG1=0x44;}
     }
     else
     if (strcmp(command,"3") == 0)
  {
 
-        printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole XMODEM dans les 20s\r\n");
+        printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole Xmodem CRC dans les 20s\r\n");
 
 
 
 
-      _delay((unsigned long)((500)*(64000000U/4000.0)));
       recoit_xmodem(1);
     }
  else
     if (strcmp(command,"4") == 0)
  {
 
-        printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole XMODEM dans les 20s\r\n");
+        printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
 
 
 
 
-      _delay((unsigned long)((500)*(64000000U/4000.0)));
       recoit_xmodem(2);
     }
     else
@@ -21666,8 +21675,9 @@ void UART_ExecuteCommand(char *command)
         affiche_enregistrement();
     }
  else
- if(strcmp(command,"5") == 0)
+ if(strcmp(command,"6") == 0)
     {
+      INTCONbits.GIE=0;
 
       printf("Dernière erreur : ");
 
@@ -21687,7 +21697,7 @@ void UART_ExecuteCommand(char *command)
             case 7: {printf("Erreur crc");break;}
             case 8: {printf("Erreur écriture EPROM ext");break;}
             default: printf(" %d",erreur);
-# 845 "main.c"
+# 855 "main.c"
         }
 
         printf(" Dernière erreur I2C=%d",erreurI2C);
@@ -21696,14 +21706,17 @@ void UART_ExecuteCommand(char *command)
 
 
         printf("\r\n");
+        INTCONbits.GIE=1;
     }
 
     else
     if (strcmp(command,"7") == 0)
     {
+        INTCONbits.GIE=0;
         printf("n° paquet=%d\r\n",pak);
         printf("n° paquet compl=%d\r\n",pakcom);
         printf("Valeur compt=%d\r\n",compt);
+
         for (i=1;i<=130;i++)
         {
            printf("%d:",i);
@@ -21712,12 +21725,14 @@ void UART_ExecuteCommand(char *command)
         printf("\r\n");
         printf("Crc calculé=%x\r\n",crc);
         printf("Crc recu=%x\r\n",crcrecu);
+        INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"8") == 0)
     {
 
 
+      INTCONbits.GIE=0;
       for (i=0;i<200;i++)
       {
         lit_eprom_ext(i);
@@ -21725,12 +21740,14 @@ void UART_ExecuteCommand(char *command)
         printf("%x, ",i2cread[0]);
         if (((i+1) % 16)==0) printf("\r\n");
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"9") == 0)
     {
 
 
+      INTCONbits.GIE=0;
       for (i=0;i<1023;i++)
       {
         uint8_t v=lit_eprom_int(i);
@@ -21738,6 +21755,7 @@ void UART_ExecuteCommand(char *command)
         printf("%x, ",v);
         if (((i+1) % 16)==0) printf("\r\n");
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"A") == 0)
@@ -21745,6 +21763,8 @@ void UART_ExecuteCommand(char *command)
 
       uint8_t chk=0;
       uint32_t j;
+      INTCONbits.GIE=0;
+      printf("Wait 10s..\r\n");
       i=0;
       while (i<0x1ffff)
       {
@@ -21757,6 +21777,7 @@ void UART_ExecuteCommand(char *command)
       }
       printf("Checksum eprom ext = %x ",chk);
       if (chk==0) printf("Ok\r\n"); else printf("Non ok\r\n");
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"B") == 0)
@@ -21764,6 +21785,7 @@ void UART_ExecuteCommand(char *command)
 
 
       uint32_t k,j=0;
+      INTCONbits.GIE=0;
       while (j<0x1ffff)
       {
         lit_bloc_eprom_ext(j,128);
@@ -21771,18 +21793,19 @@ void UART_ExecuteCommand(char *command)
         for (i=0;i<=127;i++)
         {
           k=i+j;
-          if ((i % 16)==0) printf("%x ",k);
+          if ((i % 16)==0) {Affiche5(k);printf(" ");}
           printf("%x,",i2cread[i]);
           if (((i+1) % 16)==0) printf("\r\n");
           _delay((unsigned long)((100)*(64000000U/4000000.0)));
         }
         j=j+128;
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"C") == 0)
     {
-# 948 "main.c"
+# 973 "main.c"
     }
 
     else
@@ -21876,13 +21899,6 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
 }
 
 
-
-void Affiche9(uint32_t codex)
-{
-  uint64_t c64;
-  c64=(uint64_t)codex & 0xFFFFFFFF;
-  printf("%05lX",codex);
-}
 
 
 void Affiche(uint64_t codex)
@@ -22054,7 +22070,6 @@ void decode_b06()
     printf(",Bouton=%d",bouton);
     if (debug>=1)
     {
-
       printf(",Index=%d",codet);
       printf(",repete=%d ",repete);
     }
@@ -22191,7 +22206,7 @@ int main(void)
   SYSTEM_Initialize();
   RA5=1;
   erreur=0;
-# 1375 "main.c"
+# 1392 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -22235,7 +22250,7 @@ int main(void)
   RC0=1;
 
   debug=0 ;
-# 1432 "main.c"
+# 1449 "main.c"
   TMR0_Start();
   INTCONbits.GIE=1;
 

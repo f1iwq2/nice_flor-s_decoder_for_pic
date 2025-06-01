@@ -21019,7 +21019,7 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
 # 109 "main.c" 2
-# 126 "main.c"
+# 125 "main.c"
 const uint32_t silence=37767;
 const uint32_t debutbit=2979;
 const uint32_t bit0=958;
@@ -21037,7 +21037,7 @@ uint16_t mesure_bits[150];
 uint8_t mesure_error[150];
 uint8_t compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
 uint8_t rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
-uint16_t compt,crc,crcrecu,codet;
+uint16_t compt,crc,crcrecu,codet,dureeS,dureeStart1;
 uint64_t code,tpsvalidetelecom;
 uint32_t duree=0,i,trame,serial,tpsbouton;
 static uint8_t command[(8U)];
@@ -21048,10 +21048,9 @@ _Bool aff_enr=0;
 int NbreBits,NbreBitsMsg,nb;
 uint16_t valt0;
 uint16_t coderecu[10];
-# 162 "main.c"
+# 161 "main.c"
 void raz_bits()
 {
-  nb=NbreBits;
   telegram=0;
   bitDebut=0;
   tramebits=0;
@@ -21069,7 +21068,14 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;
     TMR0H=0;
     TMR0L=0;
-# 192 "main.c"
+
+
+    if (debug==3)
+    {
+      if (duree>300) printf("T=%u \n\r",duree);
+    }
+
+
     NbreBits++;
 
 
@@ -21077,7 +21083,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     {
       NbreBits=1;
       bitDebut=1;
-      {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+      dureeS=duree;
+
 
       telegram=1;
       code=0;
@@ -21098,6 +21105,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         bitDebut=0;bitSilence=0;
         mesure_bits[NbreBits]=duree;
         mesure_error[NbreBits]=0;
+        nb=NbreBits;
         telegram=0;
         bitDebut=0;
         tramebits=0;
@@ -21109,8 +21117,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       {
         if (NbreBits==2)
         {
-          mesure_bits[NbreBits]=duree;
-          mesure_error[NbreBits]=0;
+          dureeStart1=duree;
 
 
           goto fin;
@@ -21118,6 +21125,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
         if (NbreBits==3)
         {
+          mesure_bits[NbreBits-2]=dureeS;mesure_error[NbreBits-2]=0;
+          mesure_bits[NbreBits-1]=dureeStart1;mesure_error[NbreBits-1]=0;
           mesure_bits[NbreBits]=duree;
           mesure_error[NbreBits]=0;
 
@@ -21131,10 +21140,14 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       else
       {
 
+         if (NbreBits<108)
+         {
+           mesure_bits[NbreBits]=duree;
+           mesure_error[NbreBits]=1;
+         }
          raz_bits();
-
+         nb=NbreBits;
          printf("EZ%u\r\n",NbreBits);
-
          goto fin;
       }
     }
@@ -21162,7 +21175,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           else
           {
             NbreBits=0;raz_bits();
-            if (debug==2) {mesure_error[NbreBits]=1;printf("EA D=%u\r\n",duree);}
+            if (debug==2) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}
           }
         }
       }
@@ -21186,19 +21199,20 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           else
           {
              NbreBits=0;raz_bits();
-             if (debug==2) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}
+             if (debug==2) {mesure_error[NbreBits]=3;printf("EA D=%u\r\n",duree);}
           }
         }
       }
       else
       {
          raz_bits();
-         printf("EF\r\n");
+         nb=NbreBits;
+         printf("EF%d\r\n",NbreBits);
       }
     }
 
-fin:
-    __nop();
+    fin:
+
     INTCONbits.RBIF=0;
   }
 }
@@ -21231,7 +21245,7 @@ void menu()
    printf("9....Affiche EPROM interne\r\n");
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
-# 375 "main.c"
+# 379 "main.c"
    i=lit_eprom_int(0);
    if (i==0xff)
    {
@@ -21436,10 +21450,13 @@ void recoit_xmodem(int mode)
 {
    uint8_t b,ancienpak,delta;
    uint16_t padr;
+   _Bool demande=1;
+
    RC0=1;
    ancienpak=0;padr=0;pak=0;pakcom=0;
    INTCONbits.GIE=0;
-   _Bool demande=1;
+    _delay((unsigned long)((500)*(64000000U/4000.0)));
+
    trame=0;
    do
    {
@@ -21460,7 +21477,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 615 "main.c"
+# 622 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -21559,31 +21576,6 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
    }
 }
 
-void xaffiche_enregistrement()
-{
-  INTCONbits.GIE=0;
-  aff_enr=0;
-  if (nb>108) nb=108;
-  printf("NbreBits=%d\r\n",nb);
-  for (i=1;i<=nb;i++)
-  {
-    printf("%d",i);
-    duree=mesure_bits[i];
-    printf(" %u",duree);
-    if ((duree>(silence-1000)) && (duree<(silence+1000))) printf(" Start");
-    else
-    if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0");
-    else
-    if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1");
-    else
-    if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" Debut ou fin");
-    else
-    if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
-    printf("\r\n");
-  }
-  raz_bits();
-  INTCONbits.GIE=1;
-}
 
 void affiche_enregistrement()
 {
@@ -21591,15 +21583,15 @@ void affiche_enregistrement()
   INTCONbits.GIE=0;
   aff_enr=0;
 
-  printf("NbreBits=%d,nb);
-  if (NbreBits!=108) printf(" différent de 108");
+  printf("NbreBits=%d",nb);
+  if (nb!=108) printf(" différent de 108");
   printf("\r\n");
   for (y=1;y<=16;y++)
   {
     for (x=1;x<=7;x++)
     {
       i=((y-1) % 16)+1 + ((x-1) * 16);
-      if (i<=108)
+      if (i<=nb)
       {
         printf("%3d",i);
         duree=mesure_bits[i];
@@ -21616,6 +21608,7 @@ void affiche_enregistrement()
         if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
         printf(" ");
       }
+      else printf("        ");
     }
     printf("\r\n");
   }
@@ -21623,6 +21616,14 @@ void affiche_enregistrement()
   INTCONbits.GIE=1;
 }
 
+
+
+
+void Affiche5(uint32_t codex)
+{
+  uint32_t p=codex & 0xFFFFFFFF;
+  printf("%08lX",p);
+}
 
 void UART_ExecuteCommand(char *command)
 {
@@ -21634,7 +21635,7 @@ void UART_ExecuteCommand(char *command)
     if(strcmp(command,"1") == 0)
     {
        debug++;
-       if (debug>2) debug=0;
+       if (debug>3) debug=0;
        printf("Debug %d\r\n",debug);
     }
     else
@@ -21643,31 +21644,29 @@ void UART_ExecuteCommand(char *command)
         pvitesse++;
         if (pvitesse==2) pvitesse=0;
         printf("Vitesse UART=%lu bauds ",vitesse[pvitesse]);
-        if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;printf("pour transfert xmodem\r\n");}
-        if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;printf("pour debug\r\n");}
+        if (pvitesse==0) {printf("pour transfert xmodem\r\n");SPBRGH1=0x06;SPBRG1=0x82;}
+        if (pvitesse==1) {printf("pour debug\r\n");SPBRGH1=0x00;SPBRG1=0x44;}
     }
     else
     if (strcmp(command,"3") == 0)
  {
 
-        printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole XMODEM dans les 20s\r\n");
+        printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole Xmodem CRC dans les 20s\r\n");
 
 
 
 
-      _delay((unsigned long)((500)*(64000000U/4000.0)));
       recoit_xmodem(1);
     }
  else
     if (strcmp(command,"4") == 0)
  {
 
-        printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole XMODEM dans les 20s\r\n");
+        printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
 
 
 
 
-      _delay((unsigned long)((500)*(64000000U/4000.0)));
       recoit_xmodem(2);
     }
     else
@@ -21676,10 +21675,16 @@ void UART_ExecuteCommand(char *command)
         affiche_enregistrement();
     }
  else
- if(strcmp(command,"5") == 0)
+ if(strcmp(command,"6") == 0)
     {
-        printf("Dernière erreur : ");
-        switch (erreur)
+      INTCONbits.GIE=0;
+
+      printf("Dernière erreur : ");
+
+
+
+
+      switch (erreur)
         {
 
             case 0: {printf("Aucune");break;}
@@ -21692,7 +21697,7 @@ void UART_ExecuteCommand(char *command)
             case 7: {printf("Erreur crc");break;}
             case 8: {printf("Erreur écriture EPROM ext");break;}
             default: printf(" %d",erreur);
-# 860 "main.c"
+# 855 "main.c"
         }
 
         printf(" Dernière erreur I2C=%d",erreurI2C);
@@ -21701,14 +21706,17 @@ void UART_ExecuteCommand(char *command)
 
 
         printf("\r\n");
+        INTCONbits.GIE=1;
     }
 
     else
     if (strcmp(command,"7") == 0)
     {
+        INTCONbits.GIE=0;
         printf("n° paquet=%d\r\n",pak);
         printf("n° paquet compl=%d\r\n",pakcom);
         printf("Valeur compt=%d\r\n",compt);
+
         for (i=1;i<=130;i++)
         {
            printf("%d:",i);
@@ -21717,12 +21725,14 @@ void UART_ExecuteCommand(char *command)
         printf("\r\n");
         printf("Crc calculé=%x\r\n",crc);
         printf("Crc recu=%x\r\n",crcrecu);
+        INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"8") == 0)
     {
 
 
+      INTCONbits.GIE=0;
       for (i=0;i<200;i++)
       {
         lit_eprom_ext(i);
@@ -21730,12 +21740,14 @@ void UART_ExecuteCommand(char *command)
         printf("%x, ",i2cread[0]);
         if (((i+1) % 16)==0) printf("\r\n");
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"9") == 0)
     {
 
 
+      INTCONbits.GIE=0;
       for (i=0;i<1023;i++)
       {
         uint8_t v=lit_eprom_int(i);
@@ -21743,6 +21755,7 @@ void UART_ExecuteCommand(char *command)
         printf("%x, ",v);
         if (((i+1) % 16)==0) printf("\r\n");
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"A") == 0)
@@ -21750,6 +21763,8 @@ void UART_ExecuteCommand(char *command)
 
       uint8_t chk=0;
       uint32_t j;
+      INTCONbits.GIE=0;
+      printf("Wait 10s..\r\n");
       i=0;
       while (i<0x1ffff)
       {
@@ -21762,6 +21777,7 @@ void UART_ExecuteCommand(char *command)
       }
       printf("Checksum eprom ext = %x ",chk);
       if (chk==0) printf("Ok\r\n"); else printf("Non ok\r\n");
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"B") == 0)
@@ -21769,6 +21785,7 @@ void UART_ExecuteCommand(char *command)
 
 
       uint32_t k,j=0;
+      INTCONbits.GIE=0;
       while (j<0x1ffff)
       {
         lit_bloc_eprom_ext(j,128);
@@ -21776,18 +21793,19 @@ void UART_ExecuteCommand(char *command)
         for (i=0;i<=127;i++)
         {
           k=i+j;
-          if ((i % 16)==0) printf("%x ",k);
+          if ((i % 16)==0) {Affiche5(k);printf(" ");}
           printf("%x,",i2cread[i]);
           if (((i+1) % 16)==0) printf("\r\n");
           _delay((unsigned long)((100)*(64000000U/4000000.0)));
         }
         j=j+128;
       }
+      INTCONbits.GIE=1;
     }
     else
     if (strcmp(command,"C") == 0)
     {
-# 963 "main.c"
+# 973 "main.c"
     }
 
     else
@@ -21801,19 +21819,19 @@ void UART_ProcessCommand(void)
 {
   if(UART1.IsRxReady())
   {
-    readMessage = UART1.Read();
-    if ( (readMessage != ((uint8_t)'\n')) & (readMessage != ((uint8_t)'\r')) )
+    readMessage=UART1.Read();
+    if ( (readMessage!=((uint8_t)'\n')) & (readMessage != ((uint8_t)'\r')) )
     {
-      command[index++] = readMessage;
-      if (index > (8U))
+      command[index++]=readMessage;
+      if (index>(8U))
       {
-        (index) = 0;
+        (index)=0;
       }
     }
-    if (readMessage == ((uint8_t)'\r'))
+    if (readMessage==((uint8_t)'\r'))
     {
-      command[index] = '\0';
-      index = 0;
+      command[index]='\0';
+      index=0;
       UART_ExecuteCommand(command);
     }
   }
@@ -21821,7 +21839,7 @@ void UART_ProcessCommand(void)
 
 void UART1_WriteString(const char *message)
 {
-    for(int i = 0; i < (int)strlen(message); i++)
+    for(int i=0;i<(int)strlen(message); i++)
     {
         while(!UART1.IsTxReady())
         {
@@ -21841,11 +21859,16 @@ void uart1_champ(char* message,int valeur)
 
 
 
-
-
-void ecrit_eprom_ext()
+void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
 {
   int err ;
+  uint32_t mask;
+
+  if (adresse>0xffff) mask=1; else mask=0;
+
+  i2cdata[0]=adresse >> 8;
+  i2cdata[1]=adresse & 0xff;
+  i2cdata[2]=valeur;
 
   if (I2C1_Host.Write(0xA0 >>1,i2cdata,3))
   {
@@ -21876,13 +21899,6 @@ void ecrit_eprom_ext()
 }
 
 
-
-void Affiche9(uint32_t codex)
-{
-  uint64_t c64;
-  c64=(uint64_t)codex & 0xFFFFFFFF;
-  printf("%05lX",codex);
-}
 
 
 void Affiche(uint64_t codex)
@@ -22054,7 +22070,6 @@ void decode_b06()
     printf(",Bouton=%d",bouton);
     if (debug>=1)
     {
-
       printf(",Index=%d",codet);
       printf(",repete=%d ",repete);
     }
@@ -22191,7 +22206,7 @@ int main(void)
   SYSTEM_Initialize();
   RA5=1;
   erreur=0;
-# 1385 "main.c"
+# 1392 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -22235,7 +22250,7 @@ int main(void)
   RC0=1;
 
   debug=0 ;
-# 1442 "main.c"
+# 1449 "main.c"
   TMR0_Start();
   INTCONbits.GIE=1;
 

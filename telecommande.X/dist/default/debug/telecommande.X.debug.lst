@@ -1,7 +1,7 @@
 
 
 Microchip MPLAB XC8 Assembler V3.00 build 20241204225717 
-                                                                                               Sun Jun 01 11:21:41 2025
+                                                                                               Sun Jun 01 11:20:57 2025
 
 Microchip MPLAB XC8 C Compiler v3.00 (Free license) build 20241204225717 Og1 
      1                           	processor	18F26K80
@@ -29285,7 +29285,7 @@ BITBANK2           256      0       0      0.0%
 BANK2              256      0     130     50.8%
 BITBANK1           256      0       0      0.0%
 BANK1              256     31     234     91.4%
-BITBIGSFRh         165      0       0      0.0%
+BITBIGSFRh         162      0       0      0.0%
 BITBANK0           160      0       0      0.0%
 BANK0              160    117     145     90.6%
 BITCOMRAM           94      0       0      0.0%
@@ -29297,7 +29297,7 @@ DATA                 0      0    1301      0.0%
 
 
 Microchip Technology PIC18 Macro Assembler V3.00 build 20241204225717 
-Symbol Table                                                                                   Sun Jun 01 11:21:41 2025
+Symbol Table                                                                                   Sun Jun 01 11:20:57 2025
 
                                recoit_xmodem@demande 008A                                   UART1_WriteString@i 0078  
                                                   _i 00E1                                       I2C1_Write@data 0071  
