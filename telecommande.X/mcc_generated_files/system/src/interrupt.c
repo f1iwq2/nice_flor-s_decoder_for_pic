@@ -50,7 +50,7 @@ void  INTERRUPT_Initialize (void)
     EXT_INT0_InterruptFlagClear();   
     EXT_INT0_fallingEdgeSet();
     // Set Default Interrupt Handler
-    INT0_SetInterruptHandler(INT0_DefaultInterruptHandler);
+//    INT0_SetInterruptHandler(INT0_DefaultInterruptHandler);
     // EXT_INT0_InterruptEnable();
 
     // Clear the interrupt flag
@@ -58,7 +58,7 @@ void  INTERRUPT_Initialize (void)
     EXT_INT1_InterruptFlagClear();   
     EXT_INT1_risingEdgeSet();
     // Set Default Interrupt Handler
-    INT1_SetInterruptHandler(INT1_DefaultInterruptHandler);
+//    INT1_SetInterruptHandler(INT1_DefaultInterruptHandler);
     // EXT_INT1_InterruptEnable();
 
     // Clear the interrupt flag
@@ -66,7 +66,7 @@ void  INTERRUPT_Initialize (void)
     EXT_INT2_InterruptFlagClear();   
     EXT_INT2_risingEdgeSet();
     // Set Default Interrupt Handler
-    INT2_SetInterruptHandler(INT2_DefaultInterruptHandler);
+ //   INT2_SetInterruptHandler(INT2_DefaultInterruptHandler);
     // EXT_INT2_InterruptEnable();
 
     // Clear the interrupt flag
@@ -74,7 +74,7 @@ void  INTERRUPT_Initialize (void)
     EXT_INT3_InterruptFlagClear();   
     EXT_INT3_risingEdgeSet();
     // Set Default Interrupt Handler
-    INT3_SetInterruptHandler(INT3_DefaultInterruptHandler);
+ //   INT3_SetInterruptHandler(INT3_DefaultInterruptHandler);
     // EXT_INT3_InterruptEnable();
 
 }

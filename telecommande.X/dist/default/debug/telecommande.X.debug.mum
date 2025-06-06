@@ -1,7 +1,7 @@
 
 18F26K80 Memory Summary:
-    Program space        used  64BEh ( 25790) of 10000h bytes   ( 39.4%)
-    Data space           used   516h (  1302) of   E41h bytes   ( 35.7%)
+    Program space        used  6ECCh ( 28364) of 10000h bytes   ( 43.3%)
+    Data space           used   51Ah (  1306) of   E41h bytes   ( 35.8%)
     Configuration bits   used     7h (     7) of     7h words   (100.0%)
     EEPROM space         used     0h (     0) of   400h bytes   (  0.0%)
     ID Location space    used     0h (     0) of     8h bytes   (  0.0%)

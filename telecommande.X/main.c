@@ -1,9 +1,8 @@
 /* 
-programme décodeur télécommande protocole NICE FLOR-S 
+programme décodeur télécommande protocole NICE FLOR-S / CAME
 NICE FLOR-S protocol remote control decoder program
- 
-imspired from https://github.com/Jev1337/NiceFlor-Encoder/tree/main
- 
+MPLAB X IDE v6.25
+   
 processeur pic 18F26K80 
 mémoire programme 64Ko
 mémoire RAM 3648 octets
@@ -47,12 +46,22 @@ https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/codes
 En eprom interne / in internal eprom
 un bloc de 256 octets : nice_flor_s_table_ki[256]
 
-Pour lire les 64ko de l'eprom ext (quand on cherche le code de décodage), il faut 7s , trop long pour un décodage.
+Pour lire les 128ko de l'eprom ext (quand on cherche le code de décodage), il faut jusque 7s , trop long pour un décodage.
 donc on utilise l'ancien code transmis (par télécommande) pour "prévoir" le suivant qui est incrémenté de 1, qui doit
 de trouver dans les 128 octets suivants.
-Reading the 64kB of the ext eprom (when fetching the decoding code) takes 7s, too long for decoding.
+Reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
 So we use the previous transmitted code (per remote) to "predict" the next one, which is incremented by 1, 
 and have to be inside the next 128 ones.
+
+Récepteurs testés / Tested receivers :
+RFM210LCF : modulations ASK et OOK / both ASK and OOK
+RBX6 : modulation ASK uniquement / ASK only
+ 
+----------------------------------------------------------
+protocole (ASK) Nice-flors
+fonctionne avec récepteur RXB6 / works with RXB6 receiver
+récepteur RFM210LCF
+https://github.com/Jev1337/NiceFlor-Encoder/tree/main
 
   code roulant de 52 bits
   1 bit silence de 18500 µs (37 x 500µs)
@@ -64,7 +73,6 @@ and have to be inside the next 128 ones.
 
   1 bit 1500 µs de fin
  
- 
 exemples de codes
 transmis par télécommande 52 bits / 7 octets décodés brut (b0 b6)
 remote transmits 52 bits / 7 bytes raw decoded (b0-b6)
@@ -72,6 +80,9 @@ remote transmits 52 bits / 7 bytes raw decoded (b0-b6)
   E2052 39A7FA15 Decode=1/DF/AD/C6/58/5/EA
   E5052 39A7FA15 Decode=1/AF/AD/C6/58/5/EA
   E4052 39A7FA15 Decode=1/BF/AD/C6/58/5/EA
+
+B2-B3 est le code courant envoyé par la télécommande. Ce code se trouve dans l'eprom 128Ko. Son index sert de clé de décodage.
+B2-B3 is the current code sent by the remote device. This code is within the 128kb eprom. The code index is the decoding key.
 
 télécommande clé
 7 octets décodés bruts / numéro de série / bouton / index code / répétition
@@ -85,6 +96,7 @@ ok  2/83/61/62/14/49/a6/ Serial=0295C827,Bouton=2,Code=1948,repete=5
 télécommande sans clé
 ok  1/cc/e3/5d/1b/e6/da/ Serial=00000000 027588B4,Bouton=1,Code=680,repete=2
  * 
+ *  version 27/05 à 14h30
 
  Plan d'adressage de l'eeprom interne:
  Internal EEPROM mapping:
@@ -100,7 +112,46 @@ ok  1/cc/e3/5d/1b/e6/da/ Serial=00000000 027588B4,Bouton=1,Code=680,repete=2
  0x110       : 9
  0x114       ; 10
  .. jusque 10 télécommandes / up to 10 remotes
-   
+
+Exemples d'erreurs / Error examples :
+EZ41     : bit start ou stop mal placé, inattendu en position 41
+         : unexpected start or stop bit in position 41
+EF101    : erreur de longueur de bit reçu pendant les données en position 101
+         : length duration bit error during datas in position 101
+EA=1250  : erreur A de symétrie dans le motif des données (rencontré 500/500 µs au lieu de 500/1000µs)
+         : 1250 est la valeur du TMR0
+         : error A symétrical frame in data (encountered 500/500 µs instead of 500/1000µs)
+         : 1250 is the TMR0 value
+EB=2500  : erreur B de symétrie dans les données (rencontré 1000/1000 au lieu de 1000/500µs)
+         : error B symétrical frame in data (encountered 1000/1000 µs instead of 1000/500µs)
+
+Décodage correct / correct decoding :
+NumSer=0295C827,Bouton=1 T1 ok  <-- télécommande 1 reconnue car enregistrée / remote 1 recognized
+NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 inconnue reçue / remote 0 unknown
+
+---------------------------------------------------
+Pour le protocole (OOK) CARDIN S449 :
+ne fonctionne pas avec les récepteurs RXB6 RFM210LCF/ don't work with RXB6 RFM210LCF receivers 
+car cardin S449 utilise le protocole FSK / because cardin S449 uses the FSK protocol
+Récepteurs FSK : HM-R-433       (5?) Sensibilité : -109 dBm
+                 RC-RFSK1-433N (10?) Sensibilité : -118 dBm
+                 RXB15          (2?) Sensibilité : -108 dBm ou -118dBm suivant sources
+ 
+ 
+https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
+https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
+ 
+---------------------------------------------------
+pour le protocole CAME (OOK) protocol: 
+ne fonctionne pas avec récepteur RXB6 / don't work with RXB6 receiver
+Récepteur RFM210LCF-A ok
+Code fixe 26 bits / Static 26 bits code
+https://github.com/jehy/arduino-came-reader
+https://github.com/psa-jforestier/rtl_433_tests/tree/master/tests/Came/TOP432
+https://github.com/merbanan/rtl_433/issues/1452
+
+
+ 
  */
 
 #include "mcc_generated_files/system/system.h"
@@ -111,6 +162,7 @@ ok  1/cc/e3/5d/1b/e6/da/ Serial=00000000 027588B4,Bouton=1,Code=680,repete=2
 #define francais    1    // choisissez votre langue
 #define english     0    // choose your language
 
+
 #define led     RC0
 #define rts     RC1     // not used
 #define cts     RC2     // not used
@@ -120,35 +172,57 @@ ok  1/cc/e3/5d/1b/e6/da/ Serial=00000000 027588B4,Bouton=1,Code=680,repete=2
 #define CARRIAGERETURN_CHAR   ((uint8_t)'\r')
 #define EpromI2C 0xA0 >>1     // BO en bit 1 (avant décalage) pour le bloc 0/1
 
-// éléments radio / radio items
-const uint32_t silence=37767;   // 18888 µs silent
+// CAME éléments radio / radio items
+// modulation OOK (tout ou rien AM)
+const uint32_t silenceC=29690;  // 14845 µs silent
+const uint32_t debutbitC=2660;  //2560 // 1280 µs start
+const uint32_t bit0C=640;       // 320 µs  
+const uint32_t bit1C=1280;      // 640 µs
+const uint32_t toleranceC=170;
+
+// CARDIN 
+// modulation OOK
+const uint32_t silenceD=12200;   // 6152 µs silence
+const uint32_t bit0D=1464;   // 732 µs     24 bits
+const uint32_t bit1D=2824;   // 1412 µs silence
+const uint32_t toleranceD=190;
+
+// NiceFLors éléments radio / radio items
+// modulation ASK AM (Amplitude shift keying)
+const uint32_t silence=37776;   // 18888 µs silent
 const uint32_t debutbit=2979;   // 1500 µs start
 const uint32_t bit0=958;        // 500 µs  
 const uint32_t bit1=1962;       // 1000 µs
 const uint32_t tolerance=280;
 
-uint8_t b0,b1,b2,b3,b4,b5,b6;  // codes bruts de la télécommande décodés / raw remote codes
-char chaine[50];
-uint8_t i2cdata[130];
-uint8_t debug=0;
-uint8_t i2cread[130] = {};
-uint32_t vitesse[2]={9600,230400};
-uint8_t bufferRx[130] ={};
-uint16_t mesure_bits[150];
-uint8_t  mesure_error[150];
-uint8_t compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
-uint8_t rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
-uint16_t compt,crc,crcrecu,codet,dureeS,dureeStart1;
-uint64_t code,tpsvalidetelecom;
-uint32_t duree=0,i,trame,serial,tpsbouton;
+// protocoles
+const uint8_t  prot_niceflors=1;
+const uint8_t  prot_came=2;
+const uint8_t  prot_cardin=3;
+
+
+uint8_t b0,b1,b2,b3,b4,b5,b6;  // codes bruts de la télécommande niceflors décodés / raw remote niceflors codes
+char          chaine[50];
+uint8_t       i2cdata[130];
+uint8_t       debug=0,protocole;
+uint8_t       i2cread[130] = {};
+uint32_t      vitesse[2]={9600,230400};
+uint8_t       bufferRx[130] ={};
+uint16_t      mesure_bits[150];
+uint8_t       mesure_error[150];
+uint8_t       compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
+uint8_t       rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
+uint16_t      compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
+uint64_t      code,tpsvalidetelecom;
+uint32_t      duree=0,i,trame,serial,tpsbouton;
 static uint8_t command[MAX_COMMAND_LEN];
-static uint8_t index = 0;
+static uint8_t index=0;
 static uint8_t readMessage;
-bool recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-bool aff_enr=LOW;
-int NbreBits,NbreBitsMsg,nb;
-uint16_t valt0;
-uint16_t coderecu[10];  // codes recus des télécommandes 1 à 10
+bool          recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
+bool          aff_enr=LOW;
+int           NbreBits,NbreBitsMsg,nb;
+uint16_t      valt0;
+uint16_t      indexCodeRecu[10];  // codes recus des télécommandes 1 à 10
 
 // debug mode xmodem
 #if debugxmodem
@@ -164,15 +238,26 @@ void raz_bits()
   tramebits=LOW;
   bitSilence=LOW;  
 }
+
+void fin_came()
+{
+    nb=NbreBits;
+    telegram=LOW;
+    bitDebut=LOW;
+    tramebits=LOW;
+    bitSilence=LOW;
+    // printf("Fin recu CAME\r\n");
+    recu=HIGH;
+}
   
 // https://www.youtube.com/watch?v=dy9GlerX_NE
 // interruption IOC (interrupt on change) port B4
 void __interrupt(high_priority) ISR_high()
 {
   // interruption IOC rx récepteur radio
-  if(INTCONbits.RBIE == 1 && INTCONbits.RBIF == 1)
+  if(INTCONbits.RBIE==1 && INTCONbits.RBIF==1)
   {        
-    PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the actual B4 value
+    PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
     TMR0H=0;     // raz timer pour mesure crénau suivant
     TMR0L=0;
@@ -180,150 +265,264 @@ void __interrupt(high_priority) ISR_high()
     // ------traitement signal télécommande -----
     if (debug==3)  // test des transitions du signal brut debugage de bas niveau - test for raw transitions signal. low level debugging
     {
-      if (duree>300) printf("T=%u \n\r",duree); 
+      if (duree>300) printf("T=%u \n\r",duree);
+      goto fin;
     }
        
     //if (telegram) printf("%d\r\n",duree);
     NbreBits++;
     
-    // silence - silent 18880 µs   
+    // silence nice flors
     if ((!telegram) && ((duree>(silence-tolerance)) && (duree<(silence+tolerance))))  
     {
       NbreBits=1;
       bitDebut=HIGH;
       dureeS=duree;
       
-      //printf("S=%u\r\n",duree);
+      if (debug==2) printf("NiceFS=%u\r\n",duree);
+      telegram=HIGH; 
+      protocole=prot_niceflors;
+      code=0;
+      bitSilence=HIGH;
+      goto fin;
+    }
+   
+    // silence - came   
+    //if ((!telegram) && ((duree>(29000-230)) && (duree<(29000+230))))  
+    if ((!telegram) && ((duree>(silenceC-200)) && (duree<(silenceC+200))))  
+    {
+      NbreBits=1;
+      protocole=prot_came;
+      mesure_bits[NbreBits]=duree;
+      if (debug==2) printf("Scame=%u\r\n",duree);
       telegram=HIGH; 
       code=0;
       bitSilence=HIGH;
       goto fin;
     }
     
-    // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
-    // found a start bit, might be one of the 2 begining or the last
-    if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) 
-    { 
-      if (!telegram) goto fin;
-      //if (debug==1) {printf("S%u",NbreBits);printf(" %d\r\n",duree);}
-      // bit de fin, fin du message radio télécommande
-      // end bit, end of radio remote message
-      if (NbreBits==108)
-      {     
-        bitDebut=LOW;bitSilence=LOW;     
-        mesure_bits[NbreBits]=duree;
-        mesure_error[NbreBits]=0; 
-        nb=NbreBits;  // mémoriser le nombre de bits reçus pour affichage
-        telegram=LOW;
-        bitDebut=LOW;
-        tramebits=LOW;
-        bitSilence=LOW;
-        if (NbreBits==108) recu=HIGH;  // info pour prog principal / send to do for main
-        goto fin;
-      }
-      if ((NbreBits==2) | (NbreBits==3)) // on a eu le silence
+    // ----------------------------------------------------------------------------
+    if (protocole==prot_came)
+    {   
+   /*   if (NbreBits==2) 
       {
-        if (NbreBits==2)
-        {         
-          dureeStart1=duree; 
-          //printf("D1 %u",duree);
-          //printf(" Nb %d \r\n",NbreBits);   
+        mesure_bits[NbreBits]=duree; 
+        if (bitSilence && (!telegram) && ((duree>(debutbitC-200)) && (duree<(debutbitC+200))))  
+        {
+          telegram=HIGH;  
+        //  if (debug==2) printf("Start\r\n");
+          printf(">");
+          
           goto fin;
         }
-        // 2eme bit de début
-        if (NbreBits==3)
+        else
         {
-          mesure_bits[NbreBits-2]=dureeS;mesure_error[NbreBits-2]=0;  
-          mesure_bits[NbreBits-1]=dureeStart1;mesure_error[NbreBits-1]=0;
-          mesure_bits[NbreBits]=duree;
-          mesure_error[NbreBits]=0;
-          //printf(" Nb %d \r\n",NbreBits);   
-          tramebits=HIGH;
-          //printf("D2 %u",duree);
-          NbreBitsMsg=0;
-          bitSilence=LOW;
+          raz_bits();
           goto fin;
         }
       }
-      else
-      {  // bit start ou stop mal placé, inattendu
-         // unexepected start or stop bit
-         if (NbreBits<108) 
-         {
-           mesure_bits[NbreBits]=duree;
-           mesure_error[NbreBits]=1;  // bit start/stop mal placé
-         } 
-         raz_bits(); 
-         nb=NbreBits;  // mémoriser le nombre de bits reçus pour affichage
-         printf("EZ%u\r\n",NbreBits); // erreur de séquencement
-         goto fin;
-      }      
+     */
+        
+      //printf("%d\r\n",duree);
+      if (telegram)
+      {
+        if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC)))
+        {
+          //printf("1");
+          code=code * 2; // décaler à gauche
+          code=code | 1;
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
+          if (NbreBits==26) fin_came();
+          goto fin;
+          if (NbreBits % 2==0) // bit impair : mémoriser son état - even bit : store it
+          {
+            bitPrec=HIGH;
+          }
+          else
+          // évaluation sur bits pairs
+          {
+            if (bitPrec==LOW) 
+            {
+              NbreBitsMsg++;           
+              code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+              code=code | 1;  // bit 0 à 1
+            }
+            else 
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1) 
+              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
+            }
+          }
+          goto fin;
+        }
+        //if (telegram) printf("%d\r\n",duree);  
+        if ((duree>(bit0C-toleranceC)) && (duree<(bit0C+toleranceC)))
+        {
+          //printf("0");
+          code=code * 2;  // décaler à gauche 
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
+          if (NbreBits==26) fin_came();
+          goto fin;
+          if (NbreBits % 2==0)
+          {
+            bitPrec=LOW;
+          }
+          else
+          // évaluation sur bits pairs
+          {
+            if (bitPrec==HIGH) 
+            {
+              NbreBitsMsg++;
+              code=code*2; // décaler à gauche
+            }
+            else 
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1) 
+              {mesure_error[NbreBits]=3;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
+            }
+          }
+          goto fin;
+        }
+        else
+        {
+          raz_bits();
+          nb=NbreBits;  // pour affichage
+          if (debug==1) printf("EFA%d\r\n",NbreBits); // erreur bit inconnu dans les données
+          goto fin;
+        }       
+      }       
+    }   
+    
+    // -------------------------------------------------------------------   
+    if (protocole==prot_niceflors)
+    {
+      // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
+      // found a start bit, might be one of the 2 firsts or the last
+      if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) 
+      { 
+        if (!telegram) goto fin;
+        //if (debug==1) {printf("S%u",NbreBits);printf(" %d\r\n",duree);}
+        // bit de fin, fin du message radio télécommande
+        // end bit, end of radio remote message
+        if (NbreBits==108)
+        {     
+          bitDebut=LOW;bitSilence=LOW;     
+          mesure_bits[NbreBits]=duree;
+          mesure_error[NbreBits]=0; 
+          nb=NbreBits;  // mémoriser le nombre de bits reçus pour affichage
+          telegram=LOW;
+          bitDebut=LOW;
+          tramebits=LOW;
+          bitSilence=LOW;
+          if (NbreBits==108) recu=HIGH;  // info pour prog principal / send to do for main
+          goto fin;
+        }
+        if ((NbreBits==2) | (NbreBits==3)) // on a eu le silence
+        {
+          if (NbreBits==2)
+          {         
+            dureeStart1=duree; 
+            //printf("D1 %u",duree);
+            //printf(" Nb %d \r\n",NbreBits);   
+            goto fin;
+          }
+          // 2eme bit de début
+          if (NbreBits==3)
+          {
+            mesure_bits[NbreBits-2]=dureeS;mesure_error[NbreBits-2]=0;  
+            mesure_bits[NbreBits-1]=dureeStart1;mesure_error[NbreBits-1]=0;
+            mesure_bits[NbreBits]=duree;
+            mesure_error[NbreBits]=0;
+            //printf(" Nb %d \r\n",NbreBits);   
+            tramebits=HIGH;
+            //printf("D2 %u",duree);
+            NbreBitsMsg=0;
+            bitSilence=LOW;
+            goto fin;
+          }  
+        }
+        // bit inconnu ou stop mal placé, inattendu
+        // unexepected start or stop bit
+        // erreur
+        if (NbreBits<108) 
+        {
+          mesure_bits[NbreBits]=duree;
+          mesure_error[NbreBits]=3;  // bit inconnu
+        }   
+        raz_bits(); 
+        nb=NbreBits;  // mémoriser le nombre de bits reçus pour affichage
+        if (debug==1) printf("EZ%u\r\n",NbreBits); // erreur de séquencement
+        goto fin;      
+      }
+    
+      if (tramebits)  // données 
+      {
+        //printf("D%d\r\n",NbreBits);
+        if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance)))
+        {
+          //Serial.print("1");
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
+          if (NbreBits % 2==0) // bit pair : mémoriser son état - even bit : store it
+          {
+            bitPrec=HIGH;
+          }
+          else
+          // évaluation sur bits impairs
+          {
+            if (bitPrec==LOW) 
+            {
+              NbreBitsMsg++;           
+              code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+              code=code | 1;  // bit 0 à 1
+            }
+            else 
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}  // erreur symétrie données
+            }
+          }
+        }
+        else  
+        if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance)))
+        {
+          //Serial.print("0");
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
+          if (NbreBits % 2==0)
+          {
+            bitPrec=LOW;
+          }
+          else
+          // évaluation sur bits impairs
+          {
+            if (bitPrec==HIGH) 
+            {
+              NbreBitsMsg++;
+              code=code*2; // décaler à gauche
+            }
+            else 
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1) {mesure_error[NbreBits]=3;printf("EBB D=%u\r\n",duree);}  // erreur symétrie données
+            }
+          }  
+        }
+        else
+        {
+          raz_bits();
+          nb=NbreBits;  // pour affichage
+          if (debug==1) printf("EFB%d\r\n",NbreBits); // erreur de données
+        }
+      }    
     }
     
-    if (tramebits)  // données 
-    {
-      //printf("D%d\r\n",NbreBits);
-      if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance)))
-      {
-        //Serial.print("1");
-        if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
-        if (NbreBits % 2==0) // bit pair : mémoriser son état - even bit : store it
-        {
-          bitPrec=HIGH;
-        }
-        else
-        // évaluation sur bits impairs
-        {
-          if (bitPrec==LOW) 
-          {
-            NbreBitsMsg++;           
-            code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
-            code=code | 1;  // bit 0 à 1
-          }
-          else 
-          {
-            NbreBits=0;raz_bits();
-            if (debug==2) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}  // erreur symétrie données
-          }
-        }
-      }
-      else  
-      if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance)))
-      {
-        //Serial.print("0");
-        if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
-        if (NbreBits % 2==0)
-        {
-          bitPrec=LOW;
-        }
-        else
-        // évaluation sur bits impairs
-        {
-          if (bitPrec==HIGH) 
-          {
-            NbreBitsMsg++;
-            code=code*2; // décaler à gauche
-          }
-          else 
-          {
-             NbreBits=0;raz_bits();
-             if (debug==2) {mesure_error[NbreBits]=3;printf("EA D=%u\r\n",duree);}  // erreur symétrie données
-          }
-        }  
-      }
-      else
-      {
-         raz_bits();
-         nb=NbreBits;  // pour affichage
-         printf("EF%d\r\n",NbreBits); // erreur de données
-      }
-    }    
-    
     fin:
-    //NOP();    // il faut exécuter au moins une instruction entre la lecture du port B et le RAZ de RBIF: §11.3
+    //NOP();    // il faut exécuter au moins une instruction entre la lecture du port B et le RAZ de RBIF: §11.3 sauf dans ce cas
     INTCONbits.RBIF=0;
   }
-}
+}  
+
 
 // lecture d'un octet de l'eprom int
 // read one byte from int eprom
@@ -342,6 +541,7 @@ void menu()
 {
    #if francais
    printf("       ** MENU **\n\r\n\r");
+   printf("?....Affiche ce menu\r\n");
    printf("1....Change mode debug \r\n");
    printf("2....UART9600/230400 bauds\r\n");
    printf("3....Envoyer à l'eprom ext le fichier 128Ko de codes NiceFlorS (protocole Xmodem CRC)\r\n");
@@ -353,12 +553,15 @@ void menu()
    printf("9....Affiche EPROM interne\r\n");
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
-     #if debugxmodem
-     printf("C....Affiche le tableau adresses[]");
+   printf("C....Liste des télécommandes connues\r\n");  
+   #if debugxmodem
+     printf("K....Affiche le tableau adresses[]");
     #endif
+    
    #endif
    #if english
    printf("       ** MENU **\n\r\n\r");
+   printf("?....Display this menu\r\n");
    printf("1....Change debug mode \r\n");
    printf("2....UART9600/230400 bauds\r\n");
    printf("3....Send Niceflors 128kb codes file to ext eprom (Xmodem CRC protocol)\r\n");
@@ -370,8 +573,9 @@ void menu()
    printf("9....Display internal EPROM\r\n");
    printf("A....Check ext checksum eprom\r\n");
    printf("B....Display ext 64Kb eprom (long) by 128 range bytes\r\n");
-     #if debugxmodem
-     printf("C....Display array adresses[]");
+   printf("C....List of known remotes\r\n");   
+   #if debugxmodem
+     printf("K....Display array adresses[]");
      #endif
    #endif
 
@@ -470,7 +674,7 @@ uint8_t attend_rx_30()
   {  
     __delay_us(50);
     Compte--;
-    if ((Compte % 1000)==0) 
+    if ((Compte % 2000)==0) 
     {
       led=!led;  
       UART_WriteByte('C'); // code ascii de C
@@ -666,22 +870,22 @@ void lit_eprom_ext(uint32_t adresse)
   I2C1_Host.WriteRead(EpromI2C | mask,i2cdata,2,i2cread,1);
   int err;  
   waitCounter = 1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
-        while ( I2C1_Host.IsBusy())
-        {
-            I2C1_Host.Tasks();
-            waitCounter--; 
-            __delay_ms(1);
-        }
-   err=I2C1_Host.ErrorGet();
-        if (  err == I2C_ERROR_NONE)
-        {
-            // WriteRead operation is successful
-        }
-        else
-        {
-               printf("erreur I2C WriteRead=%d\r\n",err);
-            // Error handling
-        }
+  while ( I2C1_Host.IsBusy())
+  {
+    I2C1_Host.Tasks();
+    waitCounter--; 
+    __delay_ms(1);
+  }
+  err=I2C1_Host.ErrorGet();
+  if (  err == I2C_ERROR_NONE)
+  {
+    // WriteRead operation is successful
+  }
+  else
+  {
+    printf("erreur I2C WriteRead=%d\r\n",err);
+    // Error handling
+  }
 }
 
 // lit "nombre" octet l'eprom ext (lecture séquentielle - random read) à l'adresse adresse, met la valeur dans i2cread[]
@@ -697,22 +901,22 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
     
   I2C1_Host.WriteRead(EpromI2C | mask,i2cdata,2,i2cread,nombre);
   int err;  
-  waitCounter = 1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
-  while ( I2C1_Host.IsBusy())
+  waitCounter=1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
+  while (I2C1_Host.IsBusy())
   {
     I2C1_Host.Tasks();
     waitCounter--; 
     // __delay_ms(1);   fonctionne sans 
    }
    err=I2C1_Host.ErrorGet();
-   if (  err == I2C_ERROR_NONE)
+   if (err==I2C_ERROR_NONE)
    {
      // WriteRead operation is successful
    }
    else
    {
      printf("erreur I2C WriteRead=%d\r\n",err);
-          // Error handling
+    // Error handling
    }
 }
 
@@ -724,8 +928,17 @@ void affiche_enregistrement()
   aff_enr=LOW;   
   
   printf("NbreBits=%d",nb);
-  if (nb!=108) printf(" différent de 108");
-  printf("\r\n");
+  
+  if (protocole==prot_niceflors)
+  {
+     if (nb!=108) printf(" différent de 108 ");
+     printf(" Protocole NiceFlorS");
+  }
+  if (protocole==prot_came)
+  {
+      printf(" Protocole Came");
+  }
+     printf("\r\n");
   for (y=1;y<=16;y++)
   {
     for (x=1;x<=7;x++)
@@ -736,16 +949,32 @@ void affiche_enregistrement()
         printf("%3d",i);
         duree=mesure_bits[i];
         printf(" %5u",duree);   
-        if ((duree>(silence-1000)) && (duree<(silence+1000)))     printf(" Start   ");
-        else
-        if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0       ");
-        else
-        if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1       ");  
-        else
-        if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" Deb/fin ");
-        else
-        printf(" ?       ");
-        if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
+        if (protocole==prot_niceflors)
+        {    
+          if ((duree>(silence-1000)) && (duree<(silence+1000)))     printf(" Silence   ");
+          else
+          if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0       ");
+          else
+          if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1       ");  
+          else
+          if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" Deb/fin ");
+          else
+          printf(" ?       ");
+          if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
+        }
+        if (protocole==prot_came)
+        {    
+          if ((duree>(silenceC-1000)) && (duree<(silenceC+1000)))     printf(" Silence ");
+          else
+          if ((duree>(bit0C-toleranceC)) && (duree<(bit0C+toleranceC))) printf(" 0       ");
+          else
+          if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC))) printf(" 1       ");  
+          else
+          if ((duree>(debutbitC-toleranceC)) && (duree<(debutbitC+toleranceC))) printf(" Deb ");
+          else
+          printf(" ?       ");
+          if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
+        }
         printf(" ");
       }
       else printf("        ");
@@ -764,8 +993,16 @@ void Affiche5(uint32_t codex)
   printf("%08lX",p);
 }
 
+// affiche un nombre en 32 bits en hexa
+void Affiche4(uint64_t codex)
+{
+  uint32_t p=codex & 0xFFFFFFFF;
+  printf("%08lX",p);
+}
+
 void UART_ExecuteCommand(char *command)
 {
+    uint64_t ep;
     if(strcmp(command,"?") == 0)
     {
       menu();
@@ -775,7 +1012,20 @@ void UART_ExecuteCommand(char *command)
     {
        debug++;
        if (debug>3) debug=0;
-       printf("Debug %d\r\n",debug);
+       printf("Debug %d ",debug);
+       #if francais
+       if (debug==0) printf("pas de debug\r\n");
+       if (debug==1) printf("Affiche les erreurs\r\n");
+       if (debug==2) printf("Affiche silence\r\n");
+       if (debug==3) printf("Affiche les durées reçues en direct\r\n");
+       #endif   
+       #if english
+       if (debug==0) printf("No debug\r\n");
+       if (debug==1) printf("Display errors\r\n");
+       if (debug==2) printf("Display silent\r\n");
+       if (debug==3) printf("Display length durations live\r\n");
+       #endif   
+
     }
     else
     if(strcmp(command,"2") == 0)
@@ -790,9 +1040,11 @@ void UART_ExecuteCommand(char *command)
     if (strcmp(command,"3") == 0)
 	{
       #if francais
+        if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
         printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole Xmodem CRC dans les 20s\r\n");  
       #endif  
       #if english
+        if (pvitesse!0=) printf("Use 9600 bauds to use Xmodem\r\n");
         printf("Using TeraTerm, select the 128Kb file to transmit (Xmodem CRC protocol) within 20s\r\n");  
       #endif  
       recoit_xmodem(1);
@@ -801,9 +1053,11 @@ void UART_ExecuteCommand(char *command)
     if (strcmp(command,"4") == 0)
 	{
       #if francais
+        if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
         printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");  
       #endif  
       #if english
+        if (pvitesse!=0) printf("Use 9600 bauds to use Xmodem\r\n");
         printf("Using TeraTerm, select the 256b file to transmit (Xmodem CRC protocol) within 20s\r\n");  
       #endif  
       recoit_xmodem(2);
@@ -957,6 +1211,26 @@ void UART_ExecuteCommand(char *command)
     else
     if (strcmp(command,"C") == 0)
     {
+      i=0;
+      do
+      {
+         ep=(uint32_t)lit_eprom_int(0x100+i*4);
+         ep=ep+((uint32_t)lit_eprom_int(0x101+i*4) << 8);
+         ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
+         ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
+         //ep=lit_eprom_int(0x100+i*4);
+         //ep=ep+(lit_eprom_int(0x101+i*4) << 8);
+         //ep=ep+(lit_eprom_int(0x102+i*4) << 16);
+         //ep=ep+(lit_eprom_int(0x103+i*4) << 24);
+         printf("T%d ",i+1);Affiche4(ep);
+         printf("\r\n"); 
+         i++;           
+      } while (i<10); 
+      i--;   
+    }
+    else
+    if (strcmp(command,"K") == 0)
+    {
       /*
       INTCONbits.GIE=0;
       for (i=0;i<1024;i++)
@@ -972,7 +1246,7 @@ void UART_ExecuteCommand(char *command)
     
     else
     {
-        printf("Incorrect command.\r\n");
+      printf("Incorrect command.\r\n");
     }
 }
 
@@ -1001,13 +1275,13 @@ void UART_ProcessCommand(void)
 
 void UART1_WriteString(const char *message)
 {
-    for(int i=0;i<(int)strlen(message); i++)
+  for(int i=0;i<(int)strlen(message); i++)
+  {
+    while(!UART1.IsTxReady())
     {
-        while(!UART1.IsTxReady())
-        {
-        };
-        (void) UART1.Write(message[i]);
-    }
+    };
+    (void) UART1.Write(message[i]);
+  }
 }
 
 void uart1_champ(char* message,int valeur)
@@ -1034,32 +1308,31 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
   
   if (I2C1_Host.Write(EpromI2C,i2cdata,3))  
   {  
-      waitCounter = 100; // This value depends on the system clock, I2C clock and data length.                                                                                          
-      while (I2C1_Host.IsBusy())
-      {
-          I2C1_Host.Tasks();
-          __delay_ms(10);
-          waitCounter--;              
-      }
-     /*I2C_ERROR_NONE,         *< No error 
-       I2C_ERROR_ADDR_NACK,        *< Client returned address NACK 
-       I2C_ERROR_DATA_NACK,        *< Client returned data NACK 
-       I2C_ERROR_BUS_COLLISION*/
-      err=I2C1_Host.ErrorGet();
-   
-      if (err == I2C_ERROR_NONE)
-      {
-          // Write operation is successful
-         // printf("écrit ok\r\n");
-      }
-      else
-      {
-          // Error handling
-          printf("erreur I2C Write=%d\r\n",err);
-      }
+    waitCounter = 100; // This value depends on the system clock, I2C clock and data length.                                                                                          
+    while (I2C1_Host.IsBusy())
+    {
+      I2C1_Host.Tasks();
+      __delay_ms(10);
+      waitCounter--;              
     }
+    /*I2C_ERROR_NONE,         *< No error 
+    I2C_ERROR_ADDR_NACK,        *< Client returned address NACK 
+    I2C_ERROR_DATA_NACK,        *< Client returned data NACK 
+    I2C_ERROR_BUS_COLLISION*/
+    err=I2C1_Host.ErrorGet();
+   
+    if (err==I2C_ERROR_NONE)
+    {
+      // Write operation is successful
+      // printf("écrit ok\r\n");
+    }
+    else
+    {
+      // Error handling
+      printf("erreur I2C Write=%d\r\n",err);
+    }
+  }
 }
-
 
 
 // affiche un nombre en 64 bits en hexa
@@ -1071,12 +1344,6 @@ void Affiche(uint64_t codex)
   printf("%08lX",p);
 }
 
-// affiche un nombre en 32 bits en hexa
-void Affiche4(uint64_t codex)
-{
-  uint32_t p=codex & 0xFFFFFFFF;
-  printf("%08lX",p);
-}
 
 bool code_valide()
 {
@@ -1136,29 +1403,29 @@ void decode_telecommande_b0b6()     // type 64 bits
 }
   
 // trouve le code "c" en EPROM ext - renvoie son adresse
-// ca prend 7s si le code à trouver est en 0x1FFFE
+// ca prend 7s si le code à trouver est en 0x1FFFE (dernière adresse)
 // fetch with raw method code "c" in external eprom - send back address
-// takes 7s to find if the code to be found is at 0x1FFFE (last address))
+// takes 7s to find if the code to be found is at 0x1FFFE (last address)
 uint16_t trouve_code(uint16_t c)
 {
   bool trouve=LOW;  
   uint16_t cr;  
   uint32_t i;
   uint8_t j;
-      i=0;
-      do
-      {   
-        lit_bloc_eprom_ext(i,128);  // lecture de l'eprom ext I2C par bloc de 128 octets
-        i=i+128;
-        j=0;
-        do
-        { //    poids faible   poids fort
-          trouve=(i2cread[j]+(i2cread[j+1] << 8))==c;
-          j=j+2;
-        }
-        while ((!trouve) && (j<=127)) ;
-      }
-      while ((!trouve) && (i<0x20000)); 
+  i=0;
+  do
+  {   
+    lit_bloc_eprom_ext(i,128);  // lecture de l'eprom ext I2C par bloc de 128 octets
+    i=i+128;
+    j=0;
+    do
+    { //    poids faible   poids fort
+      trouve=(i2cread[j]+(i2cread[j+1] << 8))==c;
+      j=j+2;
+    }
+    while ((!trouve) && (j<=127)) ;
+  }
+  while ((!trouve) && (i<0x20000)); 
   return((i-128+j-2)/2);  // divisé par 2 car c'est l'adresse du mot de 16 bits qu'il faut renvoyer
 }
 
@@ -1176,13 +1443,14 @@ uint16_t trouve_code_algo(uint16_t c) // trouver l'adresse de encode dans l'epro
   {
     // boucle par télécommande : on lit 128 octets
     // by remote loop : we read 128 bytes
-    i=coderecu[bal_telecom];  // index du code recu+increment 0 ou 1 ou 
-    lit_bloc_eprom_ext(i*2,128); 
-    increment=0;        
+    i=indexCodeRecu[bal_telecom];  // index (en mots) du code recu précédemment - previous index remote code (in words)
+    lit_bloc_eprom_ext(i*2,128);   // lire les 128 octets après l'index, en mots donc *2 - read next 128 bytes; in words so *2
+    increment=0;  // explorer le bloc de 128 octets        
     do
     {
       //printf("trouver à l'index %d\r\n",i);
-      // sur les 4 codes consécutifs recus, essayer de trouver dans le bloc de 128 octets  
+      // essayer de touver "c" dans le bloc de 128 octets lu de l'eprom ext
+      // try to find out "c" in the 128 bytes memory bloc read out from ext eprom	  
       lu_ext=i2cread[increment];
       lu_ext=lu_ext + (i2cread[increment+1] << 8);
       //printf("code eprom=%x\r\n",lu_ext);
@@ -1192,61 +1460,61 @@ uint16_t trouve_code_algo(uint16_t c) // trouver l'adresse de encode dans l'epro
     bal_telecom++;
   } while ((!trouve) & (bal_telecom<10));   
   // si pas trouvé, le trouver par le méthode directe linéraire de lecture tous les octets
-  // if not find, fetch with straight linear all bytes read 
+  // if not find, fetch it with straight linear all bytes read 
   if (!trouve) i=trouve_code(c);else i=i+(increment/2);
-  //if (trouve) printf(" Trouvé télécommande %d ",bal_telecom-1);
+  //if (trouve) printf(" Trouvé code dans télécommande %d ",bal_telecom-1);
   return (i); 
 }
 
 
 // décode les octets B0 à B6, extrait le numéro de série, bouton, code et répétition
-// decode B0-B6 bytes, extract serial, nuton, code and repeat
+// decode B0-B6 bytes, extract serial, button, code and repeat
 void decode_b06()
 {
-    uint16_t encode,encodeEprom;
-    uint8_t ki,snbuf3,snbuf2,snbuf1,snbuf0;
-    encode=(b2<<8) + b3;  // b2 et b3 contiennent le code dans le tableau de 65535 valeurs (eprom ext)
-    codet=0;              // b2 and b3 are the code to find in the ext eprom  
-    codet=trouve_code_algo(encode);  // codet est l'index de encode dans l'eprom ext
+  uint16_t encode,encodeEprom;
+  uint8_t ki,snbuf3,snbuf2,snbuf1,snbuf0;
+  encode=(b2<<8) + b3;  // b2 et b3 contiennent le code dans le tableau de 65535 valeurs (eprom ext)
+  indexcode=0;          // b2 and b3 are the code to find in the ext eprom  
+  indexcode=trouve_code_algo(encode);  // index de encode dans l'eprom ext
    
-    // https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/ArduinoC.ino
-    //printf("Le code %x a été trouvé en index ",encode);
-    //printf("%d\r\n",code);
-    ki=lit_eprom_int(codet & 0xff);
-    //printf("encode=%x\r\n",encode);
-    ki=ki ^ (encode & 0xff);
-    //printf("ki=index=%d\r\n",ki);
+  // https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/ArduinoC.ino
+  //printf("Le code %x a été trouvé en index ",encode);
+  //printf("%d\r\n",code);
+  ki=lit_eprom_int(indexcode & 0xff);
+  //printf("encode=%x\r\n",encode);
+  ki=ki ^ (encode & 0xff);
+  //printf("ki=index=%d\r\n",ki);
     
-    snbuf3=(b1^ki) & 0x0f;
-    snbuf2=b4^ki;
-    snbuf1=b5^ki;
-    snbuf0=b6^ki;
-    serial=0;
-    serial=serial + (uint32_t)snbuf0;
-    serial=serial + ((uint32_t)snbuf1 << 8L);
-    serial=serial + ((uint32_t)snbuf2 << 16L);
-    serial=serial + ((uint32_t)snbuf3 << 24L);
-    bouton=b0 & 0x0f;
-    repete=(b1 >> 4) ^ bouton ^ 0x0f;
-    printf("NumSer=");Affiche4(serial);   // numéro de série de la télécommande
-    printf(",Bouton=%d",bouton);
-    if (debug>=1)
-    { 
-      printf(",Index=%d",codet);          // code envoyé par la télécommande pour décoder son message  
-      printf(",repete=%d ",repete);     // répétition
-    }
+  snbuf3=(b1^ki) & 0x0f;
+  snbuf2=b4^ki;
+  snbuf1=b5^ki;
+  snbuf0=b6^ki;
+  serial=0;
+  serial=serial + (uint32_t)snbuf0;
+  serial=serial + ((uint32_t)snbuf1 << 8L);
+  serial=serial + ((uint32_t)snbuf2 << 16L);
+  serial=serial + ((uint32_t)snbuf3 << 24L);
+  bouton=b0 & 0x0f;
+  repete=(b1 >> 4) ^ bouton ^ 0x0f;
+  printf("NiceFlorS NumSer=");Affiche4(serial);   // numéro de série de la télécommande
+  printf(",Bouton=%d",bouton);
+  if (debug>=1)
+  { 
+    printf(",Index=%d",indexcode);    // code envoyé par la télécommande pour décoder son message  
+    printf(",repete=%d ",repete);     // répétition
+  }
 }
 
 // encode les octets b0-b6 en code émetteur
 // pour vérification inverse
 uint64_t encode_quartets()    // type 64 bits
 {
-  uint64_t  encoded;
+  uint64_t encoded;
   uint8_t b;  
-  code = 0;
-  code = ((b6 << 0x4) & 0xF0) ;
+  code=0;
+  code=((b6 << 0x4) & 0xF0) ;
 
-  code |= ((((b5 & 0x0F) << 4) | ((b6 & 0xF0) >> 4)) << 8) & 0xff00;
+  code|=((((b5 & 0x0F) << 4) | ((b6 & 0xF0) >> 4)) << 8) & 0xff00;
   
   b=((b4 & 0x0F) << 4) + ((b5 & 0xF0) >> 4);
   code = code + (b *0x10000) ;    // << 16
@@ -1255,19 +1523,19 @@ uint64_t encode_quartets()    // type 64 bits
   code= code + (b*0x1000000);    // << 24
  
   // à partir d'ici, on ne peut pas décaler de plus de 32 bits, il faut utiliser la multiplication
-  // De même le OU bitwise (encoder|=) ne marche pas en 64 bits, il faut utiliser +
+  // De même le OU bitwise (encoder|=) ne marche pas en 64 bits, il faut utiliser + (commentaire pour arduino nano)
   b=(((b2 & 0x0F) << 4) & 0xF0) | (((b3 & 0xF0) >> 4) & 0x0F);
-  code = code + (b*0x100000000);     // << 32
+  code=code + (b*0x100000000);     // << 32
  
   b=((b1 & 0x0F) << 4) | ((b2 & 0xF0) >> 4);
-  code = code + (b*0x10000000000);   // << 40;
+  code=code + (b*0x10000000000);   // << 40;
  
   b=((b0 & 0x0F) << 4) | ((b1 & 0xF0) >> 4);
   
-  code = code + (b*0x1000000000000); // << 48;
-  code = code ^ 0xFFFFFFFFFFFFF0;
+  code=code + (b*0x1000000000000); // << 48;
+  code=code ^ 0xFFFFFFFFFFFFF0;
   
-  code = code >> 4;     
+  code=code >> 4;     
 
   Affiche(code);
 }
@@ -1298,68 +1566,67 @@ uint8_t num_telecommande_int(uint32_t serialin)
 // and if it has to be stored as a new remote
 void traitementCode()
 {
-    uint8_t n;
-    uint32_t ep;
-    n=num_telecommande_int(serial);     // renvoie le numéro de télécommande "serial" si stocké en eprom int (connu)
-    printf(" T%d",n);  // numéro de télécommande
+  uint8_t n;
+  uint32_t ep;
+  n=num_telecommande_int(serial);     // renvoie le numéro de télécommande "serial" si stocké en eprom int (connu)
+  printf(" T%d",n);  // numéro de télécommande
     
-    if (n!=0)
+  if (n!=0)
+  {
+    // normalement il faudrait contrôler que l'index du code de la télécommande
+    // est plus grand que l'ancien
+    // we should check if the new index code is greater than the previous
+    // indexcode > previous indexcode , so: indexcoderecu[n]<indexcode
+    printf(" ok");
+    indexCodeRecu[n]=indexcode;  // stocker index du code reçu de la télécommande  
+    // coller le relais 1 seconde
+    // relay 1s on
+    rel1=0;
+    __delay_ms(1000);
+    rel1=1;
+  }
+  printf("\r\n");
+    
+  // on demande d'enregistrer une nouvelle télécommande (appui long sur bouton)
+  // store a new remote as we push the button for a long time
+  if (tpsvalidetelecom!=0)
+  {
+    tpsvalidetelecom=0;
+    if (n==0) 
     {
-      // normalement il faudrait contrôler que l'index du code de la télécommande
-      // est plus grand que l'ancien
-      // we should check if the new index code is greater than the previous
-      // codet > previous codet , so: coderecu[n]<codet
-      printf(" ok");
-      coderecu[n]=codet;  // index du code reçu de la télécommande  
-      // coller le relais 1 seconde
-      // relay 1s on
-      rel1=0;
+      //trouver place vide
+      i=0;
+      do
+      {
+         ep=(uint32_t)lit_eprom_int(0x100+(i*4));
+         ep=ep+((uint32_t)lit_eprom_int(0x101+(i*4)) << 8);
+         ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
+         ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
+         i++;           
+      } while ((ep!=0xffffffff) & (i<10)); 
+      i--;
+      if (i>=11) {printf("Plus de place\r\n");return;}
+      ecrit_eprom_int(0x100+(i*4),serial & 0xff); // poids faible
+      ecrit_eprom_int(0x101+(i*4),serial>>8);
+      ecrit_eprom_int(0x102+(i*4),serial>>16); 
+      ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
+        
+      printf("Télécommande ");Affiche4(serial);printf(" ajoutée\r\n");
+      n=num_telecommande_int(serial); // numéro de télécommande
+      if (n>0) indexCodeRecu[n]=indexcode;  // index du code reçu de la télécommande n  
       __delay_ms(1000);
-      rel1=1;
     }
-    printf("\r\n");
-    
-    // on demande d'enregistrer une nouvelle télécommande (appui long sur bouton)
-    // store a new remote as we push the button for a long time
-    if (tpsvalidetelecom!=0)
+    else 
     {
-       tpsvalidetelecom=0;
-       if (n==0) 
-       {
-           //trouver place vide
-           i=0;
-           do
-           {
-              ep=(uint32_t)lit_eprom_int(0x100+i*4);
-              ep=ep+((uint32_t)lit_eprom_int(0x101+i*4) << 8);
-              ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
-              ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
-              i++;    
-              
-           } while ((ep!=0xffffffff) & (i<11)); 
-           i--;
-           if (i>=11) {printf("Plus de place\r\n");return;}
-           ecrit_eprom_int(0x100+i*4,serial & 0xff); // poids faible
-           ecrit_eprom_int(0x101+i*4,serial>>8);
-           ecrit_eprom_int(0x102+i*4,serial>>16); 
-           ecrit_eprom_int(0x103+i*4,serial>>24);   // poids fort
-           
-           printf("Télécommande ");Affiche4(serial);printf(" ajoutée\r\n");
-           n=num_telecommande_int(serial); // numéro de télécommande
-           coderecu[n]=codet;  // index du code reçu de la télécommande  
-           __delay_ms(1000);
-       }
-       else 
-       {
-         #ifdef francais
-           printf("Télécommande déja stockée\r\n");
-         #endif
-         #ifdef english
-           printf("Remote already stored\r\n");
-         #endif
-         __delay_ms(1000);
-       }
+      #if francais
+        printf("Télécommande déja stockée\r\n");
+      #endif
+      #if english
+        printf("Remote already stored\r\n");
+      #endif
+      __delay_ms(1000);
     }
+  }
 }
 
 
@@ -1408,20 +1675,20 @@ int main(void)
   if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;}  // 9600 bauds pour transfert xmodem
   if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;}  // 240200
     
-  // prédivision par (2)=8 ce qui permet de mesurer le signal 18888µs
-  T0CON = (2 << _T0CON_T0PS_POSN)   // T0PS  0=/2 1=/4  2=/8 3=/16 4=/32  5=/64 6=/128 7=/256 =préscaleur  1=/4
-      | (0 << _T0CON_PSA_POSN)   // PSA=0 utilise le prédiviseur
-      | (1 << _T0CON_T0SE_POSN)   // T0SE Increment_hi_lo
-      | (0 << _T0CON_T0CS_POSN)   // T0CS FOSC/4
-      | (0 << _T0CON_T08BIT_POSN)   // T08BIT 16-bit
-      | (1 << _T0CON_TMR0ON_POSN);  // TMR0ON enabled
+  // réglage de la prédivision par (2)=8 du timer 0 ce qui permet de mesurer le signal 18888µs
+  T0CON = (2 << _T0CON_T0PS_POSN)    // T0PS  0=/2 1=/4  2=/8 3=/16 4=/32 5=/64 6=/128 7=/256 1=/4
+        | (0 << _T0CON_PSA_POSN)     // PSA=0 utilise le prédiviseur
+        | (1 << _T0CON_T0SE_POSN)    // T0SE Increment_hi_lo
+        | (0 << _T0CON_T0CS_POSN)    // T0CS FOSC/4
+        | (0 << _T0CON_T08BIT_POSN)  // T08BIT 16-bit
+        | (1 << _T0CON_TMR0ON_POSN); // TMR0ON enabled
    
   #ifdef francais
-  UART1_WriteString("Récepteur télécommande Nice FLOR-s\r\n");
+  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
   #endif  
   #ifdef english
-  UART1_WriteString("Remote receiver for Nice FLOR-s\r\n");
+  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
   #endif  
    
@@ -1447,26 +1714,27 @@ int main(void)
   TMR0_Start();   
   INTCONbits.GIE=1;      // valide les irq
     
-  AncBp=RB2;
+
    
   while(1)
   {
     if (!RB2) // bouton appuyé
     {
+      __delay_ms(1);
       tpsbouton++;
       // appui long sur bouton
       // button long press
-      if (tpsbouton>500000) //5s
+      if (tpsbouton>5000) //5s
       { 
         led=0;
         tpsbouton=0;
-        #ifdef francais
+        #if francais
         printf("Effacement toutes télécommandes\r\n");
         #endif
-        #ifdef english
+        #if english
         printf("Discarding all remotes\r\n");
         #endif
-        for (crc=0x100;crc<=0x12b;crc++)
+        for (crc=0x100;crc<=0x127;crc++)  // 10 télécommandes = 4x10 = 0x28
         {
           ecrit_eprom_int(crc,0xff);
         }    
@@ -1478,13 +1746,10 @@ int main(void)
       
     // Appui court du bouton
     // button short press
-    if ((!AncBp) & (RB2) & (tpsbouton>500) & (tpsbouton<2000))
+    if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
     {
       printf("relache\r\n");
-      //tpsbouton--;
-      tpsvalidetelecom=50000;
-      //if (tpsbouton==0) {led=!led;tpsbouton=30000;BoutonActif--;}
-      //if (BoutonActif==0) Bp=LOW;
+      tpsvalidetelecom=50000;     
     }  
         
     if (tpsvalidetelecom!=0)
@@ -1494,7 +1759,7 @@ int main(void)
       if (tpsvalidetelecom==0) led=1;
     }
        
-    AncBp=RB2;  
+    AncBp=RB2;   
     if (RB2) tpsbouton=0;  
         
     if (!recu) UART_ProcessCommand();
@@ -1511,12 +1776,21 @@ int main(void)
       {
         affiche_enregistrement();       
       }
-      if (debug>=1) {Affiche(code);printf(" ");} 
-      decode_telecommande_b0b6();   // décode le code en b0 b6
-      if (code_valide())            // si B0 B6 sont valides - if b0 b6 are valid
-      {        
-        decode_b06();               // décode B0 B6 et extrait le numéro de série, bouton etc
-        traitementCode();           // faire le traitement - compute the code
+      if (protocole==prot_niceflors)
+      {    
+        if (debug>=1) {Affiche(code);printf(" ");} 
+        decode_telecommande_b0b6();   // décode le code en b0 b6
+        if (code_valide())            // si B0 B6 sont valides - if b0 b6 are valid
+        {        
+          decode_b06();               // décode B0 B6 et extrait le numéro de série, bouton etc
+          traitementCode();           // faire le traitement - compute the code
+        }
+      }
+      if (protocole==prot_came)
+      {
+        serial=code;
+        printf("Came      ");Affiche4(code);
+        traitementCode();
       }
            
       NbreBits=0;
@@ -1526,5 +1800,5 @@ int main(void)
   }    
 }
 
-//__EEPROM_DATA(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
+// test __EEPROM_DATA(0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08);
 
