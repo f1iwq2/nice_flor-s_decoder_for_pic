@@ -59,8 +59,7 @@ RBX6 : modulation ASK uniquement / ASK only
  
 ----------------------------------------------------------
 protocole (ASK) Nice-flors
-fonctionne avec récepteur RXB6 / works with RXB6 receiver
-récepteur RFM210LCF
+fonctionne avec les récepteurs RXB6 / works with receivers : RXB6 & RFM210LCF
 https://github.com/Jev1337/NiceFlor-Encoder/tree/main
 
   code roulant de 52 bits
@@ -135,7 +134,7 @@ ne fonctionne pas avec les récepteurs RXB6 RFM210LCF/ don't work with RXB6 RFM21
 car cardin S449 utilise le protocole FSK / because cardin S449 uses the FSK protocol
 Récepteurs FSK : HM-R-433       (5?) Sensibilité : -109 dBm
                  RC-RFSK1-433N (10?) Sensibilité : -118 dBm
-                 RXB15          (2?) Sensibilité : -108 dBm ou -118dBm suivant sources
+                 RXB15          (2?) Sensibilité : -108 dBm ou -118dBm suivant sources. Introuvable au détail. Unavailable on retail
  
  
 https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
@@ -143,8 +142,7 @@ https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
  
 ---------------------------------------------------
 pour le protocole CAME (OOK) protocol: 
-ne fonctionne pas avec récepteur RXB6 / don't work with RXB6 receiver
-Récepteur RFM210LCF-A ok
+fonctionne avec les récepteurs / work with receivers : RXB6 & RFM210LCF-A 
 Code fixe 26 bits / Static 26 bits code
 https://github.com/jehy/arduino-came-reader
 https://github.com/psa-jforestier/rtl_433_tests/tree/master/tests/Came/TOP432
@@ -265,7 +263,7 @@ void __interrupt(high_priority) ISR_high()
     // ------traitement signal télécommande -----
     if (debug==3)  // test des transitions du signal brut debugage de bas niveau - test for raw transitions signal. low level debugging
     {
-      if (duree>300) printf("T=%u \n\r",duree);
+      if (duree>300) printf("T=%u\n\r",duree);
       goto fin;
     }
        
@@ -304,25 +302,6 @@ void __interrupt(high_priority) ISR_high()
     // ----------------------------------------------------------------------------
     if (protocole==prot_came)
     {   
-   /*   if (NbreBits==2) 
-      {
-        mesure_bits[NbreBits]=duree; 
-        if (bitSilence && (!telegram) && ((duree>(debutbitC-200)) && (duree<(debutbitC+200))))  
-        {
-          telegram=HIGH;  
-        //  if (debug==2) printf("Start\r\n");
-          printf(">");
-          
-          goto fin;
-        }
-        else
-        {
-          raz_bits();
-          goto fin;
-        }
-      }
-     */
-        
       //printf("%d\r\n",duree);
       if (telegram)
       {
@@ -1218,10 +1197,7 @@ void UART_ExecuteCommand(char *command)
          ep=ep+((uint32_t)lit_eprom_int(0x101+i*4) << 8);
          ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
          ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
-         //ep=lit_eprom_int(0x100+i*4);
-         //ep=ep+(lit_eprom_int(0x101+i*4) << 8);
-         //ep=ep+(lit_eprom_int(0x102+i*4) << 16);
-         //ep=ep+(lit_eprom_int(0x103+i*4) << 24);
+         
          printf("T%d ",i+1);Affiche4(ep);
          printf("\r\n"); 
          i++;           
@@ -1246,7 +1222,12 @@ void UART_ExecuteCommand(char *command)
     
     else
     {
-      printf("Incorrect command.\r\n");
+      #if francais
+        printf("Commande incorrecte.\r\n");
+      #endif
+      #if english
+        printf("Incorrect command.\r\n");
+      #endif
     }
 }
 
@@ -1540,22 +1521,25 @@ uint64_t encode_quartets()    // type 64 bits
   Affiche(code);
 }
 
-// renvoie le numéro de la télécommande serialin en eprom interne
+// renvoie le numéro de la télécommande "serialin" en eprom interne
 // si pas reconnue en epromint, renvoie 0
 // get the remote number (1-10) from serial from int eprom
 // if not found, sends 0
 uint8_t num_telecommande_int(uint32_t serialin)
 {
    uint16_t index=0;
-   uint32_t seriallu=0;
+   uint32_t serialEprom=0;
+   // si protocole niceflors, rajouter le bouton dans le poids fort du numéro de série reçu
+   // dans le quartet haut du poids fort (BXXX XXXX XXXX XXXX)
+   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28); 
    do
    {
-     seriallu=(uint32_t)lit_eprom_int(0x100+index*4);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
+     serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
      index++;
-   } while ((serialin!=seriallu) & (index<11)); 
+   } while ((serialin!=serialEprom) & (index<11)); 
    if (index==11) index=0;
    return(index);
 }
@@ -1580,7 +1564,7 @@ void traitementCode()
     printf(" ok");
     indexCodeRecu[n]=indexcode;  // stocker index du code reçu de la télécommande  
     // coller le relais 1 seconde
-    // relay 1s on
+    // relay 1 second on
     rel1=0;
     __delay_ms(1000);
     rel1=1;
@@ -1588,7 +1572,7 @@ void traitementCode()
   printf("\r\n");
     
   // on demande d'enregistrer une nouvelle télécommande (appui long sur bouton)
-  // store a new remote as we push the button for a long time
+  // store a new remote as we press the button for a long time
   if (tpsvalidetelecom!=0)
   {
     tpsvalidetelecom=0;
@@ -1609,15 +1593,27 @@ void traitementCode()
       ecrit_eprom_int(0x100+(i*4),serial & 0xff); // poids faible
       ecrit_eprom_int(0x101+(i*4),serial>>8);
       ecrit_eprom_int(0x102+(i*4),serial>>16); 
-      ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
+      // si niceflor, stocker le bouton dans le quartet haut poids fort (libre), car le numéro de série de la télécommande est indépendant du bouton
+      // for nicelor, store the button in the high nibble byte (unused), as serial remote is apart from button.  
+      if (protocole==prot_niceflors) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));   // poids fort
+      else
+        ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
         
       printf("Télécommande ");Affiche4(serial);printf(" ajoutée\r\n");
+      for (i=0;i<10;i++)
+      {
+        __delay_ms(50);
+        led=0;
+        __delay_ms(50);
+        led=1;
+      }    
       n=num_telecommande_int(serial); // numéro de télécommande
       if (n>0) indexCodeRecu[n]=indexcode;  // index du code reçu de la télécommande n  
       __delay_ms(1000);
     }
     else 
-    {
+    { 
+      led=1;  // éteint la led  
       #if francais
         printf("Télécommande déja stockée\r\n");
       #endif
@@ -1748,7 +1744,6 @@ int main(void)
     // button short press
     if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
     {
-      printf("relache\r\n");
       tpsvalidetelecom=50000;     
     }  
         
@@ -1766,8 +1761,8 @@ int main(void)
      
     if (aff_enr) affiche_enregistrement();
      
-    // télégramme radio reçu de la télécommande, le décoder
-    // radio remote received, start decoding
+    // télégramme radio reçu de la télécommande depuis routine IOC, le décoder
+    // radio remote received from IOC routine, start decoding
     if (recu)
     {
       recu=LOW;

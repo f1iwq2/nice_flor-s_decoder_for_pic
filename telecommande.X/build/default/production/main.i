@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 152 "main.c"
+# 155 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 153 "main.c" 2
+# 156 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,8 +21018,8 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 154 "main.c" 2
-# 172 "main.c"
+# 157 "main.c" 2
+# 175 "main.c"
 const uint32_t silenceC=29690;
 const uint32_t debutbitC=2660;
 const uint32_t bit0C=640;
@@ -21069,7 +21069,7 @@ _Bool aff_enr=0;
 int NbreBits,NbreBitsMsg,nb;
 uint16_t valt0;
 uint16_t indexCodeRecu[10];
-# 229 "main.c"
+# 232 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21104,7 +21104,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
     if (debug==3)
     {
-      if (duree>300) printf("T=%u \n\r",duree);
+      if (duree>300) printf("T=%u\n\r",duree);
       goto fin;
     }
 
@@ -21143,7 +21143,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
     if (protocole==prot_came)
     {
-# 322 "main.c"
+
       if (telegram)
       {
         if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC)))
@@ -21374,7 +21374,7 @@ void menu()
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des télécommandes connues\r\n");
-# 577 "main.c"
+# 561 "main.c"
    i=lit_eprom_int(0);
    if (i==0xff)
    {
@@ -21606,7 +21606,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 820 "main.c"
+# 804 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -21803,7 +21803,7 @@ void UART_ExecuteCommand(char *command)
        if (debug==1) printf("Affiche les erreurs\r\n");
        if (debug==2) printf("Affiche silence\r\n");
        if (debug==3) printf("Affiche les durées reçues en direct\r\n");
-# 1024 "main.c"
+# 1008 "main.c"
     }
     else
     if(strcmp(command,"2") == 0)
@@ -21868,7 +21868,7 @@ void UART_ExecuteCommand(char *command)
             case 7: {printf("Erreur crc");break;}
             case 8: {printf("Erreur écriture EPROM ext");break;}
             default: printf(" %d",erreur);
-# 1102 "main.c"
+# 1086 "main.c"
         }
 
         printf(" Dernière erreur I2C=%d",erreurI2C);
@@ -21984,9 +21984,6 @@ void UART_ExecuteCommand(char *command)
          ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
          ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
 
-
-
-
          printf("T%d ",i+1);Affiche4(ep);
          printf("\r\n");
          i++;
@@ -21996,12 +21993,17 @@ void UART_ExecuteCommand(char *command)
     else
     if (strcmp(command,"K") == 0)
     {
-# 1240 "main.c"
+# 1221 "main.c"
     }
 
     else
     {
-      printf("Incorrect command.\r\n");
+
+        printf("Commande incorrecte.\r\n");
+
+
+
+
     }
 }
 
@@ -22302,15 +22304,18 @@ uint64_t encode_quartets()
 uint8_t num_telecommande_int(uint32_t serialin)
 {
    uint16_t index=0;
-   uint32_t seriallu=0;
+   uint32_t serialEprom=0;
+
+
+   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28);
    do
    {
-     seriallu=(uint32_t)lit_eprom_int(0x100+index*4);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
-     seriallu=seriallu+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
+     serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
+     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
      index++;
-   } while ((serialin!=seriallu) & (index<11));
+   } while ((serialin!=serialEprom) & (index<11));
    if (index==11) index=0;
    return(index);
 }
@@ -22364,15 +22369,27 @@ void traitementCode()
       ecrit_eprom_int(0x100+(i*4),serial & 0xff);
       ecrit_eprom_int(0x101+(i*4),serial>>8);
       ecrit_eprom_int(0x102+(i*4),serial>>16);
-      ecrit_eprom_int(0x103+(i*4),serial>>24);
+
+
+      if (protocole==prot_niceflors) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
+      else
+        ecrit_eprom_int(0x103+(i*4),serial>>24);
 
       printf("Télécommande ");Affiche4(serial);printf(" ajoutée\r\n");
+      for (i=0;i<10;i++)
+      {
+        _delay((unsigned long)((50)*(64000000U/4000.0)));
+        RC0=0;
+        _delay((unsigned long)((50)*(64000000U/4000.0)));
+        RC0=1;
+      }
       n=num_telecommande_int(serial);
       if (n>0) indexCodeRecu[n]=indexcode;
       _delay((unsigned long)((1000)*(64000000U/4000.0)));
     }
     else
     {
+      RC0=1;
 
         printf("Télécommande déja stockée\r\n");
 
@@ -22390,7 +22407,7 @@ int main(void)
   SYSTEM_Initialize();
   RA5=1;
   erreur=0;
-# 1652 "main.c"
+# 1653 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -22434,7 +22451,7 @@ int main(void)
   RC0=1;
 
   debug=0 ;
-# 1709 "main.c"
+# 1710 "main.c"
   TMR0_Start();
   INTCONbits.GIE=1;
 
@@ -22472,7 +22489,6 @@ int main(void)
 
     if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
     {
-      printf("relache\r\n");
       tpsvalidetelecom=50000;
     }
 

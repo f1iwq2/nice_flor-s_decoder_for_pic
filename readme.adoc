@@ -1,4 +1,4 @@
-nice flor-s / Came remote decoder for pic
+Nice flor-s / Came remote decoder for pic
 =========================================
 
 Programme pic pour décoder les protocoles des télécommandes Nice-florS et CAME.
@@ -12,8 +12,7 @@ Came utilise le protocole radio OOK, code fixe.
 NiceFlorS utilise le protocole radio ASK, code roulant.
 Cardin utilise le protocole radio FSK, code roulant.
 Utilisez le récepteur adéquat. Ne brancher qu'un seul récepteur sur la platine.
-RXB6 = ASK seulement
-RFM210LCF-A = ASK et OOK.
+RXB6, RFM210LCF-A = ASK et OOK.
 RXB15 = FSK
 
 Taper ? [enter] dans le terminal pour afficher le menu.
@@ -30,8 +29,7 @@ CAME use OOK radio protocol.
 NiceFlorS use ASK radio protocol, rolling code.
 Cardin use FSK radio protocol
 Use the correct receiver. Plug only a single receiver on the board.
-RXB6 = ASK only
-RFM210LCF-A = ASK and OOK.
+RXB6, RFM210LCF-A = ASK and OOK.
 RXB15 = FSK
 
 Type in ? [enter] to display the menu.
