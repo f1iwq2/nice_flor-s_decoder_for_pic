@@ -1,7 +1,7 @@
-Nice flor-s / Came remote decoder for pic
-=========================================
+Nice flor-s / Came / Somfy RTS remote decoders for pic
+======================================================
 
-Programme pic pour décoder les protocoles des télécommandes Nice-florS et CAME.
+Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME et Somfy RTS.
 Le projet est composé d'un PIC 18F26K80 à 16 MHz (x4 par pll = 64 MHz)
 L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprises.
 L'eprom externe de 128Ko contient le fichier codes.bin
@@ -17,7 +17,8 @@ RXB15 = FSK
 
 Taper ? [enter] dans le terminal pour afficher le menu.
 
-pic program to decode Nice-florS and CAME remote devices.
+-----
+pic program to decode Nice-florS and CAME and SOMFY RTS remote devices.
 This project is made with a PIC 18F26K80 at 16 MHz (x4 with pll = 64 MHz)
 Internal eprom contains the ki.bin file, and also learnt remotes.
 External 128Kb eprom contains codes.bin file. 
