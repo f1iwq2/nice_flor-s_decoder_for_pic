@@ -1,13 +1,13 @@
 /* 
-programme décodeur télécommande protocole NICE FLOR-S / CAME
-NICE FLOR-S protocol remote control decoder program
+programme décodeur télécommande protocole NICE FLOR-S / CAME / Somfy RTS
+NICE FLOR-S / CAME / Somfy protocol receiver remote control decoder program
 MPLAB X IDE v6.25
    
-processeur pic 18F26K80 
-mémoire programme 64Ko
-mémoire RAM 3648 octets
-mémoire EPROM int 1ko
-mémoire EPROM ext de 128Ko 24LC1026 I2C
+Processeur pic 18F26K80 
+Mémoire programme 64Ko
+Mémoire RAM 3648 octets
+Mémoire EPROM int 1ko : contient le fichier KI / contains KI file
+Mémoire EPROM ext de 128Ko 24LC1026 I2C / contient le fichier de codes nice flors-s / contains nice flor-s file codes
 
 Pour ne pas écraser l'eprom interne à chaque programmation du pic:
 To avoid overwriting the internal EPROM each time the pic is programmed:
@@ -30,39 +30,58 @@ Config dans MCC:
   
 UART :             230400    115200      9600
 SPBRGH1/SPBRG1 = 0x00/0x44  0x00/0x8A  0x06/0x82
-la vitesse de 230400 est preque ok pour le debug, en dessous, on mesure mal
+la vitesse de 230400 est presque ok pour le debug, en dessous, on mesure mal
 éviter d'utiliser l'UART pendant l'acquisition du signal radio même en 230400 bauds, ca fausse l'acquisition.
  
 A speed of 230400 is nearly ok for debugging ; below this speed, the measurement is poor.
 Avoid using the UART during radio signal acquisition, even at 230400 baud, as this will distort the acquisition.
  
-EPROM 24LC1026 = 2x64Ko:  
-Adresse I2C 1010 A2 A1 B RW  = 1010 0000 = 0xA0  
+Bus I2C à 400 kHz
+EPROM 24LC1026 = 2x64Ko: Adresse I2C 1010 A2 A1 B RW  = 1010 0000 = 0xA0  
 
-le contenu de l'eprom des codes nice flor-s est ici:
+Le contenu de l'eprom des codes nice flor-s est ici:
 the eprom-codes nice flor-s is here:
 https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/codes.h
+ou dans ce projet : codes.bin
 
 En eprom interne / in internal eprom
 un bloc de 256 octets : nice_flor_s_table_ki[256]
-
-Pour lire les 128ko de l'eprom ext (quand on cherche le code de décodage), il faut jusque 7s , trop long pour un décodage.
+ki.bin
+ 
+Pour Nice flors: pour lire les 128ko de l'eprom ext (quand on cherche le code de décodage), il faut jusque 7s , trop long pour un décodage.
 donc on utilise l'ancien code transmis (par télécommande) pour "prévoir" le suivant qui est incrémenté de 1, qui doit
 de trouver dans les 128 octets suivants.
-Reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
+For nice flors: reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
 So we use the previous transmitted code (per remote) to "predict" the next one, which is incremented by 1, 
 and have to be inside the next 128 ones.
 
+Plan d'adressage de l'eeprom interne:
+Internal EEPROM mapping:
+ 0x000 - 0x0ff : codes KI de niceflor-s / KI codes niceflor-s
+ 0x100       : numéro série télécommande 1 (32 bits) / serial #, remote 1 / low to high bytes
+ 0x104       : télécommande 2 : serial #, remote 2
+ 0x108       : 3
+ 0x10C       : 4
+ 0x110       : 5
+ 0x104       : 6
+ 0x108       : 7
+ 0x10C       : 8
+ 0x110       : 9
+ 0x114       ; 10
+ .. jusque 10 télécommandes / up to 10 remotes
+ 
 Récepteurs testés / Tested receivers :
 RFM210LCF : modulations ASK et OOK / both ASK and OOK
-RBX6 : modulation ASK uniquement / ASK only
+RBX6 : modulation ASK et OOK uniquement / ASK and OOK
  
 ----------------------------------------------------------
-protocole (ASK) Nice-flors
+protocole (radio ASK) Nice-flors : protocole assez compliqué qui nécessite une table de 
+décodage de 65535 mots, et une table de 256 octets.
+Quite complicated protocol, requires a 65535 words decoding table and a 256 bytes table.
 fonctionne avec les récepteurs RXB6 / works with receivers : RXB6 & RFM210LCF
 https://github.com/Jev1337/NiceFlor-Encoder/tree/main
 
-  code roulant de 52 bits
+  code roulant de 52 bits / 52 bits rolling code
   1 bit silence de 18500 µs (37 x 500µs)
   2 bits début de 1500 µs  (3 x 500 µs)
 
@@ -83,7 +102,6 @@ remote transmits 52 bits / 7 bytes raw decoded (b0-b6)
 B2-B3 est le code courant envoyé par la télécommande. Ce code se trouve dans l'eprom 128Ko. Son index sert de clé de décodage.
 B2-B3 is the current code sent by the remote device. This code is within the 128kb eprom. The code index is the decoding key.
 
-télécommande clé
 7 octets décodés bruts / numéro de série / bouton / index code / répétition
 (b0-b6)                  télécommande
 7 raw decoded bytes    / serial remote  / button / index code / repeat
@@ -91,26 +109,6 @@ ok  1/db/52/cc/4c/11/fe/ Serial=0295C827,Bouton=1,Code=1946,repete=3
 ok  1/c8/38/e7/cf/92/7d/ Serial=0295C827,Bouton=1,Code=1947,repete=2
 ok  2/c3/61/62/14/49/a6/ Serial=0295C827,Bouton=2,Code=1948,repete=1
 ok  2/83/61/62/14/49/a6/ Serial=0295C827,Bouton=2,Code=1948,repete=5
- 
-télécommande sans clé
-ok  1/cc/e3/5d/1b/e6/da/ Serial=00000000 027588B4,Bouton=1,Code=680,repete=2
- * 
- *  version 27/05 à 14h30
-
- Plan d'adressage de l'eeprom interne:
- Internal EEPROM mapping:
- 0x000 - 0x0ff : codes KI de niceflor-s / KI codes niceflor-s
- 0x100       : numéro série télécommande 1 (32 bits) / serial #, remote 1 / low to high bytes
- 0x104       : télécommande 2 : serial #, remote 2
- 0x108       : 3
- 0x10C       : 4
- 0x110       : 5
- 0x104       : 6
- 0x108       : 7
- 0x10C       : 8
- 0x110       : 9
- 0x114       ; 10
- .. jusque 10 télécommandes / up to 10 remotes
 
 Exemples d'erreurs / Error examples :
 EZ41     : bit start ou stop mal placé, inattendu en position 41
@@ -129,7 +127,7 @@ NumSer=0295C827,Bouton=1 T1 ok  <-- télécommande 1 reconnue car enregistrée / re
 NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 inconnue reçue / remote 0 unknown
 
 ---------------------------------------------------
-Pour le protocole (OOK) CARDIN S449 :
+Protocole (radio OOK) CARDIN S449 :
 ne fonctionne pas avec les récepteurs RXB6 RFM210LCF/ don't work with RXB6 RFM210LCF receivers 
 car cardin S449 utilise le protocole FSK / because cardin S449 uses the FSK protocol
 Récepteurs FSK : HM-R-433       (5?) Sensibilité : -109 dBm
@@ -141,14 +139,19 @@ https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
 https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
  
 ---------------------------------------------------
-pour le protocole CAME (OOK) protocol: 
+Protocole CAME (radio OOK) protocol: 
 fonctionne avec les récepteurs / work with receivers : RXB6 & RFM210LCF-A 
 Code fixe 26 bits / Static 26 bits code
 https://github.com/jehy/arduino-came-reader
 https://github.com/psa-jforestier/rtl_433_tests/tree/master/tests/Came/TOP432
 https://github.com/merbanan/rtl_433/issues/1452
 
+-------------------------------------------------
+Protocole Somfy RTS
+https://github.com/Legion2/Somfy_Remote_Lib
+https://pushstack.wordpress.com/somfy-rts-protocol/
 
+ 
  
  */
 
@@ -169,20 +172,21 @@ https://github.com/merbanan/rtl_433/issues/1452
 #define LINEFEED_CHAR         ((uint8_t)'\n')
 #define CARRIAGERETURN_CHAR   ((uint8_t)'\r')
 #define EpromI2C 0xA0 >>1     // BO en bit 1 (avant décalage) pour le bloc 0/1
+const uint8_t maxtel=10;
 
 // CAME éléments radio / radio items
 // modulation OOK (tout ou rien AM)
 const uint32_t silenceC=29690;  // 14845 µs silent
-const uint32_t debutbitC=2660;  //2560 // 1280 µs start
+const uint32_t debutbitC=2660;  // 2560 // 1280 µs start
 const uint32_t bit0C=640;       // 320 µs  
 const uint32_t bit1C=1280;      // 640 µs
 const uint32_t toleranceC=170;
 
-// CARDIN 
-// modulation OOK
-const uint32_t silenceD=12200;   // 6152 µs silence
-const uint32_t bit0D=1464;   // 732 µs     24 bits
-const uint32_t bit1D=2824;   // 1412 µs silence
+// CARDIN pas encore traité, nécessite un récepteur FSK
+// modulation FSK
+const uint32_t silenceD=12200;  // 6152 µs silence
+const uint32_t bit0D=1464;      // 732 µs     24 bits
+const uint32_t bit1D=2824;      // 1412 µs silence
 const uint32_t toleranceD=190;
 
 // NiceFLors éléments radio / radio items
@@ -193,13 +197,21 @@ const uint32_t bit0=958;        // 500 µs
 const uint32_t bit1=1962;       // 1000 µs
 const uint32_t tolerance=280;
 
+// Somfy RTS
+const uint32_t silenceS=5084;   // 2416 µs silent
+const uint32_t debutbitS=9600;  // 4550 µs start
+const uint32_t bit0S=1317;      // 604 µs
+const uint32_t bit1S=2614;      // 1208 µs 
+const uint32_t toleranceS=220;
+
+
 // protocoles
 const uint8_t  prot_niceflors=1;
 const uint8_t  prot_came=2;
 const uint8_t  prot_cardin=3;
+const uint8_t  prot_somfy=4;
 
-
-uint8_t b0,b1,b2,b3,b4,b5,b6;  // codes bruts de la télécommande niceflors décodés / raw remote niceflors codes
+uint8_t b0,b1,b2,b3,b4,b5,b6;  // codes bruts de la télécommande niceflors et somfy / raw remote niceflors and somfy codes
 char          chaine[50];
 uint8_t       i2cdata[130];
 uint8_t       debug=0,protocole;
@@ -211,14 +223,14 @@ uint8_t       mesure_error[150];
 uint8_t       compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
 uint8_t       rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
 uint16_t      compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
-uint64_t      code,tpsvalidetelecom;
-uint32_t      duree=0,i,trame,serial,tpsbouton;
+uint64_t      code,tpsvalidetelecom,serial;
+uint32_t      duree=0,anc_duree,i,trame,tpsbouton;
 static uint8_t command[MAX_COMMAND_LEN];
 static uint8_t index=0;
 static uint8_t readMessage;
 bool          recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-bool          aff_enr=LOW;
-int           NbreBits,NbreBitsMsg,nb;
+bool          aff_enr=LOW,rx,SilenceSomfy;
+uint16_t      NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t      valt0;
 uint16_t      indexCodeRecu[10];  // codes recus des télécommandes 1 à 10
 
@@ -244,8 +256,17 @@ void fin_came()
     bitDebut=LOW;
     tramebits=LOW;
     bitSilence=LOW;
-    // printf("Fin recu CAME\r\n");
     recu=HIGH;
+}
+
+void fin_somfy()
+{
+  nb=NbreBitsMsg;
+  telegram=LOW;
+  bitDebut=LOW;
+  tramebits=LOW;
+  bitSilence=LOW;
+  recu=HIGH;  
 }
   
 // https://www.youtube.com/watch?v=dy9GlerX_NE
@@ -255,7 +276,11 @@ void __interrupt(high_priority) ISR_high()
   // interruption IOC rx récepteur radio
   if(INTCONbits.RBIE==1 && INTCONbits.RBIF==1)
   {        
-    PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
+    rx=!RB4; //PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
+    //if (RB4==0) printf("0"); else printf("1");
+    //goto fin;
+    
+    anc_duree=duree;
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
     TMR0H=0;     // raz timer pour mesure crénau suivant
     TMR0L=0;
@@ -263,7 +288,7 @@ void __interrupt(high_priority) ISR_high()
     // ------traitement signal télécommande -----
     if (debug==3)  // test des transitions du signal brut debugage de bas niveau - test for raw transitions signal. low level debugging
     {
-      if (duree>300) printf("T=%u\n\r",duree);
+      if (duree>300) {printf("%d",rx);printf(" T=%u\n\r",duree);}
       goto fin;
     }
        
@@ -285,8 +310,7 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     }
    
-    // silence - came   
-    //if ((!telegram) && ((duree>(29000-230)) && (duree<(29000+230))))  
+    // silence - came     
     if ((!telegram) && ((duree>(silenceC-200)) && (duree<(silenceC+200))))  
     {
       NbreBits=1;
@@ -299,7 +323,81 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     }
     
-    // ----------------------------------------------------------------------------
+    // Somy : x bits silence et un bit start
+    // le bit de start est précédé de n bits silences, on contrôle seulement que le précédent est un silence
+    if ((anc_duree>(silenceS-toleranceS)) && (anc_duree<(silenceS+toleranceS)) && rx && (!telegram) && (duree>(debutbitS-toleranceS)) && (duree<(debutbitS+toleranceS)) )   
+    {
+      NbreBits=1;
+      SilenceSomfy=HIGH;
+      protocole=prot_somfy;
+      if (debug==2) printf("Somfy=%u\r\n",duree);
+      mesure_bits[NbreBits]=duree;
+      NbreBitsMsg=0;
+      Nb0=0;   // nombre de demi bits 0 successifs
+      telegram=HIGH; 
+      code=0;
+      goto fin;
+    }
+
+    // SOMFY----------------------------------------------------------------------------
+    // le codage radio du protocole somfy est manchester: changement sur fronts
+    // somfy radio coding is manchester : only check edges
+    if ((protocole==prot_somfy) & telegram)
+    {
+      //printf(" %d",NbreBits);
+      if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
+       
+      // cas bit 1 -> bit 0  ou   bit 0 -> bit 1
+      if ((duree>(bit1S-toleranceS)) && (duree<(bit1S+toleranceS)))
+      {
+        Nb0=0;  
+        if (rx)
+        {
+          //printf("0");
+          NbreBitsMsg++;           
+          code=code*2;  
+        }
+        else
+        {
+          //printf("1");
+          NbreBitsMsg++;           
+          code=code*2;    // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+          code=code | 1;  // bit 0 à 1 c'est un bit à 1
+        }
+        if (NbreBitsMsg==56) fin_somfy();
+        goto fin;
+      }
+      
+      // cas bit 0 -> bit 0  ou   bit 1 -> bit 1
+      if ((duree>(bit0S-toleranceS)) && (duree<(bit0S+toleranceS)))
+      {
+        Nb0++;   // incrémenter nombre de bits à 0 consécutifs
+        if (Nb0==1) goto fin;   // si c'est le 1er ne rien faire
+        Nb0=0;
+        if (!rx) 
+        {
+          //printf("B1");
+          NbreBitsMsg++;           
+          code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+          code=code | 1;  // bit 0 à 1 c'est un bit à 1
+        }
+        else
+        { 
+          //printf("B0");
+          NbreBitsMsg++;           
+          code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+        }   
+        if (NbreBitsMsg==56) fin_somfy();
+        goto fin;
+      }
+      // erreur
+      if (debug==1) printf("E");
+      raz_bits();
+      goto fin;
+    }  
+         
+    
+    // CAME ----------------------------------------------------------------------------
     if (protocole==prot_came)
     {   
       //printf("%d\r\n",duree);
@@ -574,7 +672,7 @@ void menu()
       printf("***Erreur l'eprom ne contient pas le bon fichier***\r\n");  
       #endif  
       #if english
-      printf("***Error internal eprom is wrong***\r\n");  
+      printf("***Error internal eprom has wrong values***\r\n");  
       #endif  
    }
    
@@ -913,11 +1011,10 @@ void affiche_enregistrement()
      if (nb!=108) printf(" différent de 108 ");
      printf(" Protocole NiceFlorS");
   }
-  if (protocole==prot_came)
-  {
-      printf(" Protocole Came");
-  }
-     printf("\r\n");
+  if (protocole==prot_came) printf(" Protocole Came");
+  if (protocole==prot_somfy) printf(" Protocole Somfy");
+  
+  printf("\r\n");
   for (y=1;y<=16;y++)
   {
     for (x=1;x<=7;x++)
@@ -928,6 +1025,7 @@ void affiche_enregistrement()
         printf("%3d",i);
         duree=mesure_bits[i];
         printf(" %5u",duree);   
+  
         if (protocole==prot_niceflors)
         {    
           if ((duree>(silence-1000)) && (duree<(silence+1000)))     printf(" Silence   ");
@@ -1447,10 +1545,98 @@ uint16_t trouve_code_algo(uint16_t c) // trouver l'adresse de encode dans l'epro
   return (i); 
 }
 
+// inverse poids faibles et fort
+uint16_t inverse16(int16_t mot)
+{
+  uint16_t r;
+  r=mot >> 8;
+  r=r | ((mot & 0xff) << 8) ;
+  return r;
+}
 
-// décode les octets B0 à B6, extrait le numéro de série, bouton, code et répétition
-// decode B0-B6 bytes, extract serial, button, code and repeat
-void decode_b06()
+uint32_t inverse24(int32_t mot)
+{
+  uint32_t r;
+  r=mot >> 16;  // poids fort vers faible
+  r=r | (mot & 0xff00);  // milieu inchangé
+  r=r | ((mot & 0xffL) << 16); // faible vers fort
+  return r;
+}
+
+// décode somfy. renvoie HIGH si le chk est ok
+bool decode_somfy()
+{
+  uint8_t chk;    
+  
+  if (debug==1) {Affiche(code);printf("\r\n");}
+  // mettre le code dans 7 octets
+  // put the code in 7 bytes
+  b0=(code >> 48) & 0xff;
+  b1=(code >> 40) & 0xff;
+  b2=(code >> 32) & 0xff;
+  b3=(code >> 24) & 0xff;
+  b4=(code >> 16) & 0xff;
+  b5=(code >> 8) & 0xff;
+  b6=code & 0xff;
+
+  // décodage xor - xor décoding
+  b6=b6^b5;
+  b5=b5^b4;
+  b4=b4^b3;
+  b3=b3^b2;
+  b2=b2^b1;
+  b1=b1^b0;
+
+  if (debug==1)
+  {
+    printf("Decodage:\r\n");
+    printf("b0=%x\r\n",b0);
+    printf("b1=%x\r\n",b1);
+    printf("b2=%x\r\n",b2);
+    printf("b3=%x\r\n",b3);  
+    printf("b4=%x\r\n",b4);  
+    printf("b5=%x\r\n",b5);
+    printf("b6=%x\r\n",b6);
+  }
+
+  // checksum, doit être =0 / must be =0
+  chk=(b0)^(b0>>4);
+  chk=chk^b1^(b1>>4);
+  chk=chk^b2^(b2>>4);
+  chk=chk^b3^(b3>>4);
+  chk=chk^b4^(b4>>4);
+  chk=chk^b5^(b5>>4);
+  chk=chk^b6^(b6>>4);
+  chk=chk & 0x0f;
+  
+  bouton=(b1>>4) & 0x0f;  // non significatif
+  indexcode=(b2<<8)+b3;  // rolling code 
+  serial=(uint64_t)b4<<16;
+  serial=serial | ((uint64_t)b5<<8);
+  serial=serial+(uint64_t)b6;
+  
+  if (debug==1)
+  {
+    printf("Chk calc=%x",chk);
+    if (chk!=0) printf(" Erreur");
+    printf("\r\n");  
+  
+    printf("Entete=0x%x",b0);  // 0x0a 
+    if ((b0 & 0xf0)!=0xa0) printf(" Erreur\r\n");
+    printf("\r\n");
+    printf("Compteur=0x%x\r\n",b0 & 0x0f);  
+    printf("Bouton=%x\r\n",bouton);  
+    printf("Chk=%x\r\n",b1 & 0x0f);   
+    printf("Code=0x%x\r\n",indexcode);
+    printf("Serial=0x");Affiche4(serial);printf("\r\n");
+  } 
+  
+  return (chk==0);
+}
+
+// décode les octets B0 à B6 nice-flors, extrait le numéro de série, bouton, code et répétition
+// decode B0-B6 nice-flors bytes, extract serial, button, code and repeat
+void decode_b06_nice()
 {
   uint16_t encode,encodeEprom;
   uint8_t ki,snbuf3,snbuf2,snbuf1,snbuf0;
@@ -1527,21 +1713,21 @@ uint64_t encode_quartets()    // type 64 bits
 // if not found, sends 0
 uint8_t num_telecommande_int(uint32_t serialin)
 {
-   uint16_t index=0;
-   uint32_t serialEprom=0;
-   // si protocole niceflors, rajouter le bouton dans le poids fort du numéro de série reçu
-   // dans le quartet haut du poids fort (BXXX XXXX XXXX XXXX)
-   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28); 
-   do
-   {
-     serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
-     index++;
-   } while ((serialin!=serialEprom) & (index<11)); 
-   if (index==11) index=0;
-   return(index);
+  uint16_t index=0;
+  uint32_t serialEprom=0;
+  // si protocole niceflors, rajouter le bouton dans le poids fort du numéro de série reçu
+  // dans le quartet haut du poids fort (BXXX XXXX XXXX XXXX)
+  if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28); 
+  do
+  {
+    serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
+    index++;
+  } while ((serialin!=serialEprom) & (index<=maxtel)); 
+  if (index>=maxtel+1) index=0;
+  return(index);
 }
 
 // reçu un code valide de télécommande. Vérifier s'il est reconnu,
@@ -1557,12 +1743,23 @@ void traitementCode()
     
   if (n!=0)
   {
-    // normalement il faudrait contrôler que l'index du code de la télécommande
-    // est plus grand que l'ancien
-    // we should check if the new index code is greater than the previous
-    // indexcode > previous indexcode , so: indexcoderecu[n]<indexcode
+    if (protocole==prot_niceflors)
+    {
+      // normalement il faudrait contrôler que l'index du code de la télécommande
+      // est plus grand que l'ancien
+      // we should check if the new index code is greater than the previous one
+      // indexcode > previous indexcode , so: indexcoderecu[n]<indexcode
+      indexCodeRecu[n]=indexcode;  // stocker index du code reçu de la télécommande  
+    }
+    if (protocole==prot_somfy)
+    {
+      // normalement il faudrait contrôler que le indexcode de la télécommande
+      // est plus grand que l'ancien
+      // we should check if the new indexcode is greater than the previous one
+      // encode > previous indexcode , so: indexcoderecu[n]<indexcode
+      indexCodeRecu[n]=indexcode;  // stocker index du code reçu de la télécommande  
+    }
     printf(" ok");
-    indexCodeRecu[n]=indexcode;  // stocker index du code reçu de la télécommande  
     // coller le relais 1 seconde
     // relay 1 second on
     rel1=0;
@@ -1582,12 +1779,12 @@ void traitementCode()
       i=0;
       do
       {
-         ep=(uint32_t)lit_eprom_int(0x100+(i*4));
-         ep=ep+((uint32_t)lit_eprom_int(0x101+(i*4)) << 8);
-         ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
-         ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
-         i++;           
-      } while ((ep!=0xffffffff) & (i<10)); 
+        ep=(uint32_t)lit_eprom_int(0x100+(i*4));
+        ep=ep+((uint32_t)lit_eprom_int(0x101+(i*4)) << 8);
+        ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
+        ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
+        i++;           
+      } while ((ep!=0xffffffff) & (i<maxtel)); 
       i--;
       if (i>=11) {printf("Plus de place\r\n");return;}
       ecrit_eprom_int(0x100+(i*4),serial & 0xff); // poids faible
@@ -1693,25 +1890,10 @@ int main(void)
   led=1;
    
   debug=0 ; // utiliser le mode debug utilise l'UART, ce qui prend trop de temps pendant le traitement des fronts de l'IOC
-    
-    /*
-    i=trouve_code(0xcd67);
-    printf("le code cd67 a été trouvé en %x",i);printf("\r\n");
-    */
-   
-    /*
-    code=0xE305239A7FA15;
-    Affiche(code);printf(" ");
-    decode_telecommande_b0b6();printf(" ");
-    decode_b06();
-    */
-    
-        
+         
   TMR0_Start();   
   INTCONbits.GIE=1;      // valide les irq
     
-
-   
   while(1)
   {
     if (!RB2) // bouton appuyé
@@ -1777,16 +1959,24 @@ int main(void)
         decode_telecommande_b0b6();   // décode le code en b0 b6
         if (code_valide())            // si B0 B6 sont valides - if b0 b6 are valid
         {        
-          decode_b06();               // décode B0 B6 et extrait le numéro de série, bouton etc
+          decode_b06_nice();               // décode B0 B6 et extrait le numéro de série, bouton etc
           traitementCode();           // faire le traitement - compute the code
         }
       }
       if (protocole==prot_came)
       {
         serial=code;
-        printf("Came      ");Affiche4(code);
+        printf("Came      Serial=");Affiche4(code);
         traitementCode();
       }
+      if (protocole==prot_somfy)
+      {              
+        if (decode_somfy()==HIGH)
+        {
+          printf("Somfy     Serial=");Affiche4(serial);
+          traitementCode();  
+        }
+      }   
            
       NbreBits=0;
       __delay_ms(1000);
