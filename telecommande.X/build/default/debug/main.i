@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 159 "main.c"
+# 172 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 160 "main.c" 2
+# 173 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,8 +21018,8 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 161 "main.c" 2
-# 179 "main.c"
+# 174 "main.c" 2
+# 192 "main.c"
 const uint32_t silenceC=29690;
 const uint32_t debutbitC=2660;
 const uint32_t bit0C=640;
@@ -21073,11 +21073,11 @@ static uint8_t command[(8U)];
 static uint8_t index=0;
 static uint8_t readMessage;
 _Bool recu=0,bitDebut=0,bitSilence=0,bitPrec=0,AncBp,telegram=0,tramebits=0;
-_Bool aff_enr=0,rx,SilenceSomfy;
+_Bool aff_enr=0,rx,SilenceSomfy,consecutif;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t valt0;
-uint16_t indexCodeRecu[10];
-# 244 "main.c"
+uint16_t indexCodeRecu[20 +1];
+# 257 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21088,12 +21088,12 @@ void raz_bits()
 
 void fin_came()
 {
-    nb=NbreBits;
-    telegram=0;
-    bitDebut=0;
-    tramebits=0;
-    bitSilence=0;
-    recu=1;
+  nb=NbreBits;
+  telegram=0;
+  bitDebut=0;
+  tramebits=0;
+  bitSilence=0;
+  recu=1;
 }
 
 void fin_somfy()
@@ -21125,6 +21125,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
     if (debug==3)
     {
+
+
       if (duree>300) {printf("%d",rx);printf(" T=%u\n\r",duree);}
       goto fin;
     }
@@ -21138,7 +21140,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       NbreBits=1;
       bitDebut=1;
       dureeS=duree;
-
       if (debug==2) printf("NiceFS=%u\r\n",duree);
       telegram=1;
       protocole=prot_niceflors;
@@ -21162,6 +21163,10 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
+
+
+
+
     if ((anc_duree>(silenceS-toleranceS)) && (anc_duree<(silenceS+toleranceS)) && rx && (!telegram) && (duree>(debutbitS-toleranceS)) && (duree<(debutbitS+toleranceS)) )
     {
       NbreBits=1;
@@ -21178,6 +21183,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
+
     if ((protocole==prot_somfy) & telegram)
     {
 
@@ -21191,13 +21197,13 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         {
 
           NbreBitsMsg++;
-          code=code * 2;
+          code=code*2;
         }
         else
         {
 
           NbreBitsMsg++;
-          code=code * 2;
+          code=code*2;
           code=code | 1;
         }
         if (NbreBitsMsg==56) fin_somfy();
@@ -21223,7 +21229,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           NbreBitsMsg++;
           code=code * 2;
         }
-
         if (NbreBitsMsg==56) fin_somfy();
         goto fin;
       }
@@ -21232,7 +21237,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       raz_bits();
       goto fin;
     }
-
 
 
     if (protocole==prot_came)
@@ -21468,7 +21472,7 @@ void menu()
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des télécommandes connues\r\n");
-# 659 "main.c"
+# 676 "main.c"
    i=lit_eprom_int(0);
    if (i==0xff)
    {
@@ -21700,7 +21704,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 902 "main.c"
+# 919 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -21894,10 +21898,16 @@ void UART_ExecuteCommand(char *command)
        printf("Debug %d ",debug);
 
        if (debug==0) printf("pas de debug\r\n");
-       if (debug==1) printf("Affiche les erreurs\r\n");
+       if (debug==1) printf("Affichages supplémentaires et les erreurs\r\n");
        if (debug==2) printf("Affiche silence\r\n");
        if (debug==3) printf("Affiche les durées reçues en direct\r\n");
-# 1106 "main.c"
+
+
+
+
+
+
+
     }
     else
     if(strcmp(command,"2") == 0)
@@ -21949,29 +21959,29 @@ void UART_ExecuteCommand(char *command)
 
 
 
+
+
       switch (erreur)
-        {
-
-            case 0: {printf("Aucune");break;}
-            case 1: {printf("Timeout trame %d",trame);break;}
-            case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
-            case 3: {printf("Erreur complémentation numéro paquet");break;}
-            case 4: {printf("Timeout sur numéro de paquet");break;}
-            case 5: {printf("Timeout sur numéro de paquet complémenté");break;}
-            case 6: {printf("Timeout données");break;}
-            case 7: {printf("Erreur crc");break;}
-            case 8: {printf("Erreur écriture EPROM ext");break;}
-            default: printf(" %d",erreur);
-# 1184 "main.c"
-        }
-
-        printf(" Dernière erreur I2C=%d",erreurI2C);
+      {
+        case 0: {printf("Aucune");break;}
+        case 1: {printf("Timeout trame %d",trame);break;}
+        case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
+        case 3: {printf("Erreur complémentation numéro paquet");break;}
+        case 4: {printf("Timeout sur numéro de paquet");break;}
+        case 5: {printf("Timeout sur numéro de paquet complémenté");break;}
+        case 6: {printf("Timeout données");break;}
+        case 7: {printf("Erreur crc");break;}
+        case 8: {printf("Erreur écriture EPROM ext");break;}
+        default: printf(" %d",erreur);
+      }
+# 1206 "main.c"
+      printf(" Dernière erreur I2C=%d",erreurI2C);
 
 
 
 
-        printf("\r\n");
-        INTCONbits.GIE=1;
+      printf("\r\n");
+      INTCONbits.GIE=1;
     }
 
     else
@@ -22029,7 +22039,12 @@ void UART_ExecuteCommand(char *command)
       uint8_t chk=0;
       uint32_t j;
       INTCONbits.GIE=0;
-      printf("Wait 10s..\r\n");
+
+      printf("Patientez 10s..\r\n");
+
+
+
+
       i=0;
       while (i<0x1ffff)
       {
@@ -22078,16 +22093,21 @@ void UART_ExecuteCommand(char *command)
          ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
          ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
 
-         printf("T%d ",i+1);Affiche4(ep);
+         printf("Télécommande %2d ",i+1);
+
+
+
+
+         Affiche4(ep);
          printf("\r\n");
          i++;
-      } while (i<10);
+      } while (i<20);
       i--;
     }
     else
     if (strcmp(command,"K") == 0)
     {
-# 1319 "main.c"
+# 1349 "main.c"
     }
 
     else
@@ -22110,10 +22130,7 @@ void UART_ProcessCommand(void)
     if ( (readMessage!=((uint8_t)'\n')) & (readMessage != ((uint8_t)'\r')) )
     {
       command[index++]=readMessage;
-      if (index>(8U))
-      {
-        (index)=0;
-      }
+      if (index>(8U)) index=0;
     }
     if (readMessage==((uint8_t)'\r'))
     {
@@ -22126,9 +22143,9 @@ void UART_ProcessCommand(void)
 
 void UART1_WriteString(const char *message)
 {
-  for(int i=0;i<(int)strlen(message); i++)
+  for (int i=0;i<(int)strlen(message); i++)
   {
-    while(!UART1.IsTxReady())
+    while (!UART1.IsTxReady())
     {
     };
     (void) UART1.Write(message[i]);
@@ -22196,7 +22213,7 @@ void Affiche(uint64_t codex)
 }
 
 
-_Bool code_valide()
+_Bool code_b0b6_nice_valide()
 {
   return !((b1==0) | (b1==255) | (b0==0) | (b0==0xf));
 }
@@ -22204,7 +22221,7 @@ _Bool code_valide()
 
 
 
-void decode_telecommande_b0b6()
+_Bool decode_nice_b0b6()
 {
   uint64_t decoded;
   int64_t pr;
@@ -22240,7 +22257,7 @@ void decode_telecommande_b0b6()
   pr=decoded;
   b6=b6 | ((pr >>4) & 0x0F);
 
-  _Bool ok=code_valide();
+  _Bool ok=code_b0b6_nice_valide();
 
   if (debug>=1)
   {
@@ -22251,6 +22268,7 @@ void decode_telecommande_b0b6()
     printf("%x",b6);printf("/ ");
     if (!ok) printf("\r\n");
   }
+  return (ok);
 }
 
 
@@ -22341,6 +22359,8 @@ _Bool decode_somfy()
   uint8_t chk;
 
   if (debug==1) {Affiche(code);printf("\r\n");}
+
+
   b0=(code >> 48) & 0xff;
   b1=(code >> 40) & 0xff;
   b2=(code >> 32) & 0xff;
@@ -22380,7 +22400,7 @@ _Bool decode_somfy()
   chk=chk & 0x0f;
 
   bouton=(b1>>4) & 0x0f;
-  encode=(b2<<8)+b3;
+  indexcode=(b2<<8)+b3;
   serial=(uint64_t)b4<<16;
   serial=serial | ((uint64_t)b5<<8);
   serial=serial+(uint64_t)b6;
@@ -22397,7 +22417,7 @@ _Bool decode_somfy()
     printf("Compteur=0x%x\r\n",b0 & 0x0f);
     printf("Bouton=%x\r\n",bouton);
     printf("Chk=%x\r\n",b1 & 0x0f);
-    printf("Code=0x%x\r\n",encode);
+    printf("Code=0x%x\r\n",indexcode);
     printf("Serial=0x");Affiche4(serial);printf("\r\n");
   }
 
@@ -22406,7 +22426,7 @@ _Bool decode_somfy()
 
 
 
-void decode_b06()
+void decode_b06_nice()
 {
   uint16_t encode,encodeEprom;
   uint8_t ki,snbuf3,snbuf2,snbuf1,snbuf0;
@@ -22483,21 +22503,21 @@ uint64_t encode_quartets()
 
 uint8_t num_telecommande_int(uint32_t serialin)
 {
-   uint16_t index=0;
-   uint32_t serialEprom=0;
+  uint16_t index=0;
+  uint32_t serialEprom=0;
 
 
-   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28);
-   do
-   {
-     serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
-     serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
-     index++;
-   } while ((serialin!=serialEprom) & (index<11));
-   if (index==11) index=0;
-   return(index);
+  if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28);
+  do
+  {
+    serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x101+index*4) << 8);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x102+index*4) << 16);
+    serialEprom=serialEprom+((uint32_t)lit_eprom_int(0x103+index*4) << 24);
+    index++;
+  } while ((serialin!=serialEprom) & (index<=20));
+  if (index>=20 +1) index=0;
+  return(index);
 }
 
 
@@ -22513,28 +22533,34 @@ void traitementCode()
 
   if (n!=0)
   {
-    if (protocole==prot_niceflors)
+    consecutif=1;
+    if ((protocole==prot_niceflors) || (protocole==prot_somfy))
     {
 
 
 
-
+      consecutif=(indexCodeRecu[n]<indexcode);
       indexCodeRecu[n]=indexcode;
     }
-    if (protocole==prot_somfy)
+
+    if (consecutif)
+    {
+      printf(" ok");
+
+
+      RA5=0;
+      _delay((unsigned long)((1000)*(64000000U/4000.0)));
+      RA5=1;
+    }
+    else
     {
 
+      printf(" Code non consécutif");
 
 
 
-      indexCodeRecu[n]=encode;
+
     }
-    printf(" ok");
-
-
-    RA5=0;
-    _delay((unsigned long)((1000)*(64000000U/4000.0)));
-    RA5=1;
   }
   printf("\r\n");
 
@@ -22554,9 +22580,18 @@ void traitementCode()
         ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
         ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
         i++;
-      } while ((ep!=0xffffffff) & (i<10));
+      } while ((ep!=0xffffffff) & (i<20));
       i--;
-      if (i>=11) {printf("Plus de place\r\n");return;}
+      if (i>=20 +1)
+      {
+
+        printf("Plus de place\r\n");
+
+
+
+
+        return;
+      }
       ecrit_eprom_int(0x100+(i*4),serial & 0xff);
       ecrit_eprom_int(0x101+(i*4),serial>>8);
       ecrit_eprom_int(0x102+(i*4),serial>>16);
@@ -22598,7 +22633,7 @@ int main(void)
   SYSTEM_Initialize();
   RA5=1;
   erreur=0;
-# 1848 "main.c"
+# 1893 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -22629,11 +22664,11 @@ int main(void)
         | (1 << 0x7);
 
 
-  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME\r\n");
+  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME / Somfy RTS\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
 
 
-  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME\r\n");
+  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME / Somfy RTS\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
 
 
@@ -22642,11 +22677,9 @@ int main(void)
   RC0=1;
 
   debug=0 ;
-# 1905 "main.c"
+
   TMR0_Start();
   INTCONbits.GIE=1;
-
-
 
   while(1)
   {
@@ -22710,10 +22743,10 @@ int main(void)
       if (protocole==prot_niceflors)
       {
         if (debug>=1) {Affiche(code);printf(" ");}
-        decode_telecommande_b0b6();
-        if (code_valide())
+        if (decode_nice_b0b6())
+
         {
-          decode_b06();
+          decode_b06_nice();
           traitementCode();
         }
       }
