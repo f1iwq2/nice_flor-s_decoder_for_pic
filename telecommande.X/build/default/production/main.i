@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 172 "main.c"
+# 186 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20331,7 +20331,7 @@ void CLOCK_Initialize(void);
 # 40 "./mcc_generated_files/system/config_bits.h" 2
 # 43 "./mcc_generated_files/system/system.h" 2
 # 1 "./mcc_generated_files/system/../system/pins.h" 1
-# 338 "./mcc_generated_files/system/../system/pins.h"
+# 358 "./mcc_generated_files/system/../system/pins.h"
 void PIN_MANAGER_Initialize (void);
 
 
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 173 "main.c" 2
+# 187 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,20 +21018,33 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 174 "main.c" 2
-# 192 "main.c"
+# 188 "main.c" 2
+# 209 "main.c"
+uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
+
+
+
 const uint32_t silenceC=29690;
-const uint32_t debutbitC=2660;
+
 const uint32_t bit0C=640;
 const uint32_t bit1C=1280;
 const uint32_t toleranceC=170;
 
 
 
-const uint32_t silenceD=12200;
-const uint32_t bit0D=1464;
-const uint32_t bit1D=2824;
-const uint32_t toleranceD=190;
+const uint32_t silenceD=135400;
+const uint32_t debutbitD=8020;
+const uint32_t bit0D=856;
+const uint32_t bit1D=1560;
+const uint32_t toleranceD=250;
+
+
+
+const uint32_t silenceF=6800;
+const uint32_t debutbitF=3140;
+const uint32_t bit0F=790;
+const uint32_t bit1F=1570;
+const uint32_t toleranceF=150;
 
 
 
@@ -21054,6 +21067,7 @@ const uint8_t prot_niceflors=1;
 const uint8_t prot_came=2;
 const uint8_t prot_cardin=3;
 const uint8_t prot_somfy=4;
+const uint8_t prot_fobloqf=5;
 
 uint8_t b0,b1,b2,b3,b4,b5,b6;
 char chaine[50];
@@ -21062,13 +21076,13 @@ uint8_t debug=0,protocole;
 uint8_t i2cread[130] = {};
 uint32_t vitesse[2]={9600,230400};
 uint8_t bufferRx[130] ={};
-uint16_t mesure_bits[150];
-uint8_t mesure_error[150];
+uint32_t mesure_bits[200];
+uint8_t mesure_error[200];
 uint8_t compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
-uint8_t rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
+uint8_t rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton,nbreSync;
 uint16_t compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
 uint64_t code,tpsvalidetelecom,serial;
-uint32_t duree=0,anc_duree,i,trame,tpsbouton;
+uint32_t duree=0,deborde=0,anc_duree,i,trame,tpsbouton;
 static uint8_t command[(8U)];
 static uint8_t index=0;
 static uint8_t readMessage;
@@ -21077,7 +21091,7 @@ _Bool aff_enr=0,rx,SilenceSomfy,consecutif;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t valt0;
 uint16_t indexCodeRecu[20 +1];
-# 257 "main.c"
+# 288 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21088,6 +21102,7 @@ void raz_bits()
 
 void fin_came()
 {
+  raz_bits();
   nb=NbreBits;
   telegram=0;
   bitDebut=0;
@@ -21096,9 +21111,28 @@ void fin_came()
   recu=1;
 }
 
+void fin_cardin()
+{
+  raz_bits();
+  nb=NbreBits;
+  recu=1;
+}
+
 void fin_somfy()
 {
+  raz_bits();
   nb=NbreBitsMsg;
+  telegram=0;
+  bitDebut=0;
+  tramebits=0;
+  bitSilence=0;
+  recu=1;
+}
+
+void fin_fobloqf()
+{
+  raz_bits();
+  nb=NbreBits;
   telegram=0;
   bitDebut=0;
   tramebits=0;
@@ -21108,8 +21142,17 @@ void fin_somfy()
 
 
 
+
 void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 {
+
+  if (INTCONbits.TMR0IF==1)
+  {
+
+    deborde=deborde+0x10000;
+    INTCONbits.TMR0IF=0;
+  }
+
 
   if(INTCONbits.RBIE==1 && INTCONbits.RBIF==1)
   {
@@ -21119,20 +21162,103 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
     anc_duree=duree;
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;
+    duree=duree+deborde;
+
+    deborde=0;
     TMR0H=0;
     TMR0L=0;
+
+    NbreBits++;
+
 
 
     if (debug==3)
     {
 
 
-      if (duree>300) {printf("%d",rx);printf(" T=%u\n\r",duree);}
+      if (duree>300) {printf("T=%lu\n\r",duree);}
+      if (NbreBits==20) debug=0;
+      goto fin;
+    }
+
+    if (debug==4)
+    {
+      if (NbreBits<200)
+      {
+        mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+        goto fin;
+      }
+      debug=0;
+      nb=200;
+      raz_bits();
+      aff_enr=1;
       goto fin;
     }
 
 
-    NbreBits++;
+
+
+    if ( (!bitSilence) && (!telegram) && ((duree>(silenceF-300)) && (duree<(silenceF+300))))
+    {
+      NbreBits=1;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+
+      if (debug==2)
+      printf("Fobloqf");
+      protocole=prot_fobloqf;
+      code=0;
+      bitSilence=1;
+      bitDebut=0;
+      telegram=0;
+      goto fin;
+    }
+
+    if ( (protocole==prot_fobloqf) && (bitSilence) && ((duree>(debutbitF-toleranceF)) && (duree<(debutbitF+toleranceF))))
+    {
+      if (NbreBits!=45) {raz_bits();goto fin;}
+      NbreBits=0;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+
+
+      bitDebut=0;
+      protocole=prot_fobloqf;
+      telegram=1;
+      code=0;
+      goto fin;
+    }
+
+
+    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-550)) && (duree<(silenceD+550))))
+
+    {
+      NbreBits=1;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+      protocole=prot_cardin;
+
+
+
+
+      code=0;
+      bitSilence=1;
+      bitDebut=0;
+      telegram=0;
+      goto fin;
+    }
+
+
+    if ((protocole==prot_cardin) && (bitSilence) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))
+    {
+
+      NbreBits=0;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+      protocole=prot_cardin;
+
+
+      bitDebut=0;
+      telegram=1;
+      code=0;
+      goto fin;
+    }
 
 
     if ((!telegram) && ((duree>(silence-tolerance)) && (duree<(silence+tolerance))))
@@ -21141,7 +21267,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       bitDebut=1;
       dureeS=duree;
       if (debug==2) printf("NiceFS=%u\r\n",duree);
-      telegram=1;
       protocole=prot_niceflors;
       code=0;
       bitSilence=1;
@@ -21149,15 +21274,15 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
-    if ((!telegram) && ((duree>(silenceC-200)) && (duree<(silenceC+200))))
+    if ((!telegram) &&(duree>(silenceC-200)) && (duree<(silenceC+200)))
     {
       NbreBits=1;
       protocole=prot_came;
       mesure_bits[NbreBits]=duree;
-      if (debug==2) printf("Scame=%u\r\n",duree);
+      if (debug==2) printf("came");
       telegram=1;
       code=0;
-      bitSilence=1;
+      bitSilence=0;
       goto fin;
     }
 
@@ -21239,6 +21364,159 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
+
+    if (telegram && (protocole==prot_cardin))
+    {
+
+
+      if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
+      {
+
+
+        code=code * 2;
+        code=code | 1;
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+        if (NbreBits>=64) fin_cardin();
+        goto fin;
+        if (NbreBits % 2==0)
+        {
+          bitPrec=1;
+        }
+        else
+
+        {
+          if (bitPrec==0)
+          {
+            NbreBitsMsg++;
+            code=code * 2;
+            code=code | 1;
+          }
+          else
+          {
+            NbreBits=0;raz_bits();
+            if (debug==1)
+            {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}
+          }
+        }
+        goto fin;
+      }
+
+      if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD)))
+      {
+
+
+        code=code * 2;
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+        if (NbreBits>=64) fin_cardin();
+        goto fin;
+        if (NbreBits % 2==0)
+        {
+          bitPrec=0;
+        }
+        else
+
+        {
+          if (bitPrec==1)
+          {
+            NbreBitsMsg++;
+            code=code*2;
+          }
+          else
+          {
+            if (debug==1) printf("EBA D=%u\r\n",duree);
+            nb=NbreBits;
+            mesure_error[NbreBits]=2;
+            NbreBits=0;raz_bits();
+          }
+        }
+        goto fin;
+      }
+
+      printf("E%d\r\n",duree);
+      mesure_error[NbreBits]=3;
+      nb=NbreBits;
+      raz_bits();
+      goto fin;
+    }
+
+
+
+    if (telegram && (protocole==prot_fobloqf))
+    {
+
+      if (telegram)
+      {
+        if ((duree>(bit1F-toleranceF)) && (duree<(bit1F+toleranceF)))
+        {
+
+          code=code * 2;
+          code=code | 1;
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+          if (NbreBits==56) fin_fobloqf();
+          goto fin;
+          if (NbreBits % 2==0)
+          {
+            bitPrec=1;
+          }
+          else
+
+          {
+            if (bitPrec==0)
+            {
+              NbreBitsMsg++;
+              code=code * 2;
+              code=code | 1;
+            }
+            else
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1)
+              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}
+            }
+          }
+          goto fin;
+        }
+
+        if ((duree>(bit0F-toleranceF)) && (duree<(bit0F+toleranceF)))
+        {
+
+          code=code * 2;
+          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+          if (NbreBits==56) fin_fobloqf();
+          goto fin;
+          if (NbreBits % 2==0)
+          {
+            bitPrec=0;
+          }
+          else
+
+          {
+            if (bitPrec==1)
+            {
+              NbreBitsMsg++;
+              code=code*2;
+            }
+            else
+            {
+              NbreBits=0;raz_bits();
+              if (debug==1)
+              {mesure_error[NbreBits]=2;printf("EBA D=%u\r\n",duree);}
+            }
+          }
+          goto fin;
+        }
+        else
+        {
+          raz_bits();
+          nb=NbreBits;
+
+              printf("EFA%d\r\n",NbreBits);
+          goto fin;
+        }
+      }
+    }
+
+
     if (protocole==prot_came)
     {
 
@@ -21307,20 +21585,21 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         {
           raz_bits();
           nb=NbreBits;
-          if (debug==1) printf("EFA%d\r\n",NbreBits);
+          if (debug==1) printf("ECA%d\r\n",NbreBits);
           goto fin;
         }
       }
     }
 
 
+
     if (protocole==prot_niceflors)
     {
 
 
+
       if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance)))
       {
-        if (!telegram) goto fin;
 
 
 
@@ -21334,7 +21613,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           bitDebut=0;
           tramebits=0;
           bitSilence=0;
-          if (NbreBits==108) recu=1;
+          recu=1;
           goto fin;
         }
         if ((NbreBits==2) | (NbreBits==3))
@@ -21367,7 +21646,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         if (NbreBits<108)
         {
           mesure_bits[NbreBits]=duree;
-          mesure_error[NbreBits]=3;
+          mesure_error[NbreBits]=1;
         }
         raz_bits();
         nb=NbreBits;
@@ -21422,7 +21701,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             else
             {
               NbreBits=0;raz_bits();
-              if (debug==1) {mesure_error[NbreBits]=3;printf("EBB D=%u\r\n",duree);}
+              if (debug==1) {mesure_error[NbreBits]=2;printf("EBB D=%u\r\n",duree);}
             }
           }
         }
@@ -21455,6 +21734,45 @@ uint8_t lit_eprom_int(uint16_t adresse)
   return (EEDATA);
 }
 
+
+
+
+uint32_t KeeLoq_Decrypt(uint64_t data, const uint64_t key)
+ {
+   uint32_t x = data, r;
+   for (r = 0; r < 528; r++)
+   {
+      x = (x<<1)^(((x)>>(31))&1)^(((x)>>(15))&1)^(uint32_t)(((key)>>((15-r)&63))&1)^(((0x3A5C742E)>>(((((x)>>(0))&1)+(((x)>>(8))&1)*2+(((x)>>(19))&1)*4+(((x)>>(25))&1)*8+(((x)>>(30))&1)*16)))&1);
+   }
+   return x;
+ }
+
+
+uint8_t nlf(uint8_t d)
+{
+  return (((uint32_t)(0x3A5C742E) >> d) & 0x1);
+}
+
+
+ void KeeLoq_Decrypt2(uint8_t *key, uint64_t data, const uint16_t nrounds)
+ {
+  uint32_t x;
+  uint16_t r;
+  uint8_t o,nlf_input,k,ki;
+
+  for (r=0;r<nrounds;r++)
+  {
+    nlf_input=(((data >> 30) & 0x1) << 4) | (((data >> 25) & 0x1) << 3) | (((data >> 19) & 0x1) << 2) | (((data >> 8) & 0x1) << 1) | (data & 0x1);
+
+    o=nlf(nlf_input);
+    ki=(uint16_t)(15 - r) % 64;
+    k=key[ki / 8] >> (ki % 8);
+    x=k^(data >> 31)^(data >> 15)^o;
+    data=(data << 1) | x & 1;
+  }
+}
+
+
 void menu()
 {
 
@@ -21472,28 +21790,7 @@ void menu()
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des télécommandes connues\r\n");
-# 676 "main.c"
-   i=lit_eprom_int(0);
-   if (i==0xff)
-   {
-
-      printf("***Erreur l'eprom interne est vide***\r\n");
-
-
-
-
-   }
-   if (i!=0x21)
-   {
-
-      printf("***Erreur l'eprom ne contient pas le bon fichier***\r\n");
-
-
-
-
-   }
-
-
+# 1013 "main.c"
    printf("\r\n");
 
    printf("Votre choix suivi de ENTREE\r\n");
@@ -21526,7 +21823,7 @@ void ecrit_bloc_eprom_ext(uint32_t adresse)
 
   for (i=1;i<=128;i++)
   {
- i2cdata[i+1]=bufferRx[i];
+    i2cdata[i+1]=bufferRx[i];
   }
 
   if (I2C1_Host.Write(0xA0 >>1 | mask,i2cdata,130))
@@ -21601,27 +21898,27 @@ uint8_t attend_rx()
 
 uint16_t calccrc(int count)
 {
-    uint16_t crc;
-    char i;
-    uint8_t index;
-    index=1;
+  uint16_t crc;
+  char i;
+  uint8_t index;
+  index=1;
 
-    crc=0;
-    while (--count >= 0)
+  crc=0;
+  while (--count >= 0)
+  {
+    crc=crc^(uint16_t)(bufferRx[index] << 8);
+    index++;
+    i=8;
+    do
     {
-        crc=crc^(uint16_t)(bufferRx[index] << 8);
-        index++;
-        i=8;
-        do
-        {
-          if (crc & 0x8000)
-              crc=crc<<1^0x1021;
-          else
-              crc=crc<<1;
-        }
-        while(--i);
+      if (crc & 0x8000)
+      crc=crc<<1^0x1021;
+      else
+      crc=crc<<1;
     }
-    return (crc);
+    while(--i);
+  }
+  return (crc);
 }
 
 
@@ -21653,21 +21950,20 @@ void ecrit_eprom_int(uint16_t adresse,uint8_t valeur)
 
 void ecrit_bloc_eprom_int(uint16_t adresse)
 {
-   for (i=1;i<=128;i++)
-   {
-     ecrit_eprom_int(adresse+i-1,bufferRx[i]);
-   }
+  for (i=1;i<=128;i++)
+  {
+    ecrit_eprom_int(adresse+i-1,bufferRx[i]);
+  }
 }
 
 
 
 void erreur_xmodem(uint8_t num)
 {
-   erreur=num;
-   INTCONbits.GIE=1;
-   UART_WriteByte(18);
+  erreur=num;
+  INTCONbits.GIE=1;
+  UART_WriteByte(18);
 }
-
 
 
 
@@ -21704,7 +22000,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 919 "main.c"
+# 1234 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -21812,53 +22108,91 @@ void affiche_enregistrement()
 
   printf("NbreBits=%d",nb);
 
-  if (protocole==prot_niceflors)
-  {
-     if (nb!=108) printf(" différent de 108 ");
-     printf(" Protocole NiceFlorS");
-  }
+
   if (protocole==prot_came) printf(" Protocole Came");
   if (protocole==prot_somfy) printf(" Protocole Somfy");
+  if (protocole==prot_cardin) printf(" Protocole Cardin S449");
+  if (protocole==prot_fobloqf) printf(" Protocole Fobloqf");
+  if (protocole==prot_niceflors) printf(" Protocole NiceFlorS");
+
 
   printf("\r\n");
-  for (y=1;y<=16;y++)
+  for (y=1;y<=20;y++)
   {
-    for (x=1;x<=7;x++)
+    for (x=1;x<=9;x++)
     {
-      i=((y-1) % 16)+1 + ((x-1) * 16);
+      i=((y-1) % 20)+1 + ((x-1) * 20);
       if (i<=nb)
       {
         printf("%3d",i);
         duree=mesure_bits[i];
-        printf(" %5u",duree);
+
+         printf(" %6lu",duree);
 
         if (protocole==prot_niceflors)
         {
-          if ((duree>(silence-1000)) && (duree<(silence+1000))) printf(" Silence   ");
+          if ((duree>(silence-1000)) && (duree<(silence+1000))) printf(" S");
           else
-          if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0       ");
+          if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0");
           else
-          if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1       ");
+          if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1");
           else
-          if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" Deb/fin ");
+          if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" D");
           else
-          printf(" ?       ");
+          printf(" ?");
           if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
         }
         if (protocole==prot_came)
         {
-          if ((duree>(silenceC-1000)) && (duree<(silenceC+1000))) printf(" Silence ");
+          if ((duree>(silenceC-1000)) && (duree<(silenceC+1000))) printf(" S");
           else
-          if ((duree>(bit0C-toleranceC)) && (duree<(bit0C+toleranceC))) printf(" 0       ");
+          if ((duree>(bit0C-toleranceC)) && (duree<(bit0C+toleranceC))) printf(" 0");
           else
-          if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC))) printf(" 1       ");
+          if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC))) printf(" 1");
           else
-          if ((duree>(debutbitC-toleranceC)) && (duree<(debutbitC+toleranceC))) printf(" Deb ");
-          else
-          printf(" ?       ");
+          printf(" ?");
           if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
         }
-        printf(" ");
+        if (protocole==prot_somfy)
+        {
+          if ((duree>(silenceS-1000)) && (duree<(silenceS+1000))) printf(" S");
+          else
+          if ((duree>(bit0S-toleranceS)) && (duree<(bit0S+toleranceS))) printf(" 0");
+          else
+          if ((duree>(bit1S-toleranceS)) && (duree<(bit1S+toleranceS))) printf(" 1");
+          else
+          if ((duree>(debutbitS-toleranceS)) && (duree<(debutbitS+toleranceS))) printf(" D");
+          else
+          printf(" ?");
+          if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
+        }
+        if (protocole==prot_cardin)
+        {
+          if ((duree>(silenceD-550)) && (duree<(silenceD+550))) printf(" S");
+          else
+          if ((duree>(debutbitD-tolerance)) && (duree<(debutbitD+tolerance))) printf(" D");
+          else
+          if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD))) printf(" 0");
+          else
+          if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD))) printf(" 1");
+          else
+          printf(" ?");
+          if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
+        }
+        if (protocole==prot_fobloqf)
+        {
+          if ((duree>(silenceF-550)) && (duree<(silenceF+550))) printf(" S");
+          else
+          if ((duree>(debutbitF-tolerance)) && (duree<(debutbitF+tolerance))) printf(" D");
+          else
+          if ((duree>(bit0D-toleranceF)) && (duree<(bit0D+toleranceF))) printf(" 0");
+          else
+          if ((duree>(bit1D-toleranceF)) && (duree<(bit1D+toleranceF))) printf(" 1");
+          else
+          printf(" ?");
+          if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
+        }
+        printf("| ");
       }
       else printf("        ");
     }
@@ -21885,242 +22219,252 @@ void Affiche4(uint64_t codex)
 
 void UART_ExecuteCommand(char *command)
 {
-    uint64_t ep;
-    if(strcmp(command,"?") == 0)
-    {
-      menu();
-    }
-    else
-    if(strcmp(command,"1") == 0)
-    {
-       debug++;
-       if (debug>3) debug=0;
-       printf("Debug %d ",debug);
+  uint64_t ep;
+  if(strcmp(command,"?") == 0)
+  {
+    menu();
+  }
+  else
+  if(strcmp(command,"1") == 0)
+  {
+    debug++;
+    if (debug>3) debug=0;
+    printf("Debug %d ",debug);
 
-       if (debug==0) printf("pas de debug\r\n");
-       if (debug==1) printf("Affichages supplémentaires et les erreurs\r\n");
-       if (debug==2) printf("Affiche silence\r\n");
-       if (debug==3) printf("Affiche les durées reçues en direct\r\n");
-
-
+    if (debug==0) printf("pas de debug\r\n");
+    if (debug==1) printf("Affichages supplémentaires et les erreurs\r\n");
+    if (debug==2) printf("Affiche silence\r\n");
+    if (debug==3) printf("Affiche les durées reçues en direct\r\n");
 
 
 
 
 
-    }
-    else
-    if(strcmp(command,"2") == 0)
-    {
-        pvitesse++;
-        if (pvitesse==2) pvitesse=0;
-        printf("Vitesse UART=%lu bauds ",vitesse[pvitesse]);
-        if (pvitesse==0) {printf("pour transfert xmodem\r\n");SPBRGH1=0x06;SPBRG1=0x82;}
-        if (pvitesse==1) {printf("pour debug\r\n");SPBRGH1=0x00;SPBRG1=0x44;}
-    }
-    else
-    if (strcmp(command,"3") == 0)
- {
-
-        if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
-        printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole Xmodem CRC dans les 20s\r\n");
 
 
+  }
+  else
+  if(strcmp(command,"2") == 0)
+  {
+    pvitesse++;
+    if (pvitesse==2) pvitesse=0;
+    printf("Vitesse UART=%lu bauds ",vitesse[pvitesse]);
+    if (pvitesse==0) {printf("pour transfert xmodem\r\n");SPBRGH1=0x06;SPBRG1=0x82;}
+    if (pvitesse==1) {printf("pour debug\r\n");SPBRGH1=0x00;SPBRG1=0x44;}
+  }
+  else
+  if (strcmp(command,"3") == 0)
+  {
+
+    if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
+    printf("Dans TeraTerm, sélectionner le fichier 128Ko de codes en protocole Xmodem CRC dans les 20s\r\n");
 
 
 
-      recoit_xmodem(1);
-    }
+
+
+   recoit_xmodem(1);
+ }
  else
-    if (strcmp(command,"4") == 0)
+ if (strcmp(command,"4") == 0)
  {
 
-        if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
-        printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
+   if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
+   printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
 
 
 
 
 
-      recoit_xmodem(2);
-    }
-    else
-    if (strcmp(command,"5") == 0)
+   recoit_xmodem(2);
+ }
+ else
+
+ if (strcmp(command,"5") == 0)
  {
-        affiche_enregistrement();
-    }
+   affiche_enregistrement();
+ }
  else
  if(strcmp(command,"6") == 0)
+ {
+   INTCONbits.GIE=0;
+
+   printf("Dernière erreur : ");
+
+
+
+
+
+
+   switch (erreur)
+   {
+     case 0: {printf("Aucune");break;}
+     case 1: {printf("Timeout trame %d",trame);break;}
+     case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
+     case 3: {printf("Erreur complémentation numéro paquet");break;}
+     case 4: {printf("Timeout sur numéro de paquet");break;}
+     case 5: {printf("Timeout sur numéro de paquet complémenté");break;}
+     case 6: {printf("Timeout données");break;}
+     case 7: {printf("Erreur crc");break;}
+     case 8: {printf("Erreur écriture EPROM ext");break;}
+     default: printf(" %d",erreur);
+   }
+# 1560 "main.c"
+   printf(" Dernière erreur I2C=%d",erreurI2C);
+
+
+
+
+   printf("\r\n");
+   INTCONbits.GIE=1;
+ }
+ else
+ if (strcmp(command,"7") == 0)
+ {
+   INTCONbits.GIE=0;
+   printf("n° paquet=%d\r\n",pak);
+   printf("n° paquet compl=%d\r\n",pakcom);
+   printf("Valeur compt=%d\r\n",compt);
+
+   for (i=1;i<=130;i++)
+   {
+     printf("%d:",i);
+     printf("%d,",bufferRx[i]);
+   }
+   printf("\r\n");
+   printf("Crc calculé=%x\r\n",crc);
+   printf("Crc recu=%x\r\n",crcrecu);
+   INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"8") == 0)
+  {
+
+
+    INTCONbits.GIE=0;
+    for (i=0;i<200;i++)
     {
-      INTCONbits.GIE=0;
+      lit_eprom_ext(i);
+      printf("%d:",i);
+      printf("%x, ",i2cread[0]);
+      if (((i+1) % 16)==0) printf("\r\n");
+    }
+    INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"9") == 0)
+  {
 
-      printf("Dernière erreur : ");
+
+    INTCONbits.GIE=0;
+    for (i=0;i<1023;i++)
+    {
+      uint8_t v=lit_eprom_int(i);
+      if ((i % 16)==0) printf("%x:",i);
+      printf("%x, ",v);
+      if (((i+1) % 16)==0) printf("\r\n");
+    }
+    INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"A") == 0)
+  {
+
+    uint8_t chk=0;
+    uint32_t j;
+    INTCONbits.GIE=0;
+
+    printf("Patientez 10s..\r\n");
 
 
 
 
-
-
-      switch (erreur)
+    i=0;
+    while (i<0x1ffff)
+    {
+      lit_bloc_eprom_ext(i,128);
+      i=i+128;
+      for (j=0;j<=127;j++)
       {
-        case 0: {printf("Aucune");break;}
-        case 1: {printf("Timeout trame %d",trame);break;}
-        case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
-        case 3: {printf("Erreur complémentation numéro paquet");break;}
-        case 4: {printf("Timeout sur numéro de paquet");break;}
-        case 5: {printf("Timeout sur numéro de paquet complémenté");break;}
-        case 6: {printf("Timeout données");break;}
-        case 7: {printf("Erreur crc");break;}
-        case 8: {printf("Erreur écriture EPROM ext");break;}
-        default: printf(" %d",erreur);
+        chk=chk ^ i2cread[j];
       }
-# 1206 "main.c"
-      printf(" Dernière erreur I2C=%d",erreurI2C);
-
-
-
-
-      printf("\r\n");
-      INTCONbits.GIE=1;
     }
-
-    else
-    if (strcmp(command,"7") == 0)
-    {
-        INTCONbits.GIE=0;
-        printf("n° paquet=%d\r\n",pak);
-        printf("n° paquet compl=%d\r\n",pakcom);
-        printf("Valeur compt=%d\r\n",compt);
-
-        for (i=1;i<=130;i++)
-        {
-           printf("%d:",i);
-           printf("%d,",bufferRx[i]);
-        }
-        printf("\r\n");
-        printf("Crc calculé=%x\r\n",crc);
-        printf("Crc recu=%x\r\n",crcrecu);
-        INTCONbits.GIE=1;
-    }
-    else
-    if (strcmp(command,"8") == 0)
+    lit_eprom_ext(0);
+    i=i2cread[0];
+    if (i!=3)
     {
 
+      printf("Eprom ext contient de mauvaises valeurs\r\n");
 
-      INTCONbits.GIE=0;
-      for (i=0;i<200;i++)
+
+
+
+    }
+    printf("Checksum eprom ext = %x ",chk);
+    if (chk==0) printf("Ok\r\n"); else printf("Non ok\r\n");
+    INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"B") == 0)
+  {
+
+
+    uint32_t k,j=0;
+    INTCONbits.GIE=0;
+    while (j<0x1ffff)
+    {
+      lit_bloc_eprom_ext(j,128);
+
+      for (i=0;i<=127;i++)
       {
-        lit_eprom_ext(i);
-        printf("%d:",i);
-        printf("%x, ",i2cread[0]);
+        k=i+j;
+        if ((i % 16)==0) {Affiche5(k);printf(" ");}
+        printf("%x,",i2cread[i]);
         if (((i+1) % 16)==0) printf("\r\n");
+        _delay((unsigned long)((100)*(64000000U/4000000.0)));
       }
-      INTCONbits.GIE=1;
-    }
-    else
-    if (strcmp(command,"9") == 0)
-    {
-
-
-      INTCONbits.GIE=0;
-      for (i=0;i<1023;i++)
-      {
-        uint8_t v=lit_eprom_int(i);
-        if ((i % 16)==0) printf("%x:",i);
-        printf("%x, ",v);
-        if (((i+1) % 16)==0) printf("\r\n");
+      j=j+128;
       }
-      INTCONbits.GIE=1;
-    }
-    else
-    if (strcmp(command,"A") == 0)
+    INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"C") == 0)
+  {
+    i=0;
+    do
     {
+       ep=(uint32_t)lit_eprom_int(0x100+i*4);
+       ep=ep+((uint32_t)lit_eprom_int(0x101+i*4) << 8);
+       ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
+       ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
 
-      uint8_t chk=0;
-      uint32_t j;
-      INTCONbits.GIE=0;
-
-      printf("Patientez 10s..\r\n");
-
-
-
-
-      i=0;
-      while (i<0x1ffff)
-      {
-        lit_bloc_eprom_ext(i,128);
-        i=i+128;
-        for (j=0;j<=127;j++)
-        {
-          chk=chk ^ i2cread[j];
-        }
-      }
-      printf("Checksum eprom ext = %x ",chk);
-      if (chk==0) printf("Ok\r\n"); else printf("Non ok\r\n");
-      INTCONbits.GIE=1;
-    }
-    else
-    if (strcmp(command,"B") == 0)
-    {
-
-
-      uint32_t k,j=0;
-      INTCONbits.GIE=0;
-      while (j<0x1ffff)
-      {
-        lit_bloc_eprom_ext(j,128);
-
-        for (i=0;i<=127;i++)
-        {
-          k=i+j;
-          if ((i % 16)==0) {Affiche5(k);printf(" ");}
-          printf("%x,",i2cread[i]);
-          if (((i+1) % 16)==0) printf("\r\n");
-          _delay((unsigned long)((100)*(64000000U/4000000.0)));
-        }
-        j=j+128;
-      }
-      INTCONbits.GIE=1;
-    }
-    else
-    if (strcmp(command,"C") == 0)
-    {
-      i=0;
-      do
-      {
-         ep=(uint32_t)lit_eprom_int(0x100+i*4);
-         ep=ep+((uint32_t)lit_eprom_int(0x101+i*4) << 8);
-         ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
-         ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
-
-         printf("Télécommande %2d ",i+1);
+       printf("Télécommande %2d ",i+1);
 
 
 
 
-         Affiche4(ep);
-         printf("\r\n");
-         i++;
-      } while (i<20);
-      i--;
-    }
-    else
-    if (strcmp(command,"K") == 0)
-    {
-# 1349 "main.c"
-    }
+       Affiche4(ep);
+       printf("\r\n");
+       i++;
+    } while (i<20);
+    i--;
+  }
+  else
+  if (strcmp(command,"K") == 0)
+  {
+# 1713 "main.c"
+  }
 
-    else
-    {
+  else
+  {
 
-        printf("Commande incorrecte.\r\n");
-
-
+      printf("Commande incorrecte.\r\n");
 
 
-    }
+
+
+  }
 }
-
 
 void UART_ProcessCommand(void)
 {
@@ -22154,9 +22498,9 @@ void UART1_WriteString(const char *message)
 
 void uart1_champ(char* message,int valeur)
 {
-    UART1_WriteString(message);
-    sprintf(chaine," %d\r\n",123);
-    UART1_WriteString(chaine);
+  UART1_WriteString(message);
+  sprintf(chaine," %d\r\n",123);
+  UART1_WriteString(chaine);
 }
 
 
@@ -22201,7 +22545,6 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
     }
   }
 }
-
 
 
 void Affiche(uint64_t codex)
@@ -22275,7 +22618,7 @@ _Bool decode_nice_b0b6()
 
 
 
-uint16_t trouve_code(uint16_t c)
+uint16_t trouve_code_nice(uint16_t c)
 {
   _Bool trouve=0;
   uint16_t cr;
@@ -22302,7 +22645,7 @@ uint16_t trouve_code(uint16_t c)
 
 
 
-uint16_t trouve_code_algo(uint16_t c)
+uint16_t trouve_code_algo_nice(uint16_t c)
 {
   _Bool trouve;
   uint8_t bal_telecom=1,increment;
@@ -22330,7 +22673,7 @@ uint16_t trouve_code_algo(uint16_t c)
   } while ((!trouve) & (bal_telecom<10));
 
 
-  if (!trouve) i=trouve_code(c);else i=i+(increment/2);
+  if (!trouve) i=trouve_code_nice(c);else i=i+(increment/2);
 
   return (i);
 }
@@ -22351,6 +22694,148 @@ uint32_t inverse24(int32_t mot)
   r=r | (mot & 0xff00);
   r=r | ((mot & 0xffL) << 16);
   return r;
+}
+
+_Bool decode_fobloqf()
+{
+  uint32_t temp;
+
+
+  {
+   Affiche(code);
+  }
+
+  temp=KeeLoq_Decrypt(code,0x3A5C742E);
+  printf(" Decode1=");Affiche(temp);
+
+  temp=code;
+  KeeLoq_Decrypt2(key, temp, 528);
+  printf(" Decode2=");
+  Affiche(temp);
+  printf("\r\n");
+  return 0;
+}
+
+_Bool decode_cardin()
+{
+  uint32_t temp;
+
+
+  {
+   Affiche(code);
+  }
+
+  temp=KeeLoq_Decrypt(code,0x3A5C742E);
+  printf(" Decode1=");Affiche(temp);
+
+  temp=code;
+  KeeLoq_Decrypt2(key, temp, 528);
+  printf(" Decode2=");
+  Affiche(temp);
+  printf("\r\n");
+
+
+
+
+
+  b2=(code >> 16) & 0xff;
+  b1=(code >> 8) & 0xff;
+  b0=code & 0xff;
+
+  printf("Decodage:\r\n");
+  printf("b0=%x\r\n",b0);
+  printf("b1=%x\r\n",b1);
+  printf("b2=%x\r\n",b2);
+
+
+
+    if ((b2 & 0x3f) != 0x03
+            && (b2 & 0x3f) != 0x09
+            && (b2 & 0x3f) != 0x0c
+            && (b2 & 0x3f) != 0x06)
+    {
+        printf("Erreur verte\r\n");
+        return -1;
+    }
+
+    if (((b0 & 8) == 0 && (b1 & 8) != 0)
+            || ((b0 & 16) == 0 && (b1 & 16) != 0)
+            || ((b0 & 32) == 0 && (b1 & 32) != 0)
+            || ((b0 & 64) == 0 && (b1 & 64) != 0)
+            || ((b0 & 128) == 0 && (b1 & 128) != 0)
+            || ((b2 & 128) == 0 && (b2 & 64) != 0)
+            || ((b0 & 1) == 0 && (b1 & 1) != 0)
+            || ((b0 & 2) == 0 && (b1 & 2) != 0)
+            || ((b0 & 4) == 0 && (b1 & 4) != 0))
+    {
+      printf("Erreur jaune\r\n");
+      return -1 ;
+    }
+
+
+    char const *const rbutton[4] = { "11R", "10R", "01R", "00L?" };
+    char const *const button = rbutton[((b2 & 0x0f) / 3) - 1];
+
+
+    char dip[10] = {'-','-','-','-','-','-','-','-','-', '\0'};
+
+
+    if (b0 & 8) {
+        dip[0] = 'o';
+        if (b1 & 8)
+            dip[0] = '+';
+    }
+
+    if (b0 & 16) {
+        dip[1] = 'o';
+        if (b1 & 16)
+            dip[1] = '+';
+    }
+
+    if (b0 & 32) {
+        dip[2] = 'o';
+        if (b1 & 32)
+            dip[2] = '+';
+    }
+
+    if (b0 & 64) {
+        dip[3] = 'o';
+        if (b1 & 64)
+            dip[3] = '+';
+    }
+
+    if (b0 & 128) {
+        dip[4] = 'o';
+        if (b1 & 128)
+            dip[4] = '+';
+    }
+
+    if (b2 & 128) {
+        dip[5] = 'o';
+        if (b2 & 64)
+            dip[5] = '+';
+    }
+
+    if (b0 & 1) {
+        dip[6] = 'o';
+        if (b1 & 1)
+            dip[6] = '+';
+    }
+
+    if (b0 & 2) {
+        dip[7] = 'o';
+        if (b1 & 2)
+            dip[7] = '+';
+    }
+
+    if (b0 & 4) {
+        dip[8] = 'o';
+        if (b1 & 4)
+            dip[8] = '+';
+    }
+
+    printf("%s\r\n",dip);
+  return 0;
 }
 
 
@@ -22432,7 +22917,7 @@ void decode_b06_nice()
   uint8_t ki,snbuf3,snbuf2,snbuf1,snbuf0;
   encode=(b2<<8) + b3;
   indexcode=0;
-  indexcode=trouve_code_algo(encode);
+  indexcode=trouve_code_algo_nice(encode);
 
 
 
@@ -22549,8 +23034,10 @@ void traitementCode()
 
 
       RA5=0;
+      RC0=0;
       _delay((unsigned long)((1000)*(64000000U/4000.0)));
       RA5=1;
+      RC0=1;
     }
     else
     {
@@ -22631,9 +23118,10 @@ void traitementCode()
 int main(void)
 {
   SYSTEM_Initialize();
+  RA3=0;
   RA5=1;
   erreur=0;
-# 1893 "main.c"
+# 2400 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -22645,6 +23133,9 @@ int main(void)
   INTCONbits.RBIF=0;
   INTCONbits.RBIE=1;
   INTCONbits.GIEH=1;
+  INTCONbits.TMR0IF=0;
+  INTCONbits.TMR0IE=1;
+
 
   IOCBbits.IOCB4=1;
 
@@ -22664,11 +23155,11 @@ int main(void)
         | (1 << 0x7);
 
 
-  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME\r\n");
+  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME / Somfy RTS\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
 
 
-  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME\r\n");
+  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME / Somfy RTS\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
 
 
@@ -22676,13 +23167,56 @@ int main(void)
   menu();
   RC0=1;
 
+  for (i=1;i<10;i++)
+  {
+      _delay((unsigned long)((100)*(64000000U/4000.0)));
+      RC0=0;
+      _delay((unsigned long)((100)*(64000000U/4000.0)));
+     RC0=1;
+  }
+
   debug=0 ;
 
   TMR0_Start();
   INTCONbits.GIE=1;
 
+  i=lit_eprom_int(0);
+  if (i==0xff)
+   {
+
+      printf("***Erreur l'eprom interne est vide***\r\n");
+
+
+
+
+   }
+   if (i!=0x21)
+   {
+
+      printf("***Erreur l'eprom interne ne contient pas le bon fichier***\r\n");
+
+
+
+
+   }
+
+  lit_eprom_ext(0);
+  i=i2cread[0];
+  if (i!=3)
+  {
+
+    printf("***Erreur l'eprom externe ne contient pas le bon fichier***\r\n");
+
+
+
+
+  }
+
+  RA3=1;
+
   while(1)
   {
+# 2506 "main.c"
     if (!RB2)
     {
       _delay((unsigned long)((1)*(64000000U/4000.0)));
@@ -22764,6 +23298,24 @@ int main(void)
           traitementCode();
         }
       }
+      if (protocole==prot_cardin)
+      {
+        printf("Cardin=");
+        decode_cardin();
+
+
+
+      }
+      if (protocole==prot_fobloqf)
+      {
+
+
+          printf("Flobloqf=");
+          decode_fobloqf();
+
+      }
+
+
 
       NbreBits=0;
       _delay((unsigned long)((1000)*(64000000U/4000.0)));

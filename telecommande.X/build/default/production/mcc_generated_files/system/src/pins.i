@@ -20320,7 +20320,7 @@ unsigned char __t1rd16on(void);
 unsigned char __t3rd16on(void);
 # 34 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 2 3
 # 39 "mcc_generated_files/system/src/../pins.h" 2
-# 338 "mcc_generated_files/system/src/../pins.h"
+# 358 "mcc_generated_files/system/src/../pins.h"
 void PIN_MANAGER_Initialize (void);
 
 
@@ -20348,7 +20348,7 @@ void PIN_MANAGER_Initialize(void)
 
 
 
-    TRISA = 0xCF;
+    TRISA = 0xC7;
     TRISB = 0xD4;
     TRISC = 0xBC;
 # 64 "mcc_generated_files/system/src/pins.c"

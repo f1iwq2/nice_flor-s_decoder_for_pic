@@ -1434,8 +1434,8 @@ Version 4.0 HI-TECH Software Intermediate Code
 [; ;mcc_generated_files/system/src/pins.c: 45:     LATC = 0x18;
 [e = _LATC -> -> 24 `i `uc ]
 "53
-[; ;mcc_generated_files/system/src/pins.c: 53:     TRISA = 0xCF;
-[e = _TRISA -> -> 207 `i `uc ]
+[; ;mcc_generated_files/system/src/pins.c: 53:     TRISA = 0xC7;
+[e = _TRISA -> -> 199 `i `uc ]
 "54
 [; ;mcc_generated_files/system/src/pins.c: 54:     TRISB = 0xD4;
 [e = _TRISB -> -> 212 `i `uc ]

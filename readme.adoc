@@ -2,6 +2,7 @@ Nice flor-s / Came / Somfy RTS remote decoders for pic
 ======================================================
 
 Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME et Somfy RTS.
+Cardin et Fobloqs ne sont pas terminés.
 Le projet est composé d'un PIC 18F26K80 à 16 MHz (x4 par pll = 64 MHz)
 L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprises.
 L'eprom externe de 128Ko contient le fichier codes.bin
@@ -14,10 +15,12 @@ Cardin utilise le protocole radio FSK, code roulant.
 Utilisez le récepteur adéquat. Ne brancher qu'un seul récepteur sur la platine.
 RXB6, RFM210LCF-A = ASK et OOK.
 RXB15 = FSK
+documentation dans le fichier pdf.
 
 Taper ? [enter] dans le terminal pour afficher le menu.
 
 Pic program to decode Nice-florS and CAME and SOMFY RTS remote devices.
+Cardin and Fobloqs are not completed.
 This project is made with a PIC 18F26K80 at 16 MHz (x4 with pll = 64 MHz)
 Internal eprom contains the ki.bin file, and also learnt remotes.
 External 128Kb eprom contains codes.bin file. 
@@ -31,6 +34,7 @@ Cardin use FSK radio protocol
 Use the correct receiver. Plug only a single receiver on the board.
 RXB6, RFM210LCF-A = ASK and OOK.
 RXB15 = FSK
+Documentation in pdf file.
 
 Type in ? [enter] to display the menu.
 

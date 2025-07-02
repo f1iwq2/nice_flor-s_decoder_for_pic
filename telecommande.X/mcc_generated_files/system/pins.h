@@ -49,6 +49,26 @@
 #define PULL_UP_ENABLED      1
 #define PULL_UP_DISABLED     0
 
+// get/set RA3 aliases
+#define IO_RA3_TRIS                 TRISAbits.TRISA3
+#define IO_RA3_LAT                  LATAbits.LATA3
+#define IO_RA3_PORT                 PORTAbits.RA3
+#define IO_RA3_WPU                  WPUAbits.
+#define IO_RA3_OD                   ODCONAbits.
+#define IO_RA3_ANS                  ANSELAbits.ANSEL3
+#define IO_RA3_SetHigh()            do { LATAbits.LATA3 = 1; } while(0)
+#define IO_RA3_SetLow()             do { LATAbits.LATA3 = 0; } while(0)
+#define IO_RA3_Toggle()             do { LATAbits.LATA3 = ~LATAbits.LATA3; } while(0)
+#define IO_RA3_GetValue()           PORTAbits.RA3
+#define IO_RA3_SetDigitalInput()    do { TRISAbits.TRISA3 = 1; } while(0)
+#define IO_RA3_SetDigitalOutput()   do { TRISAbits.TRISA3 = 0; } while(0)
+#define IO_RA3_SetPullup()          do { WPUAbits. = 1; } while(0)
+#define IO_RA3_ResetPullup()        do { WPUAbits. = 0; } while(0)
+#define IO_RA3_SetPushPull()        do { ODCONAbits. = 0; } while(0)
+#define IO_RA3_SetOpenDrain()       do { ODCONAbits. = 1; } while(0)
+#define IO_RA3_SetAnalogMode()      do { ANSELAbits.ANSEL3 = 1; } while(0)
+#define IO_RA3_SetDigitalMode()     do { ANSELAbits.ANSEL3 = 0; } while(0)
+
 // get/set RA5 aliases
 #define IO_RA5_TRIS                 TRISAbits.TRISA5
 #define IO_RA5_LAT                  LATAbits.LATA5
