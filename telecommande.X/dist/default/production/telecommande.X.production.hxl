@@ -1,7 +1,7 @@
 ### HEXMate logfile and output summary ###
 
 ### Command-line arguments ###
- C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o
+ C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o
  -Odist/default/production\telecommande.X.production.hex
  -logfile=dist/default/production\telecommande.X.production.hxl
  -addressing=1
@@ -9,19 +9,19 @@
 
 ### Memory Usage ###
  Input file ranges:
-  0h - 3h		(C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o)
-  8h - 92D1h		(C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o)
-  F490h - FFFEh		(C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o)
-  300000h - 30000Dh		(C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o)
+  0h - 3h		(C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o)
+  8h - 92D3h		(C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o)
+  F4A2h - FFFFh		(C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o)
+  300000h - 30000Dh		(C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o)
  Unused ranges:
   4h - 7h
-  92D2h - F48Fh
-  FFFFh - 2FFFFFh
+  92D4h - F4A1h
+  10000h - 2FFFFFh
 
 ### Hex Memory Map ###
  Legend:
   -- = Unused memory
-  H1 = Input file             (C:\Users\moua\AppData\Local\Temp\xcAs3b8.\driver_tmp_3.o)
+  H1 = Input file             (C:\Users\moua\AppData\Local\Temp\xcAsiog.\driver_tmp_3.o)
 ----------------------------------------------------------
          | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 ----------------------------------------------------------
@@ -2374,10 +2374,9 @@
 000092A0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 000092B0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 000092C0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-000092D0 | H1 H1 -- -- -- -- -- -- -- -- -- -- -- -- -- --
+000092D0 | H1 H1 H1 H1 -- -- -- -- -- -- -- -- -- -- -- --
 ----------------------------------------------------------
-0000F490 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-0000F4A0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F4A0 | -- -- H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F4B0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F4C0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F4D0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
@@ -2558,7 +2557,7 @@
 0000FFC0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000FFD0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000FFE0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-0000FFF0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 --
+0000FFF0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 ----------------------------------------------------------
 00300000 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 -- --
 00300010 | --

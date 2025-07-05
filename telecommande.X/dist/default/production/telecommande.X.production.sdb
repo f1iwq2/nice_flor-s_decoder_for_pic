@@ -22,7 +22,7 @@ I2C_STATE_ERROR 6
 I2C_STATE_STOP 7
 I2C_STATE_RESET 8
 ]
-"1048 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1038 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [e E12792 . `uc
 I2C_ERROR_NONE 0
 I2C_ERROR_ADDR_NACK 1
@@ -113,86 +113,86 @@ I2C_ERROR_BUS_COLLISION 3
 [v ___lmul __lmul `(ul  1 e 4 0 ]
 "91 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\Umul64.c
 [v ___omul __omul `(uo  1 e 8 0 ]
-"288 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"293 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _raz_bits raz_bits `(v  1 e 1 0 ]
 [v i2_raz_bits raz_bits `(v  1 e 1 0 ]
-"296
+"301
 [v _fin_came fin_came `(v  1 e 1 0 ]
-"307
+"308
 [v _fin_cardin fin_cardin `(v  1 e 1 0 ]
-"314
+"315
 [v _fin_somfy fin_somfy `(v  1 e 1 0 ]
-"325
+"322
 [v _fin_fobloqf fin_fobloqf `(v  1 e 1 0 ]
-"339
+"332
 [v _ISR_high ISR_high `IIH(v  1 e 1 0 ]
-"919
+"912
 [v _lit_eprom_int lit_eprom_int `(uc  1 e 1 0 ]
-"933
+"925
 [v _KeeLoq_Decrypt KeeLoq_Decrypt `(ul  1 e 4 0 ]
-"944
+"936
 [v _nlf nlf `(uc  1 e 1 0 ]
-"950
+"942
 [v _KeeLoq_Decrypt2 KeeLoq_Decrypt2 `(v  1 e 1 0 ]
-"969
+"961
 [v _menu menu `(v  1 e 1 0 ]
-"1023
+"1013
 [v _UART_WriteByte UART_WriteByte `(v  1 e 1 0 ]
-"1033
+"1023
 [v _ecrit_bloc_eprom_ext ecrit_bloc_eprom_ext `(v  1 e 1 0 ]
-"1079
+"1069
 [v _attend_rx_30 attend_rx_30 `(uc  1 e 1 0 ]
-"1101
+"1091
 [v _attend_rx attend_rx `(uc  1 e 1 0 ]
-"1118
+"1108
 [v _calccrc calccrc `(us  1 e 2 0 ]
-"1145
+"1135
 [v _ecrit_eprom_int ecrit_eprom_int `(v  1 e 1 0 ]
-"1170
+"1160
 [v _ecrit_bloc_eprom_int ecrit_bloc_eprom_int `(v  1 e 1 0 ]
-"1180
+"1170
 [v _erreur_xmodem erreur_xmodem `(v  1 e 1 0 ]
-"1191
+"1181
 [v _recoit_xmodem recoit_xmodem `(v  1 e 1 0 ]
-"1270
+"1260
 [v _lit_eprom_ext lit_eprom_ext `(v  1 e 1 0 ]
-"1302
+"1292
 [v _lit_bloc_eprom_ext lit_bloc_eprom_ext `(v  1 e 1 0 ]
-"1333
+"1323
 [v _affiche_enregistrement affiche_enregistrement `(v  1 e 1 0 ]
-"1437
-[v _Affiche5 Affiche5 `(v  1 e 1 0 ]
-"1444
+"1434
 [v _Affiche4 Affiche4 `(v  1 e 1 0 ]
-"1450
+"1440
 [v _UART_ExecuteCommand UART_ExecuteCommand `(v  1 e 1 0 ]
-"1726
+"1716
 [v _UART_ProcessCommand UART_ProcessCommand `(v  1 e 1 0 ]
-"1745
+"1735
 [v _UART1_WriteString UART1_WriteString `(v  1 e 1 0 ]
+"1796
+[v _print_binary print_binary `(v  1 e 1 0 ]
 "1807
 [v _Affiche Affiche `(v  1 e 1 0 ]
-"1816
+"1815
 [v _code_b0b6_nice_valide code_b0b6_nice_valide `(a  1 e 1 0 ]
-"1824
+"1823
 [v _decode_nice_b0b6 decode_nice_b0b6 `(a  1 e 1 0 ]
-"1878
+"1877
 [v _trouve_code_nice trouve_code_nice `(us  1 e 2 0 ]
-"1905
+"1904
 [v _trouve_code_algo_nice trouve_code_algo_nice `(us  1 e 2 0 ]
-"1956
+"1957
 [v _decode_fobloqf decode_fobloqf `(a  1 e 1 0 ]
-"1976
+"1978
 [v _decode_cardin decode_cardin `(a  1 e 1 0 ]
-"2099
+"2113
 [v _decode_somfy decode_somfy `(a  1 e 1 0 ]
-"2171
+"2185
 [v _decode_b06_nice decode_b06_nice `(v  1 e 1 0 ]
-"2246
+"2260
 [v _num_telecommande_int num_telecommande_int `(uc  1 e 1 0 ]
-"2269
+"2283
 [v _traitementCode traitementCode `(v  1 e 1 0 ]
-"2375
+"2389
 [v _main main `(i  1 e 2 0 ]
 "112 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/i2c_host/src/mssp.c
 [v _I2C1_Initialize I2C1_Initialize `(v  1 e 1 0 ]
@@ -847,7 +847,7 @@ I2C_ERROR_BUS_COLLISION 3
 [v _dbuf dbuf `[32]uc  1 s 32 dbuf ]
 "209 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _key key `[8]uc  1 e 8 0 ]
-"258
+"263
 [v _b0 b0 `uc  1 e 1 0 ]
 [v _b1 b1 `uc  1 e 1 0 ]
 [v _b2 b2 `uc  1 e 1 0 ]
@@ -855,59 +855,59 @@ I2C_ERROR_BUS_COLLISION 3
 [v _b4 b4 `uc  1 e 1 0 ]
 [v _b5 b5 `uc  1 e 1 0 ]
 [v _b6 b6 `uc  1 e 1 0 ]
-"259
+"264
 [v _chaine chaine `[50]uc  1 e 50 0 ]
-"260
+"265
 [v _i2cdata i2cdata `[130]uc  1 e 130 0 ]
-"261
+"266
 [v _debug debug `uc  1 e 1 0 ]
 [v _protocole protocole `uc  1 e 1 0 ]
-"262
-[v _i2cread i2cread `[130]uc  1 e 130 0 ]
-"263
-[v _vitesse vitesse `[2]ul  1 e 8 0 ]
-"264
-[v _bufferRx bufferRx `[130]uc  1 e 130 0 ]
-"265
-[v _mesure_bits mesure_bits `[200]ul  1 e 800 0 ]
-"266
-[v _mesure_error mesure_error `[200]uc  1 e 200 0 ]
 "267
+[v _i2cread i2cread `[130]uc  1 e 130 0 ]
+"268
+[v _vitesse vitesse `[2]ul  1 e 8 0 ]
+"269
+[v _bufferRx bufferRx `[130]uc  1 e 130 0 ]
+"270
+[v _mesure_bits mesure_bits `[200]ul  1 e 800 0 ]
+"271
+[v _mesure_error mesure_error `[200]uc  1 e 200 0 ]
+"272
 [v _timeout timeout `uc  1 e 1 0 ]
 [v _erreur erreur `uc  1 e 1 0 ]
 [v _erreurI2C erreurI2C `uc  1 e 1 0 ]
 [v _repete repete `uc  1 e 1 0 ]
-"268
+"273
 [v _waitCounter waitCounter `uc  1 e 1 0 ]
 [v _pak pak `uc  1 e 1 0 ]
 [v _pakcom pakcom `uc  1 e 1 0 ]
 [v _pvitesse pvitesse `uc  1 e 1 0 ]
 [v _bouton bouton `uc  1 e 1 0 ]
-"269
+"274
 [v _compt compt `us  1 e 2 0 ]
 [v _crc crc `us  1 e 2 0 ]
 [v _crcrecu crcrecu `us  1 e 2 0 ]
 [v _indexcode indexcode `us  1 e 2 0 ]
 [v _dureeS dureeS `us  1 e 2 0 ]
 [v _dureeStart1 dureeStart1 `us  1 e 2 0 ]
-"270
+"275
 [v _code code `uo  1 e 8 0 ]
 [v _tpsvalidetelecom tpsvalidetelecom `uo  1 e 8 0 ]
 [v _serial serial `uo  1 e 8 0 ]
-"271
+"276
 [v _duree duree `ul  1 e 4 0 ]
 [v _deborde deborde `ul  1 e 4 0 ]
 [v _anc_duree anc_duree `ul  1 e 4 0 ]
 [v _i i `ul  1 e 4 0 ]
 [v _trame trame `ul  1 e 4 0 ]
 [v _tpsbouton tpsbouton `ul  1 e 4 0 ]
-"272
+"277
 [v _command command `[8]uc  1 s 8 command ]
-"273
+"278
 [v _index index `uc  1 s 1 index ]
-"274
+"279
 [v _readMessage readMessage `uc  1 s 1 readMessage ]
-"275
+"280
 [v _recu recu `a  1 e 1 0 ]
 [v _bitDebut bitDebut `a  1 e 1 0 ]
 [v _bitSilence bitSilence `a  1 e 1 0 ]
@@ -915,17 +915,17 @@ I2C_ERROR_BUS_COLLISION 3
 [v _AncBp AncBp `a  1 e 1 0 ]
 [v _telegram telegram `a  1 e 1 0 ]
 [v _tramebits tramebits `a  1 e 1 0 ]
-"276
+"281
 [v _aff_enr aff_enr `a  1 e 1 0 ]
 [v _rx rx `a  1 e 1 0 ]
 [v _SilenceSomfy SilenceSomfy `a  1 e 1 0 ]
 [v _consecutif consecutif `a  1 e 1 0 ]
-"277
+"282
 [v _NbreBits NbreBits `us  1 e 2 0 ]
 [v _NbreBitsMsg NbreBitsMsg `us  1 e 2 0 ]
 [v _nb nb `us  1 e 2 0 ]
 [v _Nb0 Nb0 `us  1 e 2 0 ]
-"279
+"284
 [v _indexCodeRecu indexCodeRecu `[21]us  1 e 42 0 ]
 [s S42 . 20 `*.37(v 1 Initialize 2 0 `*.37(v 1 Deinitialize 2 2 `*.37(a 1 Write 2 4 `*.37(a 1 Read 2 6 `*.37(a 1 WriteRead 2 8 `*.37(a 1 TransferSetup 2 10 `*.37(E12340 1 ErrorGet 2 12 `*.37(a 1 IsBusy 2 14 `*.37(v 1 CallbackRegister 2 16 `*.37(v 1 Tasks 2 18 ]
 "78 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/i2c_host/src/mssp.c
@@ -964,113 +964,123 @@ I2C_ERROR_BUS_COLLISION 3
 [v _EUSART1_FramingErrorHandler EUSART1_FramingErrorHandler `*.37(v  1 s 2 EUSART1_FramingErrorHandler ]
 "84
 [v _EUSART1_OverrunErrorHandler EUSART1_OverrunErrorHandler `*.37(v  1 s 2 EUSART1_OverrunErrorHandler ]
-"2375 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"2389 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _main main `(i  1 e 2 0 ]
 {
 "2611
 } 0
-"2269
+"2283
 [v _traitementCode traitementCode `(v  1 e 1 0 ]
 {
-"2272
+"2286
 [v traitementCode@ep ep `ul  1 a 4 115 ]
-"2271
+"2285
 [v traitementCode@n n `uc  1 a 1 119 ]
-"2372
+"2386
 } 0
-"2246
+"2260
 [v _num_telecommande_int num_telecommande_int `(uc  1 e 1 0 ]
 {
-"2249
-[v num_telecommande_int@serialEprom serialEprom `ul  1 a 4 31 ]
-"2248
-[v num_telecommande_int@index index `us  1 a 2 35 ]
-"2246
-[v num_telecommande_int@serialin serialin `ul  1 p 4 20 ]
 "2263
+[v num_telecommande_int@serialEprom serialEprom `ul  1 a 4 31 ]
+"2262
+[v num_telecommande_int@index index `us  1 a 2 35 ]
+"2260
+[v num_telecommande_int@serialin serialin `ul  1 p 4 20 ]
+"2277
 } 0
-"2099
+"2113
 [v _decode_somfy decode_somfy `(a  1 e 1 0 ]
 {
-"2101
+"2115
 [v decode_somfy@chk chk `uc  1 a 1 116 ]
-"2167
+"2181
 } 0
-"1824
+"1823
 [v _decode_nice_b0b6 decode_nice_b0b6 `(a  1 e 1 0 ]
 {
-"1827
-[v decode_nice_b0b6@pr pr `o  1 a 8 110 ]
 "1826
+[v decode_nice_b0b6@pr pr `o  1 a 8 110 ]
+"1825
 [v decode_nice_b0b6@decoded decoded `uo  1 a 8 102 ]
-"1860
+"1859
 [v decode_nice_b0b6@ok ok `a  1 a 1 101 ]
-"1872
+"1871
 } 0
-"1816
+"1815
 [v _code_b0b6_nice_valide code_b0b6_nice_valide `(a  1 e 1 0 ]
 {
-"1819
+"1818
 } 0
-"1956
+"1957
 [v _decode_fobloqf decode_fobloqf `(a  1 e 1 0 ]
 {
-"1958
+"1959
 [v decode_fobloqf@temp temp `ul  1 a 4 116 ]
-"1974
+"1975
 } 0
-"1976
+"1978
 [v _decode_cardin decode_cardin `(a  1 e 1 0 ]
 {
-"2037
-[v decode_cardin@dip dip `[10]uc  1 a 10 16 ]
-"2033
-[v decode_cardin@rbutton rbutton `C[4]*.32Cuc  1 a 8 8 ]
-"1978
-[v decode_cardin@temp temp `ul  1 a 4 26 ]
-"2030
-[v decode_cardin@F13446 F13446 `C[4]*.32Cuc  1 s 8 F13446 ]
-"2034
-[v decode_cardin@F13457 F13457 `[10]uc  1 s 10 F13457 ]
-"2096
+"2051
+[v decode_cardin@dip dip `[10]uc  1 a 10 8 ]
+"2047
+[v decode_cardin@rbutton rbutton `C[4]*.32Cuc  1 a 8 0 ]
+"1980
+[v decode_cardin@temp temp `ul  1 a 4 18 ]
+"2044
+[v decode_cardin@F13451 F13451 `C[4]*.32Cuc  1 s 8 F13451 ]
+"2048
+[v decode_cardin@F13462 F13462 `[10]uc  1 s 10 F13462 ]
+"2110
 } 0
-"950
+"1796
+[v _print_binary print_binary `(v  1 e 1 0 ]
+{
+"1798
+[v print_binary@i i `i  1 a 2 110 ]
+"1796
+[v print_binary@number number `uo  1 p 8 92 ]
+[v print_binary@n n `i  1 p 2 100 ]
+"1804
+} 0
+"942
 [v _KeeLoq_Decrypt2 KeeLoq_Decrypt2 `(v  1 e 1 0 ]
 {
-"952
+"944
 [v KeeLoq_Decrypt2@x x `ul  1 a 4 72 ]
-"953
+"945
 [v KeeLoq_Decrypt2@r r `us  1 a 2 80 ]
-"954
+"946
 [v KeeLoq_Decrypt2@ki ki `uc  1 a 1 79 ]
 [v KeeLoq_Decrypt2@k k `uc  1 a 1 78 ]
 [v KeeLoq_Decrypt2@nlf_input nlf_input `uc  1 a 1 77 ]
 [v KeeLoq_Decrypt2@o o `uc  1 a 1 76 ]
-"950
+"942
 [v KeeLoq_Decrypt2@key key `*.39uc  1 p 2 26 ]
 [v KeeLoq_Decrypt2@data data `uo  1 p 8 28 ]
 [v KeeLoq_Decrypt2@nrounds nrounds `Cus  1 p 2 36 ]
-"966
+"958
 } 0
-"944
+"936
 [v _nlf nlf `(uc  1 e 1 0 ]
 {
 [v nlf@d d `uc  1 p 1 wreg ]
 [v nlf@d d `uc  1 p 1 wreg ]
-"946
+"938
 [v nlf@d d `uc  1 p 1 22 ]
-"947
+"939
 } 0
-"933
+"925
 [v _KeeLoq_Decrypt KeeLoq_Decrypt `(ul  1 e 4 0 ]
 {
-"935
+"927
 [v KeeLoq_Decrypt@x x `ul  1 a 4 107 ]
 [v KeeLoq_Decrypt@r r `ul  1 a 4 103 ]
-"933
+"925
 [v KeeLoq_Decrypt@data data `uo  1 p 8 18 ]
 [v KeeLoq_Decrypt@key key `Cuo  1 p 8 26 ]
-"941
+"933
 } 0
 "1807
 [v _Affiche Affiche `(v  1 e 1 0 ]
@@ -1081,47 +1091,47 @@ I2C_ERROR_BUS_COLLISION 3
 [v Affiche@codex codex `uo  1 p 8 92 ]
 "1813
 } 0
-"2171
+"2185
 [v _decode_b06_nice decode_b06_nice `(v  1 e 1 0 ]
 {
-"2173
+"2187
 [v decode_b06_nice@encode encode `us  1 a 2 28 ]
-"2174
+"2188
 [v decode_b06_nice@ki ki `uc  1 a 1 30 ]
 [v decode_b06_nice@snbuf0 snbuf0 `uc  1 a 1 27 ]
 [v decode_b06_nice@snbuf1 snbuf1 `uc  1 a 1 26 ]
 [v decode_b06_nice@snbuf2 snbuf2 `uc  1 a 1 25 ]
 [v decode_b06_nice@snbuf3 snbuf3 `uc  1 a 1 24 ]
-"2205
+"2219
 } 0
-"1905
+"1904
 [v _trouve_code_algo_nice trouve_code_algo_nice `(us  1 e 2 0 ]
 {
-"1909
+"1908
 [v trouve_code_algo_nice@i i `us  1 a 2 8 ]
 [v trouve_code_algo_nice@lu_ext lu_ext `us  1 a 2 5 ]
-"1908
-[v trouve_code_algo_nice@increment increment `uc  1 a 1 11 ]
 "1907
+[v trouve_code_algo_nice@increment increment `uc  1 a 1 11 ]
+"1906
 [v trouve_code_algo_nice@trouve trouve `a  1 a 1 10 ]
-"1908
+"1907
 [v trouve_code_algo_nice@bal_telecom bal_telecom `uc  1 a 1 7 ]
-"1905
+"1904
 [v trouve_code_algo_nice@c c `us  1 p 2 0 ]
-"1936
+"1935
 } 0
-"1878
+"1877
 [v _trouve_code_nice trouve_code_nice `(us  1 e 2 0 ]
 {
-"1882
+"1881
 [v trouve_code_nice@i i `ul  1 a 4 117 ]
-"1883
+"1882
 [v trouve_code_nice@j j `uc  1 a 1 121 ]
-"1880
+"1879
 [v trouve_code_nice@trouve trouve `a  1 a 1 116 ]
-"1878
+"1877
 [v trouve_code_nice@c c `us  1 p 2 106 ]
-"1899
+"1898
 } 0
 "7 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\awdiv.c
 [v ___awdiv __awdiv `(i  1 e 2 0 ]
@@ -1146,28 +1156,28 @@ I2C_ERROR_BUS_COLLISION 3
 [v ___lomod@divisor divisor `uo  1 p 8 26 ]
 "27
 } 0
-"1726 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1716 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _UART_ProcessCommand UART_ProcessCommand `(v  1 e 1 0 ]
 {
-"1743
+"1733
 } 0
-"1450
+"1440
 [v _UART_ExecuteCommand UART_ExecuteCommand `(v  1 e 1 0 ]
 {
-"1609
+"1599
 [v UART_ExecuteCommand@v v `uc  1 a 1 4 ]
-"1659
-[v UART_ExecuteCommand@j_2483 j `ul  1 a 4 10 ]
+"1649
+[v UART_ExecuteCommand@j_2486 j `ul  1 a 4 10 ]
 [v UART_ExecuteCommand@k k `ul  1 a 4 0 ]
-"1621
+"1611
 [v UART_ExecuteCommand@j j `ul  1 a 4 5 ]
-"1620
+"1610
 [v UART_ExecuteCommand@chk chk `uc  1 a 1 9 ]
-"1452
+"1442
 [v UART_ExecuteCommand@ep ep `uo  1 a 8 14 ]
-"1450
+"1440
 [v UART_ExecuteCommand@command command `*.39uc  1 p 2 106 ]
-"1724
+"1714
 } 0
 "3 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\strcmp.c
 [v _strcmp strcmp `(i  1 e 2 0 ]
@@ -1176,55 +1186,55 @@ I2C_ERROR_BUS_COLLISION 3
 [v strcmp@r r `*.32Cuc  1 p 2 20 ]
 "7
 } 0
-"1191 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1181 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _recoit_xmodem recoit_xmodem `(v  1 e 1 0 ]
 {
-"1194
+"1184
 [v recoit_xmodem@padr padr `us  1 a 2 44 ]
-"1193
+"1183
 [v recoit_xmodem@b b `uc  1 a 1 48 ]
 [v recoit_xmodem@ancienpak ancienpak `uc  1 a 1 47 ]
-"1195
+"1185
 [v recoit_xmodem@demande demande `a  1 a 1 46 ]
-"1191
+"1181
 [v recoit_xmodem@mode mode `i  1 p 2 38 ]
-"1266
+"1256
 } 0
-"1180
+"1170
 [v _erreur_xmodem erreur_xmodem `(v  1 e 1 0 ]
 {
 [v erreur_xmodem@num num `uc  1 p 1 wreg ]
 [v erreur_xmodem@num num `uc  1 p 1 wreg ]
-"1182
+"1172
 [v erreur_xmodem@num num `uc  1 p 1 22 ]
-"1185
+"1175
 } 0
-"1170
+"1160
 [v _ecrit_bloc_eprom_int ecrit_bloc_eprom_int `(v  1 e 1 0 ]
 {
 [v ecrit_bloc_eprom_int@adresse adresse `us  1 p 2 22 ]
-"1176
-} 0
-"1145
-[v _ecrit_eprom_int ecrit_eprom_int `(v  1 e 1 0 ]
-{
-"1147
-[v ecrit_eprom_int@ancgie ancgie `a  1 a 1 21 ]
-"1145
-[v ecrit_eprom_int@adresse adresse `us  1 p 2 18 ]
-[v ecrit_eprom_int@valeur valeur `uc  1 p 1 20 ]
 "1166
 } 0
-"1033
+"1135
+[v _ecrit_eprom_int ecrit_eprom_int `(v  1 e 1 0 ]
+{
+"1137
+[v ecrit_eprom_int@ancgie ancgie `a  1 a 1 21 ]
+"1135
+[v ecrit_eprom_int@adresse adresse `us  1 p 2 18 ]
+[v ecrit_eprom_int@valeur valeur `uc  1 p 1 20 ]
+"1156
+} 0
+"1023
 [v _ecrit_bloc_eprom_ext ecrit_bloc_eprom_ext `(v  1 e 1 0 ]
 {
-"1036
+"1026
 [v ecrit_bloc_eprom_ext@mask mask `ul  1 a 4 32 ]
-"1035
+"1025
 [v ecrit_bloc_eprom_ext@i i `i  1 a 2 36 ]
-"1033
+"1023
 [v ecrit_bloc_eprom_ext@adresse adresse `ul  1 p 4 26 ]
-"1074
+"1064
 } 0
 "133 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/i2c_host/src/mssp.c
 [v _I2C1_Write I2C1_Write `(a  1 e 1 0 ]
@@ -1237,40 +1247,40 @@ I2C_ERROR_BUS_COLLISION 3
 [v I2C1_Write@dataLength dataLength `ui  1 p 2 23 ]
 "150
 } 0
-"1118 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1108 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _calccrc calccrc `(us  1 e 2 0 ]
 {
-"1120
+"1110
 [v calccrc@crc crc `us  1 a 2 25 ]
-"1122
+"1112
 [v calccrc@index index `uc  1 a 1 24 ]
-"1121
+"1111
 [v calccrc@i i `uc  1 a 1 23 ]
-"1118
+"1108
 [v calccrc@count count `i  1 p 2 18 ]
-"1141
+"1131
 } 0
-"1079
+"1069
 [v _attend_rx_30 attend_rx_30 `(uc  1 e 1 0 ]
 {
-"1081
+"1071
 [v attend_rx_30@Compte Compte `ul  1 a 4 27 ]
-"1097
+"1087
 } 0
-"1101
+"1091
 [v _attend_rx attend_rx `(uc  1 e 1 0 ]
 {
-"1103
+"1093
 [v attend_rx@nbtimeout nbtimeout `i  1 a 2 22 ]
-"1114
+"1104
 } 0
-"1023
+"1013
 [v _UART_WriteByte UART_WriteByte `(v  1 e 1 0 ]
 {
 [v UART_WriteByte@b b `uc  1 p 1 wreg ]
 [v UART_WriteByte@b b `uc  1 p 1 wreg ]
 [v UART_WriteByte@b b `uc  1 p 1 21 ]
-"1029
+"1019
 } 0
 "213 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/uart/src/eusart1.c
 [v _EUSART1_Read EUSART1_Read `(uc  1 e 1 0 ]
@@ -1287,39 +1297,39 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "261
 } 0
-"969 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"961 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _menu menu `(v  1 e 1 0 ]
 {
-"1020
+"1010
 } 0
-"919
+"912
 [v _lit_eprom_int lit_eprom_int `(uc  1 e 1 0 ]
 {
 [v lit_eprom_int@adresse adresse `us  1 p 2 18 ]
-"928
+"921
 } 0
-"1270
+"1260
 [v _lit_eprom_ext lit_eprom_ext `(v  1 e 1 0 ]
 {
-"1272
+"1262
 [v lit_eprom_ext@mask mask `ul  1 a 4 99 ]
-"1280
-[v lit_eprom_ext@err err `i  1 a 2 103 ]
 "1270
+[v lit_eprom_ext@err err `i  1 a 2 103 ]
+"1260
 [v lit_eprom_ext@adresse adresse `ul  1 p 4 92 ]
-"1298
+"1288
 } 0
-"1302
+"1292
 [v _lit_bloc_eprom_ext lit_bloc_eprom_ext `(v  1 e 1 0 ]
 {
-"1304
+"1294
 [v lit_bloc_eprom_ext@mask mask `ul  1 a 4 100 ]
-"1312
-[v lit_bloc_eprom_ext@err err `i  1 a 2 104 ]
 "1302
+[v lit_bloc_eprom_ext@err err `i  1 a 2 104 ]
+"1292
 [v lit_bloc_eprom_ext@adresse adresse `ul  1 p 4 92 ]
 [v lit_bloc_eprom_ext@nombre nombre `uc  1 p 1 96 ]
-"1330
+"1320
 } 0
 "171 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/i2c_host/src/mssp.c
 [v _I2C1_WriteRead I2C1_WriteRead `(a  1 e 1 0 ]
@@ -1510,18 +1520,20 @@ I2C_ERROR_BUS_COLLISION 3
 [v I2C1_ErrorGet@retErrorState retErrorState `E12340  1 a 1 18 ]
 "195
 } 0
-"1333 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1323 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _affiche_enregistrement affiche_enregistrement `(v  1 e 1 0 ]
 {
-"1335
+"1326
+[v affiche_enregistrement@ancduree ancduree `us  1 a 2 100 ]
+"1325
 [v affiche_enregistrement@y y `uc  1 a 1 99 ]
 [v affiche_enregistrement@x x `uc  1 a 1 98 ]
-"1433
+"1431
 } 0
-"288
+"293
 [v _raz_bits raz_bits `(v  1 e 1 0 ]
 {
-"294
+"299
 } 0
 "7 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\awmod.c
 [v ___awmod __awmod `(i  1 e 2 0 ]
@@ -1534,23 +1546,14 @@ I2C_ERROR_BUS_COLLISION 3
 [v ___awmod@divisor divisor `i  1 p 2 20 ]
 "34
 } 0
-"1437 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
-[v _Affiche5 Affiche5 `(v  1 e 1 0 ]
-{
-"1439
-[v Affiche5@p p `ul  1 a 4 96 ]
-"1437
-[v Affiche5@codex codex `ul  1 p 4 92 ]
-"1441
-} 0
-"1444
+"1434 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _Affiche4 Affiche4 `(v  1 e 1 0 ]
 {
-"1446
+"1436
 [v Affiche4@p p `ul  1 a 4 100 ]
-"1444
+"1434
 [v Affiche4@codex codex `uo  1 p 8 92 ]
-"1448
+"1438
 } 0
 "5 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\printf.c
 [v _printf printf `(i  1 e 2 0 ]
@@ -1566,9 +1569,9 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "1820
 [v vfprintf@cfmt cfmt `*.32uc  1 a 2 79 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1817
-[v vfprintf@fp fp `*.30S3159  1 p 1 75 ]
+[v vfprintf@fp fp `*.30S3170  1 p 1 75 ]
 [v vfprintf@fmt fmt `*.32Cuc  1 p 2 76 ]
 [v vfprintf@ap ap `*.30*.30v  1 p 1 78 ]
 "1840
@@ -1576,17 +1579,17 @@ I2C_ERROR_BUS_COLLISION 3
 "1177
 [v _vfpfcnvrt vfpfcnvrt `(v  1 s 1 vfpfcnvrt ]
 {
-[u S3183 . 4 `l 1 sint 4 0 `ul 1 uint 4 0 `d 1 f 4 0 ]
+[u S3194 . 4 `l 1 sint 4 0 `ul 1 uint 4 0 `d 1 f 4 0 ]
 "1188
-[v vfpfcnvrt@convarg convarg `S3183  1 a 4 68 ]
+[v vfpfcnvrt@convarg convarg `S3194  1 a 4 68 ]
 "1179
 [v vfpfcnvrt@cp cp `*.32uc  1 a 2 73 ]
 [v vfpfcnvrt@c c `uc  1 a 1 72 ]
 "1180
 [v vfpfcnvrt@done done `a  1 a 1 67 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1177
-[v vfpfcnvrt@fp fp `*.30S3159  1 p 1 61 ]
+[v vfpfcnvrt@fp fp `*.30S3170  1 p 1 61 ]
 [v vfpfcnvrt@fmt fmt `*.30*.32uc  1 p 1 62 ]
 [v vfpfcnvrt@ap ap `*.39*.30v  1 p 2 63 ]
 "1814
@@ -1603,9 +1606,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v xtoa@p p `a  1 a 1 55 ]
 "1061
 [v xtoa@a a `uc  1 a 1 52 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1052
-[v xtoa@fp fp `*.30S3159  1 p 1 42 ]
+[v xtoa@fp fp `*.30S3170  1 p 1 42 ]
 [v xtoa@d d `ul  1 p 4 43 ]
 [v xtoa@x x `uc  1 p 1 47 ]
 "1153
@@ -1618,9 +1621,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v utoa@w w `i  1 a 2 48 ]
 "1007
 [v utoa@p p `a  1 a 1 47 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1001
-[v utoa@fp fp `*.30S3159  1 p 1 42 ]
+[v utoa@fp fp `*.30S3170  1 p 1 42 ]
 [v utoa@d d `ul  1 p 4 43 ]
 "1047
 } 0
@@ -1657,9 +1660,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v stoa@w w `i  1 a 2 35 ]
 "945
 [v stoa@p p `i  1 a 2 33 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "942
-[v stoa@fp fp `*.30S3159  1 p 1 28 ]
+[v stoa@fp fp `*.30S3170  1 p 1 28 ]
 [v stoa@s s `*.39uc  1 p 2 29 ]
 "997
 } 0
@@ -1685,9 +1688,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v dtoa@s s `uc  1 a 1 52 ]
 "520
 [v dtoa@p p `a  1 a 1 49 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "513
-[v dtoa@fp fp `*.30S3159  1 p 1 42 ]
+[v dtoa@fp fp `*.30S3170  1 p 1 42 ]
 [v dtoa@d d `l  1 p 4 43 ]
 "583
 } 0
@@ -1696,9 +1699,9 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "195
 [v pad@i i `i  1 a 2 40 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "193
-[v pad@fp fp `*.30S3159  1 p 1 34 ]
+[v pad@fp fp `*.30S3170  1 p 1 34 ]
 [v pad@buf buf `*.39uc  1 p 2 35 ]
 [v pad@p p `i  1 p 2 37 ]
 "226
@@ -1712,18 +1715,18 @@ I2C_ERROR_BUS_COLLISION 3
 [v fputs@c c `uc  1 a 1 31 ]
 "8
 [v fputs@s s `*.39Cuc  1 p 2 28 ]
-[u S3124 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
-[s S3127 _IO_FILE 11 `S3124 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
-[v fputs@fp fp `*.30S3127  1 p 1 30 ]
+[u S3135 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
+[s S3138 _IO_FILE 11 `S3135 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
+[v fputs@fp fp `*.30S3138  1 p 1 30 ]
 "19
 } 0
 "8 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\nf_fputc.c
 [v _fputc fputc `(i  1 e 2 0 ]
 {
 [v fputc@c c `i  1 p 2 20 ]
-[u S3124 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
-[s S3127 _IO_FILE 11 `S3124 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
-[v fputc@fp fp `*.30S3127  1 p 1 22 ]
+[u S3135 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
+[s S3138 _IO_FILE 11 `S3135 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
+[v fputc@fp fp `*.30S3138  1 p 1 22 ]
 "24
 } 0
 "249 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/uart/src/eusart1.c
@@ -1769,14 +1772,14 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "196
 } 0
-"1745 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"1735 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _UART1_WriteString UART1_WriteString `(v  1 e 1 0 ]
 {
-"1747
+"1737
 [v UART1_WriteString@i i `i  1 a 2 28 ]
-"1745
+"1735
 [v UART1_WriteString@message message `*.34Cuc  1 p 2 22 ]
-"1754
+"1744
 } 0
 "5 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\strlen.c
 [v _strlen strlen `(ui  1 e 2 0 ]
@@ -1859,10 +1862,10 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "55
 } 0
-"339 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"332 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _ISR_high ISR_high `IIH(v  1 e 1 0 ]
 {
-"914
+"907
 } 0
 "5 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\printf.c
 [v i2_printf printf `(i  1 e 2 0 ]
@@ -1878,9 +1881,9 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "1820
 [v i2vfprintf@cfmt cfmt `*.32uc  1 a 2 60 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1817
-[v i2vfprintf@fp fp `*.30S3159  1 p 1 56 ]
+[v i2vfprintf@fp fp `*.30S3170  1 p 1 56 ]
 [v i2vfprintf@fmt fmt `*.32Cuc  1 p 2 57 ]
 [v i2vfprintf@ap ap `*.30*.30v  1 p 1 59 ]
 "1840
@@ -1888,17 +1891,17 @@ I2C_ERROR_BUS_COLLISION 3
 "1177
 [v i2_vfpfcnvrt vfpfcnvrt `(v  1 s 1 i2_vfpfcnvrt ]
 {
-[u S3183 . 4 `l 1 sint 4 0 `ul 1 uint 4 0 `d 1 f 4 0 ]
+[u S3194 . 4 `l 1 sint 4 0 `ul 1 uint 4 0 `d 1 f 4 0 ]
 "1188
-[v i2vfpfcnvrt@convarg convarg `S3183  1 a 4 49 ]
+[v i2vfpfcnvrt@convarg convarg `S3194  1 a 4 49 ]
 "1179
 [v i2vfpfcnvrt@cp cp `*.32uc  1 a 2 54 ]
 [v i2vfpfcnvrt@c c `uc  1 a 1 53 ]
 "1180
 [v i2vfpfcnvrt@done done `a  1 a 1 48 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1177
-[v i2vfpfcnvrt@fp fp `*.30S3159  1 p 1 43 ]
+[v i2vfpfcnvrt@fp fp `*.30S3170  1 p 1 43 ]
 [v i2vfpfcnvrt@fmt fmt `*.30*.32uc  1 p 1 44 ]
 [v i2vfpfcnvrt@ap ap `*.30*.30v  1 p 1 45 ]
 "1814
@@ -1915,9 +1918,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2xtoa@p p `a  1 a 1 37 ]
 "1061
 [v i2xtoa@a a `uc  1 a 1 34 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1052
-[v i2xtoa@fp fp `*.30S3159  1 p 1 24 ]
+[v i2xtoa@fp fp `*.30S3170  1 p 1 24 ]
 [v i2xtoa@d d `ul  1 p 4 25 ]
 [v i2xtoa@x x `uc  1 p 1 29 ]
 "1153
@@ -1930,9 +1933,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2utoa@w w `i  1 a 2 30 ]
 "1007
 [v i2utoa@p p `a  1 a 1 29 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "1001
-[v i2utoa@fp fp `*.30S3159  1 p 1 24 ]
+[v i2utoa@fp fp `*.30S3170  1 p 1 24 ]
 [v i2utoa@d d `ul  1 p 4 25 ]
 "1047
 } 0
@@ -1969,9 +1972,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2stoa@w w `i  1 a 2 17 ]
 "945
 [v i2stoa@p p `i  1 a 2 15 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "942
-[v i2stoa@fp fp `*.30S3159  1 p 1 10 ]
+[v i2stoa@fp fp `*.30S3170  1 p 1 10 ]
 [v i2stoa@s s `*.39uc  1 p 2 11 ]
 "997
 } 0
@@ -1997,9 +2000,9 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2dtoa@s s `uc  1 a 1 34 ]
 "520
 [v i2dtoa@p p `a  1 a 1 31 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "513
-[v i2dtoa@fp fp `*.30S3159  1 p 1 24 ]
+[v i2dtoa@fp fp `*.30S3170  1 p 1 24 ]
 [v i2dtoa@d d `l  1 p 4 25 ]
 "583
 } 0
@@ -2008,9 +2011,9 @@ I2C_ERROR_BUS_COLLISION 3
 {
 "195
 [v i2pad@i i `i  1 a 2 22 ]
-[s S3159 _IO_FILE 0 ]
+[s S3170 _IO_FILE 0 ]
 "193
-[v i2pad@fp fp `*.30S3159  1 p 1 16 ]
+[v i2pad@fp fp `*.30S3170  1 p 1 16 ]
 [v i2pad@buf buf `*.39uc  1 p 2 17 ]
 [v i2pad@p p `i  1 p 2 19 ]
 "226
@@ -2024,18 +2027,18 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2fputs@c c `uc  1 a 1 13 ]
 "8
 [v i2fputs@s s `*.39Cuc  1 p 2 10 ]
-[u S3124 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
-[s S3127 _IO_FILE 11 `S3124 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
-[v i2fputs@fp fp `*.30S3127  1 p 1 12 ]
+[u S3135 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
+[s S3138 _IO_FILE 11 `S3135 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
+[v i2fputs@fp fp `*.30S3138  1 p 1 12 ]
 "19
 } 0
 "8 C:\Program Files\Microchip\xc8\v3.00\pic\sources\c99\common\nf_fputc.c
 [v i2_fputc fputc `(i  1 e 2 0 ]
 {
 [v i2fputc@c c `i  1 p 2 2 ]
-[u S3124 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
-[s S3127 _IO_FILE 11 `S3124 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
-[v i2fputc@fp fp `*.30S3127  1 p 1 4 ]
+[u S3135 . 2 `*.39uc 1 buffer 2 0 `*.39Cuc 1 source 2 0 ]
+[s S3138 _IO_FILE 11 `S3135 1 . 2 0 `i 1 count 2 2 `[3]uc 1 ungetbuf 3 4 `i 1 ungetcnt 2 7 `i 1 limit 2 9 ]
+[v i2fputc@fp fp `*.30S3138  1 p 1 4 ]
 "24
 } 0
 "249 C:\Users\moua\MPLABXProjects\telecommande.X\mcc_generated_files/uart/src/eusart1.c
@@ -2090,28 +2093,28 @@ I2C_ERROR_BUS_COLLISION 3
 [v i2___aldiv@divisor divisor `l  1 p 4 4 ]
 "41
 } 0
-"314 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
+"315 C:\Users\moua\MPLABXProjects\telecommande.X\main.c
 [v _fin_somfy fin_somfy `(v  1 e 1 0 ]
 {
-"323
+"320
 } 0
-"325
+"322
 [v _fin_fobloqf fin_fobloqf `(v  1 e 1 0 ]
 {
-"334
+"327
 } 0
-"307
+"308
 [v _fin_cardin fin_cardin `(v  1 e 1 0 ]
 {
-"312
+"313
 } 0
-"296
+"301
 [v _fin_came fin_came `(v  1 e 1 0 ]
 {
-"305
+"306
 } 0
-"288
+"293
 [v i2_raz_bits raz_bits `(v  1 e 1 0 ]
 {
-"294
+"299
 } 0

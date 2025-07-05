@@ -21034,8 +21034,8 @@ const uint32_t toleranceC=170;
 
 const uint32_t silenceD=135400;
 const uint32_t debutbitD=8020;
-const uint32_t bit0D=856;
-const uint32_t bit1D=1560;
+const uint32_t bit0D=850;
+const uint32_t bit1D=1600;
 const uint32_t toleranceD=250;
 
 
@@ -21048,11 +21048,11 @@ const uint32_t toleranceF=150;
 
 
 
-const uint32_t silence=37776;
-const uint32_t debutbit=2979;
-const uint32_t bit0=958;
-const uint32_t bit1=1962;
-const uint32_t tolerance=280;
+const uint32_t silenceN=37776;
+const uint32_t debutbitN=2979;
+const uint32_t bit0N=958;
+const uint32_t bit1N=1962;
+const uint32_t toleranceN=280;
 
 
 const uint32_t silenceS=5084;
@@ -21068,6 +21068,11 @@ const uint8_t prot_came=2;
 const uint8_t prot_cardin=3;
 const uint8_t prot_somfy=4;
 const uint8_t prot_fobloqf=5;
+
+
+const uint8_t Err_wrong_range_bit=1;
+const uint8_t Err_sym_bit=2;
+const uint8_t Err_bit_duration=3;
 
 uint8_t b0,b1,b2,b3,b4,b5,b6;
 char chaine[50];
@@ -21091,7 +21096,7 @@ _Bool aff_enr=0,rx,SilenceSomfy,consecutif;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t valt0;
 uint16_t indexCodeRecu[20 +1];
-# 288 "main.c"
+# 293 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21104,10 +21109,6 @@ void fin_came()
 {
   raz_bits();
   nb=NbreBits;
-  telegram=0;
-  bitDebut=0;
-  tramebits=0;
-  bitSilence=0;
   recu=1;
 }
 
@@ -21122,10 +21123,6 @@ void fin_somfy()
 {
   raz_bits();
   nb=NbreBitsMsg;
-  telegram=0;
-  bitDebut=0;
-  tramebits=0;
-  bitSilence=0;
   recu=1;
 }
 
@@ -21133,10 +21130,6 @@ void fin_fobloqf()
 {
   raz_bits();
   nb=NbreBits;
-  telegram=0;
-  bitDebut=0;
-  tramebits=0;
-  bitSilence=0;
   recu=1;
 }
 
@@ -21188,14 +21181,13 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
         goto fin;
       }
-      debug=0;
       nb=200;
+      debug=0;
+      protocole=0;
       raz_bits();
       aff_enr=1;
       goto fin;
     }
-
-
 
 
     if ( (!bitSilence) && (!telegram) && ((duree>(silenceF-300)) && (duree<(silenceF+300))))
@@ -21229,7 +21221,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
     if ((!bitSilence) && (!telegram) && ((duree>(silenceD-550)) && (duree<(silenceD+550))))
-
     {
       NbreBits=1;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
@@ -21245,15 +21236,14 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       goto fin;
     }
 
-
     if ((protocole==prot_cardin) && (bitSilence) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))
     {
 
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
-
-
+      if (debug==2) printf("Cardin S449");
+      NbreBitsMsg=0;
       bitDebut=0;
       telegram=1;
       code=0;
@@ -21261,7 +21251,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
-    if ((!telegram) && ((duree>(silence-tolerance)) && (duree<(silence+tolerance))))
+    if ((!telegram) && ((duree>(silenceN-toleranceN)) && (duree<(silenceN+toleranceN))))
     {
       NbreBits=1;
       bitDebut=1;
@@ -21358,7 +21348,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         goto fin;
       }
 
-      if (debug==1) printf("E");
+      printf("E%d\r\n",duree);
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
       raz_bits();
       goto fin;
     }
@@ -21369,16 +21360,17 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     {
 
 
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
       if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
       {
 
 
-        code=code * 2;
-        code=code | 1;
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
-        if (NbreBits>=64) fin_cardin();
-        goto fin;
-        if (NbreBits % 2==0)
+
+
+
+
+
+        if ((NbreBits+1) % 2==0)
         {
           bitPrec=1;
         }
@@ -21389,14 +21381,17 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           {
             NbreBitsMsg++;
             code=code * 2;
-            code=code | 1;
+            if (NbreBitsMsg>=64) fin_cardin();
+
           }
           else
           {
+            mesure_error[NbreBits]=Err_sym_bit;
+            if (debug==1) printf("EAA D=%u\r\n",duree);
+            nb=NbreBits;
             NbreBits=0;raz_bits();
-            if (debug==1)
-            {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}
           }
+
         }
         goto fin;
       }
@@ -21405,11 +21400,10 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       {
 
 
-        code=code * 2;
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
-        if (NbreBits>=64) fin_cardin();
-        goto fin;
-        if (NbreBits % 2==0)
+
+
+
+        if ((NbreBits+1) % 2==0)
         {
           bitPrec=0;
         }
@@ -21420,12 +21414,14 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           {
             NbreBitsMsg++;
             code=code*2;
+            code=code | 1;
+            if (NbreBitsMsg>=64) fin_cardin();
           }
           else
           {
+            mesure_error[NbreBits]=Err_sym_bit;
             if (debug==1) printf("EBA D=%u\r\n",duree);
             nb=NbreBits;
-            mesure_error[NbreBits]=2;
             NbreBits=0;raz_bits();
           }
         }
@@ -21433,12 +21429,11 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       }
 
       printf("E%d\r\n",duree);
-      mesure_error[NbreBits]=3;
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
       nb=NbreBits;
       raz_bits();
       goto fin;
     }
-
 
 
     if (telegram && (protocole==prot_fobloqf))
@@ -21471,7 +21466,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1)
-              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EAA D=%u\r\n",duree);}
             }
           }
           goto fin;
@@ -21500,7 +21495,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1)
-              {mesure_error[NbreBits]=2;printf("EBA D=%u\r\n",duree);}
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EBA D=%u\r\n",duree);}
             }
           }
           goto fin;
@@ -21509,8 +21504,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         {
           raz_bits();
           nb=NbreBits;
-
-              printf("EFA%d\r\n",NbreBits);
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
+          if (debug==1) printf("EFA%d\r\n",NbreBits);
           goto fin;
         }
       }
@@ -21545,9 +21540,9 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             }
             else
             {
+              mesure_error[NbreBits]=Err_sym_bit;
               NbreBits=0;raz_bits();
-              if (debug==1)
-              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}
+              if (debug==1) printf("EAA D=%u\r\n",duree);
             }
           }
           goto fin;
@@ -21576,7 +21571,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1)
-              {mesure_error[NbreBits]=3;printf("EBA D=%u\r\n",duree);}
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EBA D=%u\r\n",duree);}
             }
           }
           goto fin;
@@ -21585,6 +21580,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         {
           raz_bits();
           nb=NbreBits;
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
           if (debug==1) printf("ECA%d\r\n",NbreBits);
           goto fin;
         }
@@ -21598,7 +21594,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
-      if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance)))
+      if ((duree>(debutbitN-toleranceN)) && (duree<(debutbitN+toleranceN)))
       {
 
 
@@ -21643,13 +21639,9 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
-        if (NbreBits<108)
-        {
-          mesure_bits[NbreBits]=duree;
-          mesure_error[NbreBits]=1;
-        }
         raz_bits();
         nb=NbreBits;
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
         if (debug==1) printf("EZ%u\r\n",NbreBits);
         goto fin;
       }
@@ -21657,7 +21649,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       if (tramebits)
       {
 
-        if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance)))
+        if ((duree>(bit1N-toleranceN)) && (duree<(bit1N+toleranceN)))
         {
 
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
@@ -21677,12 +21669,12 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             else
             {
               NbreBits=0;raz_bits();
-              if (debug==1) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}
+              if (debug==1) {mesure_error[NbreBits]=Err_sym_bit;printf("EA D=%u\r\n",duree);}
             }
           }
         }
         else
-        if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance)))
+        if ((duree>(bit0N-toleranceN)) && (duree<(bit0N+toleranceN)))
         {
 
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
@@ -21701,7 +21693,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
             else
             {
               NbreBits=0;raz_bits();
-              if (debug==1) {mesure_error[NbreBits]=2;printf("EBB D=%u\r\n",duree);}
+              if (debug==1) {mesure_error[NbreBits]=Err_sym_bit;printf("EBB D=%u\r\n",duree);}
             }
           }
         }
@@ -21709,6 +21701,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         {
           raz_bits();
           nb=NbreBits;
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
           if (debug==1) printf("EFB%d\r\n",NbreBits);
         }
       }
@@ -21733,7 +21726,6 @@ uint8_t lit_eprom_int(uint16_t adresse)
   __nop();
   return (EEDATA);
 }
-
 
 
 
@@ -21790,7 +21782,7 @@ void menu()
    printf("A....Vérifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des télécommandes connues\r\n");
-# 1013 "main.c"
+# 1003 "main.c"
    printf("\r\n");
 
    printf("Votre choix suivi de ENTREE\r\n");
@@ -22000,7 +21992,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 1234 "main.c"
+# 1224 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -22103,12 +22095,13 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
 void affiche_enregistrement()
 {
   uint8_t x,y;
+  uint16_t ancduree;
   INTCONbits.GIE=0;
   aff_enr=0;
 
   printf("NbreBits=%d",nb);
 
-
+  if (protocole==0) printf(" Enregistrement brut");
   if (protocole==prot_came) printf(" Protocole Came");
   if (protocole==prot_somfy) printf(" Protocole Somfy");
   if (protocole==prot_cardin) printf(" Protocole Cardin S449");
@@ -22125,19 +22118,22 @@ void affiche_enregistrement()
       if (i<=nb)
       {
         printf("%3d",i);
+        ancduree=mesure_bits[i-1];
         duree=mesure_bits[i];
 
          printf(" %6lu",duree);
 
+        if (protocole==0) printf("  ");
+
         if (protocole==prot_niceflors)
         {
-          if ((duree>(silence-1000)) && (duree<(silence+1000))) printf(" S");
+          if ((duree>(silenceN-1000)) && (duree<(silenceN+1000))) printf(" S");
           else
-          if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0");
+          if ((duree>(bit0N-toleranceN)) && (duree<(bit0N+toleranceN))) printf(" 0");
           else
-          if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1");
+          if ((duree>(bit1N-toleranceN)) && (duree<(bit1N+toleranceN))) printf(" 1");
           else
-          if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" D");
+          if ((duree>(debutbitN-toleranceN)) && (duree<(debutbitN+toleranceN))) printf(" D");
           else
           printf(" ?");
           if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
@@ -22170,20 +22166,24 @@ void affiche_enregistrement()
         {
           if ((duree>(silenceD-550)) && (duree<(silenceD+550))) printf(" S");
           else
-          if ((duree>(debutbitD-tolerance)) && (duree<(debutbitD+tolerance))) printf(" D");
+          if ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))) printf(" D");
           else
-          if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD))) printf(" 0");
+          if ((i % 2)==0)
+          {
+            if ( ((ancduree>(bit1D-toleranceD)) && (ancduree<(bit1D+toleranceD))) &&
+                 ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD))) ) printf(" 1");
+            if ( ((ancduree>(bit0D-toleranceD)) && (ancduree<(bit0D+toleranceD))) &&
+                 ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD))) ) printf(" 0");
+          }
           else
-          if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD))) printf(" 1");
-          else
-          printf(" ?");
+          printf("  ");
           if (mesure_error[i]!=0) printf( " Err %d",mesure_error[i]);
         }
         if (protocole==prot_fobloqf)
         {
           if ((duree>(silenceF-550)) && (duree<(silenceF+550))) printf(" S");
           else
-          if ((duree>(debutbitF-tolerance)) && (duree<(debutbitF+tolerance))) printf(" D");
+          if ((duree>(debutbitF-toleranceF)) && (duree<(debutbitF+toleranceF))) printf(" D");
           else
           if ((duree>(bit0D-toleranceF)) && (duree<(bit0D+toleranceF))) printf(" 0");
           else
@@ -22200,14 +22200,6 @@ void affiche_enregistrement()
   }
   raz_bits();
   INTCONbits.GIE=1;
-}
-
-
-
-void Affiche5(uint32_t codex)
-{
-  uint32_t p=codex & 0xFFFFFFFF;
-  printf("%08lX",p);
 }
 
 
@@ -22309,7 +22301,7 @@ void UART_ExecuteCommand(char *command)
      case 8: {printf("Erreur écriture EPROM ext");break;}
      default: printf(" %d",erreur);
    }
-# 1560 "main.c"
+# 1550 "main.c"
    printf(" Dernière erreur I2C=%d",erreurI2C);
 
 
@@ -22418,7 +22410,7 @@ void UART_ExecuteCommand(char *command)
       for (i=0;i<=127;i++)
       {
         k=i+j;
-        if ((i % 16)==0) {Affiche5(k);printf(" ");}
+        if ((i % 16)==0) {Affiche4(k);printf(" ");}
         printf("%x,",i2cread[i]);
         if (((i+1) % 16)==0) printf("\r\n");
         _delay((unsigned long)((100)*(64000000U/4000000.0)));
@@ -22452,7 +22444,7 @@ void UART_ExecuteCommand(char *command)
   else
   if (strcmp(command,"K") == 0)
   {
-# 1713 "main.c"
+# 1703 "main.c"
   }
 
   else
@@ -22546,6 +22538,16 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
   }
 }
 
+void print_binary(uint64_t number,int n)
+{
+  int i;
+  for (i=n-1;i>=0;i--)
+  {
+      if (((number >> i) & 1)==1) printf("1"); else printf("0");
+      if (((i-1) % 3)==0) printf(" ");
+  }
+}
+
 
 void Affiche(uint64_t codex)
 {
@@ -22554,7 +22556,6 @@ void Affiche(uint64_t codex)
   p=codex & 0xFFFFFFFF;
   printf("%08lX",p);
 }
-
 
 _Bool code_b0b6_nice_valide()
 {
@@ -22679,6 +22680,7 @@ uint16_t trouve_code_algo_nice(uint16_t c)
 }
 
 
+
 uint16_t inverse16(int16_t mot)
 {
   uint16_t r;
@@ -22686,6 +22688,7 @@ uint16_t inverse16(int16_t mot)
   r=r | ((mot & 0xff) << 8) ;
   return r;
 }
+
 
 uint32_t inverse24(int32_t mot)
 {
@@ -22716,13 +22719,23 @@ _Bool decode_fobloqf()
   return 0;
 }
 
+
 _Bool decode_cardin()
 {
   uint32_t temp;
 
 
+
+
+
+
   {
-   Affiche(code);
+    Affiche(code);
+    printf(" / ");
+
+    print_binary(code,64);
+    printf("\r\n");
+
   }
 
   temp=KeeLoq_Decrypt(code,0x3A5C742E);
@@ -22733,6 +22746,9 @@ _Bool decode_cardin()
   printf(" Decode2=");
   Affiche(temp);
   printf("\r\n");
+
+  return 0;
+
 
 
 
@@ -23121,7 +23137,7 @@ int main(void)
   RA3=0;
   RA5=1;
   erreur=0;
-# 2400 "main.c"
+# 2414 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -23136,15 +23152,12 @@ int main(void)
   INTCONbits.TMR0IF=0;
   INTCONbits.TMR0IE=1;
 
-
   IOCBbits.IOCB4=1;
-
-
-
 
   pvitesse=1;
   if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;}
   if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;}
+
 
 
   T0CON = (2 << 0x0)
@@ -23167,12 +23180,13 @@ int main(void)
   menu();
   RC0=1;
 
+
   for (i=1;i<10;i++)
   {
-      _delay((unsigned long)((100)*(64000000U/4000.0)));
-      RC0=0;
-      _delay((unsigned long)((100)*(64000000U/4000.0)));
-     RC0=1;
+    _delay((unsigned long)((100)*(64000000U/4000.0)));
+    RC0=0;
+    _delay((unsigned long)((100)*(64000000U/4000.0)));
+   RC0=1;
   }
 
   debug=0 ;
@@ -23181,24 +23195,15 @@ int main(void)
   INTCONbits.GIE=1;
 
   i=lit_eprom_int(0);
-  if (i==0xff)
-   {
+  if (i!=0x21)
+  {
 
-      printf("***Erreur l'eprom interne est vide***\r\n");
-
-
-
-
-   }
-   if (i!=0x21)
-   {
-
-      printf("***Erreur l'eprom interne ne contient pas le bon fichier***\r\n");
+    printf("***Erreur l'eprom interne ne contient pas le bon fichier***\r\n");
 
 
 
 
-   }
+  }
 
   lit_eprom_ext(0);
   i=i2cread[0];
@@ -23216,7 +23221,7 @@ int main(void)
 
   while(1)
   {
-# 2506 "main.c"
+# 2509 "main.c"
     if (!RB2)
     {
       _delay((unsigned long)((1)*(64000000U/4000.0)));
@@ -23239,7 +23244,7 @@ int main(void)
         }
         _delay((unsigned long)((1000)*(64000000U/4000.0)));
         RC0=1;
-        while (!RB2) ;
+        while (!RB2);
       }
     }
 
@@ -23308,14 +23313,11 @@ int main(void)
       }
       if (protocole==prot_fobloqf)
       {
+        printf("Flobloqf=");
+        decode_fobloqf();
 
-
-          printf("Flobloqf=");
-          decode_fobloqf();
 
       }
-
-
 
       NbreBits=0;
       _delay((unsigned long)((1000)*(64000000U/4000.0)));

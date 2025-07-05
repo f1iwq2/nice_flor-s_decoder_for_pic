@@ -20,7 +20,7 @@ liaison UART : 9600,n,8,1 / 230240,n,8,1
 Config dans MCC: 
  UART :
  aync_noninverted_sync_inverted
- DataReceive Polarity : non_inverted  à vérifier
+ DataReceive Polarity : non_inverted  
  HS mode car c'est un quartz (16MHz)
  SOSC = oscillateur secondaire, non utilisé
  FOSC = oscillateur primaire à quartz, utiisé
@@ -220,8 +220,8 @@ const uint32_t toleranceC=170;
 // requires a FM-FSK receiver
 const uint32_t silenceD=135400; //16520µs; 
 const uint32_t debutbitD=8020;  // 4000µs
-const uint32_t bit0D=856;       // 730 µs   
-const uint32_t bit1D=1560;      // 500 µs 
+const uint32_t bit0D=850;       // 856 730 µs (officiel 400µs)   
+const uint32_t bit1D=1600;      // 1560 500 µs (officiel=800µs)
 const uint32_t toleranceD=250;  // 250 grande dispersion sur cardin
 
 // Fobloqf pas encore traité, nécessite un récepteur FM-FSK
@@ -234,11 +234,11 @@ const uint32_t toleranceF=150;
 
 // NiceFLors éléments radio / radio items
 // modulation HF AM-ASK (Amplitude shift keying)
-const uint32_t silence=37776;   // 18888 µs silent
-const uint32_t debutbit=2979;   // 1500 µs start
-const uint32_t bit0=958;        // 500 µs  
-const uint32_t bit1=1962;       // 1000 µs
-const uint32_t tolerance=280;
+const uint32_t silenceN=37776;   // 18888 µs silent
+const uint32_t debutbitN=2979;   // 1500 µs start
+const uint32_t bit0N=958;        // 500 µs  
+const uint32_t bit1N=1962;       // 1000 µs
+const uint32_t toleranceN=280;
 
 // Somfy RTS
 const uint32_t silenceS=5084;   // 2416 µs silent
@@ -254,6 +254,11 @@ const uint8_t  prot_came=2;
 const uint8_t  prot_cardin=3;
 const uint8_t  prot_somfy=4;
 const uint8_t  prot_fobloqf=5;
+
+// erreurs
+const uint8_t Err_wrong_range_bit=1; // 1=bit mal placé  2=erreur de symétrie  3=longueur inconnue bit 
+const uint8_t Err_sym_bit=2;        
+const uint8_t Err_bit_duration=3;
 
 uint8_t b0,b1,b2,b3,b4,b5,b6;  // codes bruts de la télécommande niceflors et somfy / raw remote niceflors and somfy codes
 char          chaine[50];
@@ -280,8 +285,8 @@ uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à max
 
 // debug mode xmodem
 #if debugxmodem
-  uint16_t adresses[1024];
-  uint8_t numpak[700];
+  uint16_t    adresses[1024];
+  uint8_t     numpak[700];
 #endif
   
   
@@ -297,10 +302,6 @@ void fin_came()
 {
   raz_bits();
   nb=NbreBits;
-  telegram=LOW;
-  bitDebut=LOW;
-  tramebits=LOW;
-  bitSilence=LOW;
   recu=HIGH;
 }
 
@@ -315,10 +316,6 @@ void fin_somfy()
 {
   raz_bits();
   nb=NbreBitsMsg;
-  telegram=LOW;
-  bitDebut=LOW;
-  tramebits=LOW;
-  bitSilence=LOW;
   recu=HIGH;  
 }
   
@@ -326,10 +323,6 @@ void fin_fobloqf()
 {
   raz_bits();
   nb=NbreBits;
-  telegram=LOW;
-  bitDebut=LOW;
-  tramebits=LOW;
-  bitSilence=LOW;
   recu=HIGH;  
 }
 
@@ -338,7 +331,7 @@ void fin_fobloqf()
 // interruption IOC (interrupt on change) port B4
 void __interrupt(high_priority) ISR_high()
 {
-  // interruption tmr0 déborde
+  // interruption tmr0 déborde : il passe de FFFF à 0; rajouter 0x10000 au compteur
   if (INTCONbits.TMR0IF==1)
   {
     //  printf("T");
@@ -356,7 +349,7 @@ void __interrupt(high_priority) ISR_high()
     anc_duree=duree;
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
     duree=duree+deborde;
-    //if (deborde>0) printf("%lu",duree);
+
     deborde=0;
     TMR0H=0;     // raz timer pour mesure créneau suivant
     TMR0L=0;
@@ -367,8 +360,8 @@ void __interrupt(high_priority) ISR_high()
     // ------traitement signal télécommande -----
     if (debug==3)  // test des transitions du signal brut debugage de bas niveau - test for raw transitions signal. low level debugging
     {
-      // afficher par UART prend du temps
-      // display through UART takes time
+      // afficher par UART prend du temps et altère les mesures
+      // display through UART takes time and corrupts durations
       if (duree>300) {printf("T=%lu\n\r",duree);}
       if (NbreBits==20) debug=0;
       goto fin;   // sortie rapide - quick exit
@@ -381,21 +374,20 @@ void __interrupt(high_priority) ISR_high()
         mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
         goto fin;
       }  
-      debug=0;
       nb=200;
+      debug=0;
+      protocole=0;
       raz_bits();
       aff_enr=HIGH;
       goto fin;
     }
-    
-    //if (telegram) printf("%d\r\n",duree);
     
     // silence fobloqf  
     if ( (!bitSilence) && (!telegram) && ((duree>(silenceF-300)) && (duree<(silenceF+300))))  
     {
       NbreBits=1;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-     // debug=4;
+      // debug=4;
       if (debug==2) 
       printf("Fobloqf");
       protocole=prot_fobloqf;
@@ -421,8 +413,7 @@ void __interrupt(high_priority) ISR_high()
     }
   
     // silence cardin 
-    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-550)) && (duree<(silenceD+550))))  
-   // if ((!bitDebut) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))  
+    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-550)) && (duree<(silenceD+550)))) 
     {
       NbreBits=1;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
@@ -436,8 +427,7 @@ void __interrupt(high_priority) ISR_high()
       bitDebut=LOW;
       telegram=LOW;
       goto fin;
-    }
-    
+    } 
     // début cardin, après les 11 ou 12 crénaux de sync
     if ((protocole==prot_cardin) && (bitSilence) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))  
     {
@@ -445,8 +435,8 @@ void __interrupt(high_priority) ISR_high()
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
-      //if (debug==2) printf("Cardin S449");
-      //debug=4;goto fin;
+      if (debug==2) printf("Cardin S449");
+      NbreBitsMsg=0;
       bitDebut=LOW;
       telegram=HIGH;
       code=0;
@@ -454,7 +444,7 @@ void __interrupt(high_priority) ISR_high()
     }
     
     // silence nice flors
-    if ((!telegram) && ((duree>(silence-tolerance)) && (duree<(silence+tolerance))))  
+    if ((!telegram) && ((duree>(silenceN-toleranceN)) && (duree<(silenceN+toleranceN))))  
     {
       NbreBits=1;
       bitDebut=HIGH;
@@ -551,7 +541,8 @@ void __interrupt(high_priority) ISR_high()
         goto fin;
       }
       // erreur durée hors tolérance
-      if (debug==1) printf("E");
+      printf("E%d\r\n",duree);
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
       raz_bits();
       goto fin;
     }  
@@ -560,18 +551,19 @@ void __interrupt(high_priority) ISR_high()
     // https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
     if (telegram && (protocole==prot_cardin))
     {
-      //  1  
-      //if ((NbreBits-1) %8==0) printf(" ");
+      // 1  
+      //if ((NbreBits-1)%8==0) printf(" ");
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
       if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
       {
-        //printf("1");
+       // printf("1");
         //printf("/1 %d",NbreBits);
-        code=code * 2; // décaler à gauche
-        code=code | 1;
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
-        if (NbreBits>=64) fin_cardin();
-        goto fin;
-        if (NbreBits % 2==0) // bit impair : mémoriser son état - even bit : store it
+        //code=code * 2; // décaler à gauche
+        //code=code | 1;
+         
+        //if (NbreBits>=64) fin_cardin();
+        //goto fin; //--------------------
+        if ((NbreBits+1) % 2==0) // bit impair : mémoriser son état - even bit : store it
         {
           bitPrec=HIGH;
         }
@@ -582,14 +574,17 @@ void __interrupt(high_priority) ISR_high()
           {
             NbreBitsMsg++;           
             code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
-            code=code | 1;  // bit 0 à 1
+            if (NbreBitsMsg>=64) fin_cardin();
+            //code=code | 1;  // bit 0 à 1
           }
           else 
           {
+            mesure_error[NbreBits]=Err_sym_bit;
+            if (debug==1) printf("EAA D=%u\r\n",duree);  // erreur symétrie données
+            nb=NbreBits;
             NbreBits=0;raz_bits();
-            if (debug==1) 
-            {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
           }
+     
         }
         goto fin;
       }
@@ -598,11 +593,10 @@ void __interrupt(high_priority) ISR_high()
       {
         //printf("0");
         //printf("/0 %d",NbreBits);
-        code=code * 2;  // décaler à gauche 
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
-        if (NbreBits>=64) fin_cardin();
-        goto fin;
-        if (NbreBits % 2==0)
+        //code=code * 2;  // décaler à gauche  
+        //if (NbreBits>=64) fin_cardin();
+        //goto fin; //----------------
+        if ((NbreBits+1) % 2==0)   // bit impait
         {
           bitPrec=LOW;
         }
@@ -613,25 +607,26 @@ void __interrupt(high_priority) ISR_high()
           {
             NbreBitsMsg++;
             code=code*2; // décaler à gauche
+            code=code | 1;
+            if (NbreBitsMsg>=64) fin_cardin();
           }
           else 
           {
-            if (debug==1) printf("EBA D=%u\r\n",duree);
+            mesure_error[NbreBits]=Err_sym_bit;  // erreur symétrie données
+            if (debug==1) printf("EBA D=%u\r\n",duree);           
             nb=NbreBits;
-            mesure_error[NbreBits]=2;  // erreur symétrie données
             NbreBits=0;raz_bits();         
-          }
+          }   
         }
         goto fin; 
       } 
       //if (debug==1) 
       printf("E%d\r\n",duree);
-      mesure_error[NbreBits]=3; 
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
       nb=NbreBits;
       raz_bits();
       goto fin;
     }
-    
     
     // Fobloqf ----------------------------------------------------------------------------
     if (telegram && (protocole==prot_fobloqf))
@@ -664,7 +659,7 @@ void __interrupt(high_priority) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1) 
-              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
             }
           }
           goto fin;
@@ -693,7 +688,7 @@ void __interrupt(high_priority) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1) 
-              {mesure_error[NbreBits]=2;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
             }
           }
           goto fin;
@@ -702,8 +697,8 @@ void __interrupt(high_priority) ISR_high()
         {
           raz_bits();
           nb=NbreBits;  // pour affichage
-          //if (debug==1) 
-              printf("EFA%d\r\n",NbreBits); // erreur bit inconnu dans les données
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
+          if (debug==1) printf("EFA%d\r\n",NbreBits); // erreur bit inconnu dans les données
           goto fin;
         }       
       }       
@@ -738,9 +733,9 @@ void __interrupt(high_priority) ISR_high()
             }
             else 
             {
+              mesure_error[NbreBits]=Err_sym_bit;
               NbreBits=0;raz_bits();
-              if (debug==1) 
-              {mesure_error[NbreBits]=2;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
+              if (debug==1) printf("EAA D=%u\r\n",duree);  // erreur symétrie données
             }
           }
           goto fin;
@@ -769,7 +764,7 @@ void __interrupt(high_priority) ISR_high()
             {
               NbreBits=0;raz_bits();
               if (debug==1) 
-              {mesure_error[NbreBits]=3;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
+              {mesure_error[NbreBits]=Err_sym_bit;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
             }
           }
           goto fin;
@@ -778,6 +773,7 @@ void __interrupt(high_priority) ISR_high()
         {
           raz_bits();
           nb=NbreBits;  // pour affichage
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
           if (debug==1) printf("ECA%d\r\n",NbreBits); // erreur bit inconnu dans les données
           goto fin;
         }       
@@ -791,7 +787,7 @@ void __interrupt(high_priority) ISR_high()
        // printf("J");
         // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
       // found a start bit, might be one of the 2 firsts or the last
-      if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) 
+      if ((duree>(debutbitN-toleranceN)) && (duree<(debutbitN+toleranceN))) 
       { 
         //if (debug==1) {printf("S%u",NbreBits);printf(" %d\r\n",duree);}
         // bit de fin, fin du message radio télécommande
@@ -836,13 +832,9 @@ void __interrupt(high_priority) ISR_high()
         // bit inconnu ou stop mal placé, inattendu
         // unexepected start or stop bit
         // erreur
-        if (NbreBits<108) 
-        {
-          mesure_bits[NbreBits]=duree;
-          mesure_error[NbreBits]=1;  // bit inconnu
-        }   
         raz_bits(); 
         nb=NbreBits;  // mémoriser le nombre de bits reçus pour affichage
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
         if (debug==1) printf("EZ%u\r\n",NbreBits); // erreur de séquencement
         goto fin;      
       }
@@ -850,7 +842,7 @@ void __interrupt(high_priority) ISR_high()
       if (tramebits)  // données 
       {
         //printf("D%d\r\n",NbreBits);
-        if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance)))
+        if ((duree>(bit1N-toleranceN)) && (duree<(bit1N+toleranceN)))
         {
           //Serial.print("1");
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
@@ -870,12 +862,12 @@ void __interrupt(high_priority) ISR_high()
             else 
             {
               NbreBits=0;raz_bits();
-              if (debug==1) {mesure_error[NbreBits]=2;printf("EA D=%u\r\n",duree);}  // erreur symétrie données
+              if (debug==1) {mesure_error[NbreBits]=Err_sym_bit;printf("EA D=%u\r\n",duree);}  // erreur symétrie données
             }
           }
         }
         else  
-        if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance)))
+        if ((duree>(bit0N-toleranceN)) && (duree<(bit0N+toleranceN)))
         {
           //Serial.print("0");
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
@@ -894,7 +886,7 @@ void __interrupt(high_priority) ISR_high()
             else 
             {
               NbreBits=0;raz_bits();
-              if (debug==1) {mesure_error[NbreBits]=2;printf("EBB D=%u\r\n",duree);}  // erreur symétrie données
+              if (debug==1) {mesure_error[NbreBits]=Err_sym_bit;printf("EBB D=%u\r\n",duree);}  // erreur symétrie données
             }
           }  
         }
@@ -902,6 +894,7 @@ void __interrupt(high_priority) ISR_high()
         {
           raz_bits();
           nb=NbreBits;  // pour affichage
+          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
           if (debug==1) printf("EFB%d\r\n",NbreBits); // erreur de données
         }
       }    
@@ -926,9 +919,8 @@ uint8_t lit_eprom_int(uint16_t adresse)
   NOP();
   return (EEDATA);
 }
-
  
- // https://github.com/marc-invalid/chipwhisperer-marc/blob/master/doc/marc/keeloq/keeloq_algorithm/keeloq_algorithm.md   
+// https://github.com/marc-invalid/chipwhisperer-marc/blob/master/doc/marc/keeloq/keeloq_algorithm/keeloq_algorithm.md   
 // applique l'algo keyloq à data avec la clé key 
 uint32_t KeeLoq_Decrypt(uint64_t data, const uint64_t key) 
  {
@@ -985,7 +977,7 @@ void menu()
    printf("C....Liste des télécommandes connues\r\n");  
    #if debugxmodem
      printf("K....Affiche le tableau adresses[]");
-    #endif
+   #endif
     
    #endif
    #if english
@@ -1005,10 +997,8 @@ void menu()
    printf("C....List of known remotes\r\n");   
    #if debugxmodem
      printf("K....Display array adresses[]");
-     #endif
    #endif
-
-   
+   #endif
    
    printf("\r\n");
    #if francais
@@ -1184,10 +1174,10 @@ void erreur_xmodem(uint8_t num)
   UART_WriteByte(18); // demande cancel mais ne marche pas
 }
 
-// lecture d'un flux UART au format Xmodem
-// read a UART file with xmodem format
-// mode 1 = fichier principal de codes = main code file
-// mode 2 = fichier ki = ki codes
+// lecture d'un flux UART au format Xmodem crc pour niceflors et l'écrit en eprom int ou ext
+// read an UART stream with xmodem crc format for niceflors and writes it into int or ext eprom
+// mode=1 fichier principal de codes = main code file
+// mode=2 fichier ki = ki codes
 void recoit_xmodem(int mode)
 {
    uint8_t b,ancienpak,delta;
@@ -1266,7 +1256,7 @@ void recoit_xmodem(int mode)
 }
 
 // lit un octet l'eprom (lecture aléatoire - random read) à l'adresse adresse, met la valeur dans i2cread[0]
-// read 1 byte from ext eprom, data is in i2cread[0]
+// read 1 byte from ext eprom, data is stored in i2cread[0]
 void lit_eprom_ext(uint32_t adresse)
 {
   uint32_t mask;
@@ -1297,7 +1287,7 @@ void lit_eprom_ext(uint32_t adresse)
   }
 }
 
-// lit "nombre" octet l'eprom ext (lecture séquentielle - random read) à l'adresse adresse, met la valeur dans i2cread[]
+// lit "nombre" octet l'eprom ext (lecture séquentielle - sequential read) à l'adresse adresse, met la valeur dans i2cread[]
 // read "nombre" byte(s) from ext eprom
 void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
 {
@@ -1329,16 +1319,17 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
    }
 }
 
-
+// affiche l'enregistrement reçu sous forme de tableau
 void affiche_enregistrement()
 {
-  uint8_t x,y; 
+  uint8_t x,y;
+  uint16_t ancduree;
   INTCONbits.GIE=0;  // arrete mesure radio / disable radio acquisition
   aff_enr=LOW;   
   
   printf("NbreBits=%d",nb);
   
-  
+  if (protocole==0) printf(" Enregistrement brut");
   if (protocole==prot_came) printf(" Protocole Came");
   if (protocole==prot_somfy) printf(" Protocole Somfy");
   if (protocole==prot_cardin) printf(" Protocole Cardin S449");
@@ -1355,19 +1346,22 @@ void affiche_enregistrement()
       if (i<=nb)
       {
         printf("%3d",i);
+        ancduree=mesure_bits[i-1];
         duree=mesure_bits[i];
        // printf(" %5lu",duree);
          printf(" %6lu",duree);
-  
+        
+        if (protocole==0) printf("  ");  // mesure brute - raw data record
+         
         if (protocole==prot_niceflors)
         {    
-          if ((duree>(silence-1000)) && (duree<(silence+1000)))     printf(" S");
+          if ((duree>(silenceN-1000)) && (duree<(silenceN+1000)))     printf(" S");
           else
-          if ((duree>(bit0-tolerance)) && (duree<(bit0+tolerance))) printf(" 0");
+          if ((duree>(bit0N-toleranceN)) && (duree<(bit0N+toleranceN))) printf(" 0");
           else
-          if ((duree>(bit1-tolerance)) && (duree<(bit1+tolerance))) printf(" 1");  
+          if ((duree>(bit1N-toleranceN)) && (duree<(bit1N+toleranceN))) printf(" 1");  
           else
-          if ((duree>(debutbit-tolerance)) && (duree<(debutbit+tolerance))) printf(" D");
+          if ((duree>(debutbitN-toleranceN)) && (duree<(debutbitN+toleranceN))) printf(" D");
           else
           printf(" ?");
           if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
@@ -1400,20 +1394,24 @@ void affiche_enregistrement()
         {    
           if ((duree>(silenceD-550)) && (duree<(silenceD+550)))     printf(" S");
           else
-          if ((duree>(debutbitD-tolerance)) && (duree<(debutbitD+tolerance))) printf(" D");
+          if ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))) printf(" D");
           else
-          if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD))) printf(" 0");
+          if ((i % 2)==0)
+          {
+            if ( ((ancduree>(bit1D-toleranceD)) && (ancduree<(bit1D+toleranceD))) &&
+                 ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD))) ) printf(" 1");
+            if ( ((ancduree>(bit0D-toleranceD)) && (ancduree<(bit0D+toleranceD))) &&
+                 ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD))) ) printf(" 0");
+          } 
           else
-          if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD))) printf(" 1");  
-          else
-          printf(" ?");
+          printf("  ");
           if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
         }
         if (protocole==prot_fobloqf)
         {    
           if ((duree>(silenceF-550)) && (duree<(silenceF+550)))     printf(" S");
           else
-          if ((duree>(debutbitF-tolerance)) && (duree<(debutbitF+tolerance))) printf(" D");
+          if ((duree>(debutbitF-toleranceF)) && (duree<(debutbitF+toleranceF))) printf(" D");
           else
           if ((duree>(bit0D-toleranceF)) && (duree<(bit0D+toleranceF))) printf(" 0");
           else
@@ -1429,15 +1427,7 @@ void affiche_enregistrement()
     printf("\r\n");
   }
   raz_bits();
-  INTCONbits.GIE=1; 
-}
-
-// affiche un nombre en 32 bits en hexa
-// display 32 bits hexa : XXXXX
-void Affiche5(uint32_t codex)
-{
-  uint32_t p=codex & 0xFFFFFFFF;
-  printf("%08lX",p);
+  INTCONbits.GIE=1; // remet l'acquisition radio / reenable radio acquisition
 }
 
 // affiche un nombre en 32 bits en hexa
@@ -1665,7 +1655,7 @@ void UART_ExecuteCommand(char *command)
       for (i=0;i<=127;i++)
       {   
         k=i+j;  
-        if ((i % 16)==0) {Affiche5(k);printf(" ");} 
+        if ((i % 16)==0) {Affiche4(k);printf(" ");} 
         printf("%x,",i2cread[i]);
         if (((i+1) % 16)==0) printf("\r\n");
         __delay_us(100);
@@ -1803,6 +1793,16 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
   }
 }
 
+void print_binary(uint64_t number,int n)
+{
+  int i;
+  for (i=n-1;i>=0;i--)
+  {
+      if (((number >> i) & 1)==1) printf("1"); else printf("0");
+      if (((i-1) % 3)==0) printf(" ");
+  }
+}
+
 // affiche un nombre en 64 bits en hexa
 void Affiche(uint64_t codex)
 {
@@ -1811,7 +1811,6 @@ void Affiche(uint64_t codex)
   p=codex & 0xFFFFFFFF;
   printf("%08lX",p);
 }
-
 
 bool code_b0b6_nice_valide()
 {
@@ -1935,7 +1934,8 @@ uint16_t trouve_code_algo_nice(uint16_t c) // trouver l'adresse de encode dans l
   return (i); 
 }
 
-// inverse poids faibles et fort
+// inverse poids faibles et fort d'un mot
+// AABB -> BBAA
 uint16_t inverse16(int16_t mot)
 {
   uint16_t r;
@@ -1944,6 +1944,7 @@ uint16_t inverse16(int16_t mot)
   return r;
 }
 
+// AABBCC -> CCBBAA
 uint32_t inverse24(int32_t mot)
 {
   uint32_t r;
@@ -1973,13 +1974,23 @@ bool decode_fobloqf()
   return LOW;   
 }
 
+
 bool decode_cardin()  // https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
 {
   uint32_t temp;
   // code à 64 bits, soit 4 octets 
+  // https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
+  // 110 = 0     100 = 1
+  
+  
     //if (debug==1) 
   {
-   Affiche(code);
+    Affiche(code);
+    printf(" / ");
+    
+    print_binary(code,64);
+    printf("\r\n");
+      
   }
   
   temp=KeeLoq_Decrypt(code,KeeLoq_NLF);
@@ -1990,6 +2001,9 @@ bool decode_cardin()  // https://github.com/merbanan/rtl_433/blob/master/src/dev
   printf(" Decode2=");
   Affiche(temp);
   printf("\r\n");
+  
+  return 0;
+  
 // 
   //b0=(code >> 48) & 0xff;
   //b1=(code >> 40) & 0xff;
@@ -2397,31 +2411,28 @@ int main(void)
   // Disable the Peripheral Interrupts 
   //INTERRUPT_PeripheralInterruptDisable(); 
 
-  ANCON0=0;              // on n'utilise pas l'AD
-  ANCON1=0;              // sinon RB4 ne marche pas !!
+  ANCON0=0;              // on n'utilise pas l'AD - don't need AD
+  ANCON1=0;              // sinon RB4 ne marche pas - otherwise RB4 won't work
     
-  RCONbits.IPEN=1;       // priorité IRQ
+  RCONbits.IPEN=1;       // priorité IRQ - IRQ priority
     
-  INTCON2bits.RBPU=0;    // valide les résistances de pullup sur tout le port B en entrée pour BP1
-  INTCON2bits.RBIP=1;    // Configure comme priorité haute
+  INTCON2bits.RBPU=0;    // valide les résistances de pullup sur tout le port B en entrée pour BP1 - enable pull up resistor on port B
+  INTCON2bits.RBIP=1;    // Configure comme priorité haute - high priority
   
-  INTCONbits.RBIF=0;     // raz flags      
-  INTCONbits.RBIE=1;     // valide l'irq IOC  
-  INTCONbits.GIEH=1;     // priorité haute
-  INTCONbits.TMR0IF=0;   // raz indicateur tmr0 déborde
-  INTCONbits.TMR0IE=1;   // valide irq timer 0
-          
-    
-  IOCBbits.IOCB4=1;      // IOC sur B4
-    
-    
-  // la routine IOC est en void PIN_MANAGER_IOC(void)  dans pin.c
+  INTCONbits.RBIF=0;     // raz flags - reset flags   
+  INTCONbits.RBIE=1;     // valide l'irq IOC  - enable IOC IRQ
+  INTCONbits.GIEH=1;     // priorité haute - high priprity
+  INTCONbits.TMR0IF=0;   // raz indicateur tmr0 déborde - reset tmr0 overflow flag
+  INTCONbits.TMR0IE=1;   // valide irq timer 0 - enable timer 0 irq
+         
+  IOCBbits.IOCB4=1;      // IOC sur B4 
     
   pvitesse=1;
   if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;}  // 9600 bauds pour transfert xmodem
   if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;}  // 240200
     
   // réglage de la prédivision par (2)=8 du timer 0 ce qui permet de mesurer le signal NiceFlorS de 18888µs
+  // predevider by (2)=8
   T0CON = (2 << _T0CON_T0PS_POSN)    // T0PS  0=/2 1=/4  2=/8 3=/16 4=/32 5=/64 6=/128 7=/256 1=/4
         | (0 << _T0CON_PSA_POSN)     // PSA=0 utilise le prédiviseur
         | (1 << _T0CON_T0SE_POSN)    // T0SE Increment_hi_lo
@@ -2442,38 +2453,30 @@ int main(void)
   menu();
   led=1;
   
+  // clignotement led au démarrage - blinking led at start up
   for (i=1;i<10;i++)
   {
-      __delay_ms(100);
-      led=0;
-      __delay_ms(100);
-     led=1;
+    __delay_ms(100);
+    led=0;
+    __delay_ms(100);
+   led=1;
   }
    
-  debug=0 ; // utiliser le mode debug utilise l'UART, ce qui prend trop de temps pendant le traitement des fronts de l'IOC
-         
-  TMR0_Start();   
-  INTCONbits.GIE=1;      // valide les irq
+  debug=0 ; 
+  
+  TMR0_Start();          // démarre le timer 0 - starts timer 0
+  INTCONbits.GIE=1;      // valide les irq - enable IRS
    
   i=lit_eprom_int(0);
-  if (i==0xff)
-   {
-      #if francais
-      printf("***Erreur l'eprom interne est vide***\r\n");  
-      #endif  
-      #if english
-      printf("***Error internal eprom is empty***\r\n");  
-      #endif  
-   }
-   if (i!=0x21) 
-   {
-      #if francais
-      printf("***Erreur l'eprom interne ne contient pas le bon fichier***\r\n");  
-      #endif  
-      #if english
-      printf("***Error internal eprom has wrong values***\r\n");  
-      #endif  
-   }
+  if (i!=0x21) 
+  {
+    #if francais
+    printf("***Erreur l'eprom interne ne contient pas le bon fichier***\r\n");  
+    #endif  
+    #if english
+    printf("***Error internal eprom has wrong values***\r\n");  
+    #endif  
+  }
   
   lit_eprom_ext(0);
   i=i2cread[0];
@@ -2525,7 +2528,7 @@ int main(void)
         }    
         __delay_ms(1000);
         led=1;
-        while (!RB2) ;               
+        while (!RB2);             // attendre relache bouton - wait button release  
       }
     }  
       
@@ -2558,7 +2561,7 @@ int main(void)
       INTCONbits.GIE=0;      // interdit les IRQ pour éviter interférence avec la variable durée pendant l'affichage
       if (debug==2)
       {
-        affiche_enregistrement();       
+        affiche_enregistrement();      // affiche le tableau des bits et leur durée 
       }
       if (protocole==prot_niceflors)
       {    
@@ -2588,21 +2591,18 @@ int main(void)
       {
         printf("Cardin=");
         decode_cardin();
-        // if (decode_cardin()==HIGH)
+        //if (decode_cardin()==HIGH)
         //printf("Cardin      Serial=");Affiche4(serial);
         //traitementCode();
       }
       if (protocole==prot_fobloqf)
       { 
+        printf("Flobloqf=");
+        decode_fobloqf();
         //if (decode_fobloqf()==HIGH) printf("Fobloqf      code=");Affiche(code);
-          //traitementCode();
-          printf("Flobloqf=");
-          decode_fobloqf();
-        
+        //traitementCode();
       }
-      
-      
-           
+          
       NbreBits=0;
       __delay_ms(1000);
       INTCONbits.GIE=1;      // valide les IRQ

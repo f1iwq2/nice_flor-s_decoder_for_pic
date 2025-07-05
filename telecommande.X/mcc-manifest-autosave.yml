@@ -2,7 +2,7 @@
 
 manifest_file_version: 1.0.0
 project: telecommande
-creation_date: 2025-06-28T18:44:13.892+02:00[Europe/Paris]
+creation_date: 2025-07-03T18:04:04.072+02:00[Europe/Paris]
 operating_system: Windows 11
 mcc_mode: IDE
 mcc_mode_version: v6.25
@@ -10,7 +10,7 @@ device_name: PIC18F26K80
 compiler: XC8 3.00
 mcc_version: 5.6.2
 mcc_core_version: 5.8.2
-content_manager_version: 6.0.1
+content_manager_version: 6.0.2
 is_mcc_offline: false
 is_using_prerelease_versions: false
 mcc_content_registries: https://registry.npmjs.org/
