@@ -146,9 +146,13 @@ and have to be inside the next 128 ones.
 Protocole (radio FM) CARDIN S449 :
 cardin S449 utilise le protocole FSK /  cardin S449 uses the FSK protocol
 64 bits keeloq
-utiliser le récepteur Dickert HQFM433P-50 
+utiliser le récepteur Dickert HQFM433P-50
+On ne prends on compte que le numéro de série de la télécommande pour le décodage.
+We just check the serial remote for decoding.
 https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
-https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
+Cardin    Serial=0063F2DA 6550234= Bouton=2 
+6550234 est le numéro de série de la télécommande en décimal, écrit sur son l'étiquette.
+6550234 is the remote serial number in decimal, printed on the tag of the remote. 
  
 ---------------------------------------------------
 Protocole CAME (radio OOK) protocol: 
@@ -167,7 +171,7 @@ https://pushstack.wordpress.com/somfy-rts-protocol/
 
 --------------------------------------------------
 Protocole FoBloqf (FM) de rfsolutions.co.uk
-Utilise un Keeloq
+Utilise un Keeloq - pas finalisé
 utiliser le récepteur Dickert HQFM433P-50
 code à 56 bits
 -------------------------------------------------- 
@@ -216,9 +220,9 @@ const uint32_t bit0C=640;       // 320 µs
 const uint32_t bit1C=1280;      // 640 µs
 const uint32_t toleranceC=170;
 
-// CARDIN non finalisé, nécessite un récepteur FM-FSK
+// CARDIN nécessite un récepteur FM-FSK
 // requires a FM-FSK receiver
-const uint32_t silenceD=135400; //16520µs; 
+const uint32_t silenceD=33000;  // 34000 16520µs; 
 const uint32_t debutbitD=8020;  // 4000µs
 const uint32_t bit0D=850;       // 856 730 µs (officiel 400µs)   
 const uint32_t bit1D=1600;      // 1560 500 µs (officiel=800µs)
@@ -278,7 +282,7 @@ static uint8_t command[MAX_COMMAND_LEN];
 static uint8_t index=0;
 static uint8_t readMessage;
 bool          recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-bool          aff_enr=LOW,rx,SilenceSomfy,consecutif;
+bool          aff_enr=LOW,rx,SilenceSomfy,consecutif,debugCardin,debugBrut;
 uint16_t      NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t      valt0;
 uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à maxtel
@@ -343,8 +347,7 @@ void __interrupt(high_priority) ISR_high()
   if(INTCONbits.RBIE==1 && INTCONbits.RBIF==1)
   {        
     rx=!RB4; //PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
-    //if (RB4==0) printf("0"); else printf("1");
-    //goto fin;
+
     //led=rx;
     anc_duree=duree;
     duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
@@ -367,7 +370,7 @@ void __interrupt(high_priority) ISR_high()
       goto fin;   // sortie rapide - quick exit
     }
        
-    if (debug==4)  // enregistrement brut, puis affichage
+    if (debugBrut)  // enregistrement brut, puis affichage
     {
       if (NbreBits<200) 
       {
@@ -376,6 +379,7 @@ void __interrupt(high_priority) ISR_high()
       }  
       nb=200;
       debug=0;
+      debugBrut=LOW;
       protocole=0;
       raz_bits();
       aff_enr=HIGH;
@@ -413,15 +417,15 @@ void __interrupt(high_priority) ISR_high()
     }
   
     // silence cardin 
-    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-550)) && (duree<(silenceD+550)))) 
+    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-toleranceD)) && (duree<(silenceD+toleranceD)))) 
     {
       NbreBits=1;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
-      // if (debug==2) 
-      //printf("Cardin=%lu\r\n",duree); 
+      if (debug==2) 
+      printf("Cardin=%lu\r\n",duree); 
       //   goto fin;
-      //debug=4;goto fin;
+      if (debugCardin) {debugBrut=HIGH;debugCardin=LOW;goto fin;}
       code=0;
       bitSilence=HIGH;
       bitDebut=LOW;
@@ -432,10 +436,12 @@ void __interrupt(high_priority) ISR_high()
     if ((protocole==prot_cardin) && (bitSilence) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))  
     {
       //nbreSync=NbreBits; 
+       // printf("%d\r\n",NbreBits);
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
-      if (debug==2) printf("Cardin S449");
+      //if (debug==2) 
+          //printf("S%d",duree);
       NbreBitsMsg=0;
       bitDebut=LOW;
       telegram=HIGH;
@@ -511,7 +517,7 @@ void __interrupt(high_priority) ISR_high()
         {
           //printf("1");
           NbreBitsMsg++;           
-          code=code*2;    // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+          code=code*2;    // décaler à gauche sur 64 bits on peut utiliser aussi <<1
           code=code | 1;  // bit 0 à 1 c'est un bit à 1
         }
         if (NbreBitsMsg==56) fin_somfy();
@@ -528,14 +534,14 @@ void __interrupt(high_priority) ISR_high()
         {
           //printf("B1");
           NbreBitsMsg++;           
-          code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+          code=code * 2;  // décaler à gauche sur 64 bits 
           code=code | 1;  // bit 0 à 1 c'est un bit à 1
         }
         else
         { 
           //printf("B0");
           NbreBitsMsg++;           
-          code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+          code=code * 2;  // décaler à gauche sur 64 bits
         }   
         if (NbreBitsMsg==56) fin_somfy();
         goto fin;
@@ -554,15 +560,9 @@ void __interrupt(high_priority) ISR_high()
       // 1  
       //if ((NbreBits-1)%8==0) printf(" ");
       if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
-      if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
+      //if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
+      if (duree>1200)
       {
-       // printf("1");
-        //printf("/1 %d",NbreBits);
-        //code=code * 2; // décaler à gauche
-        //code=code | 1;
-         
-        //if (NbreBits>=64) fin_cardin();
-        //goto fin; //--------------------
         if ((NbreBits+1) % 2==0) // bit impair : mémoriser son état - even bit : store it
         {
           bitPrec=HIGH;
@@ -573,7 +573,9 @@ void __interrupt(high_priority) ISR_high()
           if (bitPrec==LOW) 
           {
             NbreBitsMsg++;           
-            code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+            code=code >> 1;  // décaler à droite sur 64 bits 
+            code=code | 0x8000000000000000L ;
+           
             if (NbreBitsMsg>=64) fin_cardin();
             //code=code | 1;  // bit 0 à 1
           }
@@ -589,7 +591,8 @@ void __interrupt(high_priority) ISR_high()
         goto fin;
       }
       //if (telegram) printf("%d\r\n",duree);  
-      if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD)))
+      //if ((duree>(bit0D-toleranceD)) && (duree<(bit0D+toleranceD)))
+      else
       {
         //printf("0");
         //printf("/0 %d",NbreBits);
@@ -606,8 +609,7 @@ void __interrupt(high_priority) ISR_high()
           if (bitPrec==HIGH) 
           {
             NbreBitsMsg++;
-            code=code*2; // décaler à gauche
-            code=code | 1;
+            code=code>>1; // décaler à droite
             if (NbreBitsMsg>=64) fin_cardin();
           }
           else 
@@ -652,7 +654,7 @@ void __interrupt(high_priority) ISR_high()
             if (bitPrec==LOW) 
             {
               NbreBitsMsg++;           
-              code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+              code=code * 2;  // décaler à gauche sur 64 bits
               code=code | 1;  // bit 0 à 1
             }
             else 
@@ -728,7 +730,7 @@ void __interrupt(high_priority) ISR_high()
             if (bitPrec==LOW) 
             {
               NbreBitsMsg++;           
-              code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+              code=code * 2;  // décaler à gauche sur 64 bits 
               code=code | 1;  // bit 0 à 1
             }
             else 
@@ -856,7 +858,7 @@ void __interrupt(high_priority) ISR_high()
             if (bitPrec==LOW) 
             {
               NbreBitsMsg++;           
-              code=code * 2;  // décaler à gauche sur 64 bits ne pas utiliser << qui ne fonctionne que sur 32 bits
+              code=code * 2;  // décaler à gauche sur 64 bits 
               code=code | 1;  // bit 0 à 1
             }
             else 
@@ -939,7 +941,7 @@ uint8_t nlf(uint8_t d)
 }
 
 // entrée/sortie dans data
- void KeeLoq_Decrypt2(uint8_t *key, uint64_t data, const uint16_t nrounds) 
+ uint64_t KeeLoq_Decrypt2(uint8_t *key, uint64_t data, const uint16_t nrounds) 
  {
   uint32_t x;
   uint16_t r;
@@ -955,6 +957,7 @@ uint8_t nlf(uint8_t d)
     x=k^(data >> 31)^(data >> 15)^o;
     data=(data << 1) | x & 1;
   }
+  return data;
 }
 
 
@@ -965,16 +968,16 @@ void menu()
    printf("?....Affiche ce menu\r\n");
    printf("1....Change mode debug \r\n");
    printf("2....UART9600/230400 bauds\r\n");
-   printf("3....Envoyer à l'eprom ext le fichier 128Ko de codes NiceFlorS (protocole Xmodem CRC)\r\n");
-   printf("4....Envoyer à l'eprom int le fichier 256o de ki NiceFlorS (protocole Xmodem CRC)\r\n");
-   printf("5....Affiche télégramme reçu de la télécommande\r\n");
-   printf("6....Affiche la dernière erreur\r\n");
+   printf("3....Envoyer a l'eprom ext le fichier 128Ko de codes NiceFlorS (protocole Xmodem CRC)\r\n");
+   printf("4....Envoyer a l'eprom int le fichier 256o de ki NiceFlorS (protocole Xmodem CRC)\r\n");
+   printf("5....Affiche telegramme recu de la telecommande\r\n");
+   printf("6....Affiche la derniere erreur\r\n");
    printf("7....Octets recus par xmodem\r\n");
    printf("8....Affiche les 200 premiers octets de l'EPROM externe\r\n");
    printf("9....Affiche EPROM interne\r\n");
-   printf("A....Vérifie checksum eprom ext\r\n");
+   printf("A....Verifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
-   printf("C....Liste des télécommandes connues\r\n");  
+   printf("C....Liste des telecommandes connues\r\n");  
    #if debugxmodem
      printf("K....Affiche le tableau adresses[]");
    #endif
@@ -1342,7 +1345,7 @@ void affiche_enregistrement()
   {
     for (x=1;x<=9;x++)
     {
-      i=((y-1) % 20)+1  + ((x-1) * 20);
+      i=((y-1) % 20)+1  + ((x-1) * 20) - 1;   // -1 pour commencer en indice 0
       if (i<=nb)
       {
         printf("%3d",i);
@@ -1448,13 +1451,14 @@ void UART_ExecuteCommand(char *command)
   if(strcmp(command,"1") == 0)
   {
     debug++;
-    if (debug>3) debug=0;
+    if (debug>4) debug=0;
     printf("Debug %d ",debug);
     #if francais
     if (debug==0) printf("pas de debug\r\n");
-    if (debug==1) printf("Affichages supplémentaires et les erreurs\r\n");
+    if (debug==1) printf("Affichages supplementaires et les erreurs\r\n");
     if (debug==2) printf("Affiche silence\r\n");
-    if (debug==3) printf("Affiche les durées reçues en direct\r\n");
+    if (debug==3) printf("Affiche les durees reçues en direct\r\n");
+    if (debug==4) {printf("Mode debug cardin\r\n");debugCardin=HIGH;debug=0;}
     #endif   
     #if english
     if (debug==0) printf("No debug\r\n");
@@ -1490,7 +1494,7 @@ void UART_ExecuteCommand(char *command)
  {
    #if francais
    if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
-   printf("Dans TeraTerm, sélectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");  
+   printf("Dans TeraTerm, selectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");  
    #endif  
    #if english
    if (pvitesse!=0) printf("Use 9600 bauds to use Xmodem\r\n");
@@ -1509,7 +1513,7 @@ void UART_ExecuteCommand(char *command)
  {
    INTCONbits.GIE=0;
    #if francais
-   printf("Dernière erreur : ");
+   printf("Derniere erreur : ");
    #endif
    #if english
    printf("Last error : ");
@@ -1521,12 +1525,12 @@ void UART_ExecuteCommand(char *command)
      case 0: {printf("Aucune");break;}
      case 1: {printf("Timeout trame %d",trame);break;}
      case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
-     case 3: {printf("Erreur complémentation numéro paquet");break;}
-     case 4: {printf("Timeout sur numéro de paquet");break;}
-     case 5: {printf("Timeout sur numéro de paquet complémenté");break;}
-     case 6: {printf("Timeout données");break;}
+     case 3: {printf("Erreur complementation numero paquet");break;}
+     case 4: {printf("Timeout sur numero de paquet");break;}
+     case 5: {printf("Timeout sur numero de paquet complemente");break;}
+     case 6: {printf("Timeout donnees");break;}
      case 7: {printf("Erreur crc");break;}
-     case 8: {printf("Erreur écriture EPROM ext");break;}
+     case 8: {printf("Erreur ecriture EPROM ext");break;}
      default:  printf(" %d",erreur);
    }
    #endif 
@@ -1547,7 +1551,7 @@ void UART_ExecuteCommand(char *command)
    #endif 
      
    #if francais
-   printf(" Dernière erreur I2C=%d",erreurI2C);
+   printf(" Derniere erreur I2C=%d",erreurI2C);
    #endif
    #if english
    printf(" Last I2C error=%d",erreurI2C);
@@ -1569,7 +1573,7 @@ void UART_ExecuteCommand(char *command)
      printf("%d,",bufferRx[i]);
    }
    printf("\r\n");
-   printf("Crc calculé=%x\r\n",crc);
+   printf("Crc calcule=%x\r\n",crc);
    printf("Crc recu=%x\r\n",crcrecu);    
    INTCONbits.GIE=1;
   }
@@ -1675,7 +1679,7 @@ void UART_ExecuteCommand(char *command)
        ep=ep+((uint32_t)lit_eprom_int(0x102+i*4) << 16);
        ep=ep+((uint32_t)lit_eprom_int(0x103+i*4) << 24);
        #if francais
-       printf("Télécommande %2d ",i+1);
+       printf("Telecommande %2d ",i+1);
        #endif
        #if english
        printf("Remote %2d ",i+1);
@@ -1799,7 +1803,7 @@ void print_binary(uint64_t number,int n)
   for (i=n-1;i>=0;i--)
   {
       if (((number >> i) & 1)==1) printf("1"); else printf("0");
-      if (((i-1) % 3)==0) printf(" ");
+     // if (((i-1) % 3)==0) printf(" ");
   }
 }
 
@@ -1954,159 +1958,74 @@ uint32_t inverse24(int32_t mot)
   return r;
 }
 
+uint32_t miroir(uint32_t n)
+{
+  n = ((n >> 1) & 0x55555555) | ((n << 1) & 0xaaaaaaaa);
+  n = ((n >> 2) & 0x33333333) | ((n << 2) & 0xcccccccc);
+  n = ((n >> 4) & 0x0f0f0f0f) | ((n << 4) & 0xf0f0f0f0);
+  n = ((n >> 8) & 0x00ff00ff) | ((n << 8) & 0xff00ff00);
+  n = ((n >> 16) & 0x0000ffff) | ((n << 16) & 0xffff0000);  
+}
+
 bool decode_fobloqf()
 {
   uint32_t temp;
   // code à 64 bits, soit 4 octets 
     //if (debug==1) 
-  {
-   Affiche(code);
-  }
+  Affiche(code);
+  printf("\r\n"); 
+  return 0;
   
+  // test décode keyloq
   temp=KeeLoq_Decrypt(code,KeeLoq_NLF);
   printf(" Decode1=");Affiche(temp);
   
   temp=code;
-  KeeLoq_Decrypt2(key, temp, 528);
+  temp=KeeLoq_Decrypt2(key, temp, 528);
   printf(" Decode2=");
   Affiche(temp);
   printf("\r\n");   
-  return LOW;   
+  return 0;   
+  
 }
 
 
 bool decode_cardin()  // https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
 {
-  uint32_t temp;
-  // code à 64 bits, soit 4 octets 
+  // pour le décodage de cardin S449, on ne se sert que de la partie haute 32 bits du code de 64 bits:
+  // Ex : 20842A9B83B0A4D0 : série=00842A9B
+  // Donc on ne tient pas compte de la partie rolling code (partie basse 32 bits du code de 64 bits)
+  // For cardin S449 decoding, we just handle with the high 32 bits of the 64 bits code :
+  // Ex : 20842A9B83B0A4D0 : serial=00842A9B
+  // so we don't take care about the rolling code (low 32 bits part of the 64 bits code)  
+  uint8_t temp; 
+  // code à 64 bits, soit 8 octets , transmis LSB en premier
   // https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
-  // 110 = 0     100 = 1
-  
-  
-    //if (debug==1) 
-  {
-    Affiche(code);
-    printf(" / ");
+  if (debug==1) {Affiche(code);printf(" ");}
+   //if (debug==1) {Affiche4(tempL);printf(" ");}    
+  //Affiche4(tempL);printf(" ");Affiche4(tempH);printf("\r\n");
+  serial=(code>>32) & 0xFFFFFFF;
+  temp=code>>60;
+  if (temp==1) bouton=4; 
+  if (temp==2) bouton=1; 
+  if (temp==4) bouton=2;
+  if (temp==8) bouton=2; 
+  //printf("bouton=%x ",bouton);
     
-    print_binary(code,64);
-    printf("\r\n");
-      
-  }
+  return 0;
   
-  temp=KeeLoq_Decrypt(code,KeeLoq_NLF);
-  printf(" Decode1=");Affiche(temp);
+  // test keylocq
+  uint32_t tempH;
+  tempH=KeeLoq_Decrypt(code,KeeLoq_NLF);
+  printf(" Decode1=");Affiche(tempH);
   
-  temp=code;
-  KeeLoq_Decrypt2(key, temp, 528);
+  tempH=code;
+  KeeLoq_Decrypt2(key, tempH, 528);
   printf(" Decode2=");
-  Affiche(temp);
+  Affiche(tempH);
   printf("\r\n");
   
   return 0;
-  
-// 
-  //b0=(code >> 48) & 0xff;
-  //b1=(code >> 40) & 0xff;
-  //b2=(code >> 32) & 0xff;
-  //b3=(code >> 24) & 0xff;
-  b2=(code >> 16) & 0xff;
-  b1=(code >> 8) & 0xff;
-  b0=code & 0xff;
-  
-  printf("Decodage:\r\n");
-  printf("b0=%x\r\n",b0);
-  printf("b1=%x\r\n",b1);
-  printf("b2=%x\r\n",b2);
-
-// validate message as best as we can
-// constrain b2 & 0x3f (the button) to 0x03, 0x06, 0x09, 0x0c
-    if ((b2 & 0x3f) != 0x03
-            && (b2 & 0x3f) != 0x09
-            && (b2 & 0x3f) != 0x0c
-            && (b2 & 0x3f) != 0x06) 
-    {
-        printf("Erreur verte\r\n");
-        return -1; // DECODE_ABORT_EARLY;
-    }
-    // Disallow the fourth tri-state option on the 9 DIP switches
-    if (((b0 & 8) == 0 && (b1 & 8) != 0)
-            || ((b0 & 16) == 0 && (b1 & 16) != 0)
-            || ((b0 & 32) == 0 && (b1 & 32) != 0)
-            || ((b0 & 64) == 0 && (b1 & 64) != 0)
-            || ((b0 & 128) == 0 && (b1 & 128) != 0)
-            || ((b2 & 128) == 0 && (b2 & 64) != 0)
-            || ((b0 & 1) == 0 && (b1 & 1) != 0)
-            || ((b0 & 2) == 0 && (b1 & 2) != 0)
-            || ((b0 & 4) == 0 && (b1 & 4) != 0)) 
-    {
-      printf("Erreur jaune\r\n");
-      return -1 ; //DECODE_ABORT_EARLY;
-    }
-
-    // Get button code
-    char const *const rbutton[4] = { "11R", "10R", "01R", "00L?" };
-    char const *const button = rbutton[((b2 & 0x0f) / 3) - 1];
-
-    // Get DIP tri-state switches
-    char dip[10] = {'-','-','-','-','-','-','-','-','-', '\0'};
-
-    // Dip 1
-    if (b0 & 8) {
-        dip[0] = 'o';
-        if (b1 & 8)
-            dip[0] = '+';
-    }
-    // Dip 2
-    if (b0 & 16) {
-        dip[1] = 'o';
-        if (b1 & 16)
-            dip[1] = '+';
-    }
-    // Dip 3
-    if (b0 & 32) {
-        dip[2] = 'o';
-        if (b1 & 32)
-            dip[2] = '+';
-    }
-    // Dip 4
-    if (b0 & 64) {
-        dip[3] = 'o';
-        if (b1 & 64)
-            dip[3] = '+';
-    }
-    // Dip 5
-    if (b0 & 128) {
-        dip[4] = 'o';
-        if (b1 & 128)
-            dip[4] = '+';
-    }
-    // Dip 6
-    if (b2 & 128) {
-        dip[5] = 'o';
-        if (b2 & 64)
-            dip[5] = '+';
-    }
-    // Dip 7
-    if (b0 & 1) {
-        dip[6] = 'o';
-        if (b1 & 1)
-            dip[6] = '+';
-    }
-    // Dip 8
-    if (b0 & 2) {
-        dip[7] = 'o';
-        if (b1 & 2)
-            dip[7] = '+';
-    }
-    // Dip 9
-    if (b0 & 4) {
-        dip[8] = 'o';
-        if (b1 & 4)
-            dip[8] = '+';
-    }
-    
-    printf("%s\r\n",dip);
-  return 0;  
 }
 
 // décode somfy. renvoie HIGH si le chk est ok
@@ -2264,6 +2183,10 @@ uint8_t num_telecommande_int(uint32_t serialin)
   // si protocole niceflors, rajouter le bouton dans le poids fort du numéro de série reçu
   // dans le quartet haut du poids fort (BXXX XXXX XXXX XXXX)
   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28); 
+  
+  // si protocole cardin, rajouter le bouton dans le poids fort du numéro de série reçu
+  if (protocole==prot_cardin) serialin=serialin | ((uint32_t)bouton<<28); 
+  
   do
   {
     serialEprom=(uint32_t)lit_eprom_int(0x100+index*4);
@@ -2313,7 +2236,7 @@ void traitementCode()
     else 
     {
       #if francais
-      printf(" Code non consécutif");
+      printf(" Code non consecutif");
       #endif   
       #if english
       printf(" Non consecutive code");
@@ -2357,9 +2280,14 @@ void traitementCode()
       // for nicelor, store the button in the high nibble byte (unused), as serial remote is apart from button.  
       if (protocole==prot_niceflors) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));   // poids fort
       else
+      
+      // si cardin, stocker le bouton dans le quartet de poids fort
+      if (protocole==prot_cardin) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));   // poids fort
+      
+      else
         ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
         
-      printf("Télécommande ");Affiche4(serial);printf(" ajoutée\r\n");
+      printf("Telecommande ");Affiche4(serial);printf(" ajoutee\r\n");
       for (i=0;i<10;i++)
       {
         __delay_ms(50);
@@ -2375,7 +2303,7 @@ void traitementCode()
     { 
       led=1;  // éteint la led  
       #if francais
-        printf("Télécommande déja stockée\r\n");
+        printf("Telecommande déja stockée\r\n");
       #endif
       #if english
         printf("Remote already stored\r\n");
@@ -2441,7 +2369,7 @@ int main(void)
         | (1 << _T0CON_TMR0ON_POSN); // TMR0ON enabled
    
   #ifdef francais
-  UART1_WriteString("Récepteur télécommande Nice FLOR-s / CAME / Somfy RTS\r\n");
+  UART1_WriteString("Recepteur telecommande Nice FLOR-s / CAME / Somfy RTS\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
   #endif  
   #ifdef english
@@ -2491,6 +2419,7 @@ int main(void)
   }
           
   enable=1;  // valide le récepteur HM R 433
+
   
   while(1)
   {
@@ -2517,7 +2446,7 @@ int main(void)
         led=0;
         tpsbouton=0;
         #if francais
-        printf("Effacement toutes télécommandes\r\n");
+        printf("Effacement toutes telecommandes\r\n");
         #endif
         #if english
         printf("Discarding all remotes\r\n");
@@ -2589,15 +2518,14 @@ int main(void)
       }  
       if (protocole==prot_cardin)
       {
-        printf("Cardin=");
         decode_cardin();
-        //if (decode_cardin()==HIGH)
-        //printf("Cardin      Serial=");Affiche4(serial);
-        //traitementCode();
+        printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
+        printf(" Bouton=%d",bouton);
+        traitementCode();
       }
       if (protocole==prot_fobloqf)
       { 
-        printf("Flobloqf=");
+        printf("Fobloqf=");
         decode_fobloqf();
         //if (decode_fobloqf()==HIGH) printf("Fobloqf      code=");Affiche(code);
         //traitementCode();

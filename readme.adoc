@@ -1,7 +1,7 @@
-Nice flor-s / Came / Somfy RTS remote decoders for pic
-======================================================
+Nice flor-s / Came / CARDIN S449 / Somfy RTS remote decoders for pic
+====================================================================
 
-Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME et Somfy RTS.
+Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME, Cardin S449 et Somfy RTS.
 Cardin et Fobloqs ne sont pas terminés.
 Le projet est composé d'un PIC 18F26K80 à 16 MHz (x4 par pll = 64 MHz)
 L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprises.
@@ -19,7 +19,7 @@ documentation dans le fichier pdf.
 
 Taper ? [enter] dans le terminal pour afficher le menu.
 
-Pic program to decode Nice-florS and CAME and SOMFY RTS remote devices.
+Pic program to decode Nice-florS and CAME and Cardin S449 and SOMFY RTS remote devices.
 Cardin and Fobloqs are not completed.
 This project is made with a PIC 18F26K80 at 16 MHz (x4 with pll = 64 MHz)
 Internal eprom contains the ki.bin file, and also learnt remotes.
