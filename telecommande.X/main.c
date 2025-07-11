@@ -130,7 +130,7 @@ EB=2500  : erreur B de symétrie dans les données (rencontré 1000/1000 au lieu de
 
 Décodage correct / correct decoding :
 NumSer=0295C827,Bouton=1 T1 ok  <-- télécommande 1 reconnue car enregistrée / remote 1 recognized
-NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 inconnue reçue / remote 0 unknown
+NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 reçue signfie inconnue / remote 0 means unknown
 
 documentation télécommandes:
 https://www.cliffsnotes.com/study-notes/23860179 
@@ -141,19 +141,7 @@ se trouver dans les 128 octets suivants.
 For nice flors: reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
 So we use the previous transmitted code (per remote) to "predict" the next one, which is incremented by 1, 
 and have to be inside the next 128 ones.
- 
----------------------------------------------------
-Protocole (radio FM) CARDIN S449 :
-cardin S449 utilise le protocole FSK /  cardin S449 uses the FSK protocol
-64 bits keeloq
-utiliser le récepteur Dickert HQFM433P-50
-On ne prends on compte que le numéro de série de la télécommande pour le décodage.
-We just check the serial remote for decoding.
-https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
-Cardin    Serial=0063F2DA 6550234= Bouton=2 
-6550234 est le numéro de série de la télécommande en décimal, écrit sur son l'étiquette.
-6550234 is the remote serial number in decimal, printed on the tag of the remote. 
- 
+  
 ---------------------------------------------------
 Protocole CAME (radio OOK) protocol: 
 fonctionne avec les récepteurs / work with receivers : RXB6 & RFM210LCF-A 
@@ -164,16 +152,29 @@ https://github.com/merbanan/rtl_433/issues/1452
 
 -------------------------------------------------
 Protocole Somfy RTS
+fonctionne avec les récepteurs / work with receivers : RXB6 & RFM210LCF-A 
 Code roulant simple de 56 bits.
 Simple 56 bits rolling code.
 https://github.com/Legion2/Somfy_Remote_Lib
 https://pushstack.wordpress.com/somfy-rts-protocol/
 
+---------------------------------------------------
+Protocole (radio FM) CARDIN S449 :
+utiliser le récepteur Dickert HQFM433P-50
+cardin S449 utilise le protocole FSK /  cardin S449 uses the FSK protocol
+64 bits keelok
+On ne prends on compte que le numéro de série de la télécommande pour le décodage, pas le compteur qui est codé.
+We just check the serial remote for decoding, not the encoded counter.
+https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
+Cardin    Serial=0063F2DA=6550234 Bouton=2 
+6550234 est le numéro de série de la télécommande en décimal, écrit sur son l'étiquette.
+6550234 is the remote serial number in decimal, printed on the tag of the remote.
+
 --------------------------------------------------
 Protocole FoBloqf (FM) de rfsolutions.co.uk
+utiliser le récepteur Dickert HQFM433P-50
 Utilise un Keeloq - pas finalisé
 utiliser le récepteur Dickert HQFM433P-50
-code à 56 bits
 -------------------------------------------------- 
   
 Pour apprendre une nouvelle télécommande : 
@@ -214,42 +215,94 @@ uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
 
 // CAME éléments radio / radio items
 // modulation HF AM-OOK (tout ou rien AM)
-const uint32_t silenceC=29690;  // 14845 µs silent
-//const uint32_t debutbitC=2660;  // 1280 µs start
-const uint32_t bit0C=640;       // 320 µs  
-const uint32_t bit1C=1280;      // 640 µs
-const uint32_t toleranceC=170;
+const uint16_t silenceC=29690;  // 14845 µs silent
+const uint16_t debutbitC=2660;  // 1280 µs start
+const uint16_t bit0C=640;       // 320 µs  
+const uint16_t bit1C=1280;      // 640 µs
+const uint16_t toleranceC=170;
+// calculées:
+const uint16_t silenceC_M=silenceC-toleranceC;
+const uint16_t silenceC_P=silenceC+toleranceC;
+const uint16_t debutbitC_M=debutbitC-toleranceC;
+const uint16_t debutbitC_P=debutbitC+toleranceC;
+const uint16_t bit0C_M=bit0C-toleranceC; 
+const uint16_t bit0C_P=bit0C+toleranceC;
+const uint16_t bit1C_M=bit1C-toleranceC; 
+const uint16_t bit1C_P=bit1C+toleranceC;
+const uint16_t coupureC=(bit0C+bit1C)/2;
+
 
 // CARDIN nécessite un récepteur FM-FSK
 // requires a FM-FSK receiver
-const uint32_t silenceD=33000;  // 34000 16520µs; 
-const uint32_t debutbitD=8020;  // 4000µs
-const uint32_t bit0D=850;       // 856 730 µs (officiel 400µs)   
-const uint32_t bit1D=1600;      // 1560 500 µs (officiel=800µs)
-const uint32_t toleranceD=250;  // 250 grande dispersion sur cardin
+const uint16_t silenceD=33000;  // 34000 16520µs; 
+const uint16_t debutbitD=8020;  // 4000µs
+const uint16_t bit0D=850;       // 856 730 µs (officiel 400µs)   
+const uint16_t bit1D=1600;      // 1560 500 µs (officiel=800µs)
+const uint16_t toleranceD=250;  // 250 grande dispersion sur cardin
+// calculées:
+const uint16_t silenceD_M=silenceD-toleranceD;
+const uint16_t silenceD_P=silenceD+toleranceD;
+const uint16_t debutbitD_M=debutbitD-toleranceD;
+const uint16_t debutbitD_P=debutbitD+toleranceD;
+const uint16_t bit0D_M=bit0D-toleranceD; 
+const uint16_t bit0D_P=bit0D+toleranceD;
+const uint16_t bit1D_M=bit1D-toleranceD; 
+const uint16_t bit1D_P=bit1D+toleranceD;
+const uint16_t coupureD=(bit0D+bit1D)/2;
 
 // Fobloqf pas encore traité, nécessite un récepteur FM-FSK
 // requires a FM-FSK receiver
-const uint32_t silenceF=6800;   //3x3400µs silence
-const uint32_t debutbitF=3140;  // start 1570µs
-const uint32_t bit0F=790;       // 390 µs     
-const uint32_t bit1F=1570;      // 785 µs 
-const uint32_t toleranceF=150;
+const uint16_t silenceF=6800;   //3x3400µs silence
+const uint16_t debutbitF=3140;  // start 1570µs
+const uint16_t bit0F=790;       // 400 µs     
+const uint16_t bit1F=1570;      // 800 µs 
+const uint16_t toleranceF=150;
+// calculées:
+const uint16_t silenceF_M=silenceF-toleranceF;
+const uint16_t silenceF_P=silenceF+toleranceF;
+const uint16_t debutbitF_M=debutbitF-toleranceF;
+const uint16_t debutbitF_P=debutbitF+toleranceF;
+const uint16_t bit0F_M=bit0F-toleranceF; 
+const uint16_t bit0F_P=bit0F+toleranceF;
+const uint16_t bit1F_M=bit1F-toleranceF; 
+const uint16_t bit1F_P=bit1F+toleranceF;
+const uint16_t coupureF=(bit0F+bit1F)/2;
+
 
 // NiceFLors éléments radio / radio items
 // modulation HF AM-ASK (Amplitude shift keying)
-const uint32_t silenceN=37776;   // 18888 µs silent
-const uint32_t debutbitN=2979;   // 1500 µs start
-const uint32_t bit0N=958;        // 500 µs  
-const uint32_t bit1N=1962;       // 1000 µs
-const uint32_t toleranceN=280;
+const uint16_t silenceN=37776;   // 18888 µs silent
+const uint16_t debutbitN=2979;   // 1500 µs start
+const uint16_t bit0N=958;        // 500 µs  
+const uint16_t bit1N=1962;       // 1000 µs
+const uint16_t toleranceN=280;
+// calculées:
+const uint16_t silenceN_M=silenceN-toleranceN;
+const uint16_t silenceN_P=silenceN+toleranceN;
+const uint16_t debutbitN_M=debutbitN-toleranceN;
+const uint16_t debutbitN_P=debutbitN+toleranceN;
+const uint16_t bit0N_M=bit0N-toleranceN; 
+const uint16_t bit0N_P=bit0N+toleranceN;
+const uint16_t bit1N_M=bit1N-toleranceN; 
+const uint16_t bit1N_P=bit1N+toleranceN;
+const uint16_t coupureN=(bit0N+bit1N)/2;
 
 // Somfy RTS
-const uint32_t silenceS=5084;   // 2416 µs silent
-const uint32_t debutbitS=9600;  // 4550 µs start
-const uint32_t bit0S=1317;      // 604 µs
-const uint32_t bit1S=2614;      // 1208 µs 
-const uint32_t toleranceS=220;
+const uint16_t silenceS=5084;   // 2416 µs silent
+const uint16_t debutbitS=9600;  // 4550 µs start
+const uint16_t bit0S=1317;      // 604 µs
+const uint16_t bit1S=2614;      // 1208 µs 
+const uint16_t toleranceS=220;
+// calculées:
+const uint16_t silenceS_M=silenceS-toleranceS;
+const uint16_t silenceS_P=silenceS+toleranceS;
+const uint16_t debutbitS_M=debutbitS-toleranceS;
+const uint16_t debutbitS_P=debutbitS+toleranceS;
+const uint16_t bit0S_M=bit0S-toleranceS; 
+const uint16_t bit0S_P=bit0S+toleranceS;
+const uint16_t bit1S_M=bit1S-toleranceS; 
+const uint16_t bit1S_P=bit1S+toleranceS;
+const uint16_t coupureS=(bit0S+bit1S)/2;
 
 
 // protocoles
@@ -274,7 +327,7 @@ uint8_t       bufferRx[130] ={};
 uint32_t      mesure_bits[200];
 uint8_t       mesure_error[200];  // 1=bit mal placé  2=erreur de symétrie  3=longueur inconnue bit 
 uint8_t       compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
-uint8_t       rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton,nbreSync;
+uint8_t       rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
 uint16_t      compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
 uint64_t      code,tpsvalidetelecom,serial;
 uint32_t      duree=0,deborde=0,anc_duree,i,trame,tpsbouton;
@@ -282,7 +335,7 @@ static uint8_t command[MAX_COMMAND_LEN];
 static uint8_t index=0;
 static uint8_t readMessage;
 bool          recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-bool          aff_enr=LOW,rx,SilenceSomfy,consecutif,debugCardin,debugBrut;
+bool          aff_enr=LOW,rx,SilenceSomfy,consecutif,debugCardin,debugFobloqf,debugBrut;
 uint16_t      NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t      valt0;
 uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à maxtel
@@ -350,12 +403,14 @@ void __interrupt(high_priority) ISR_high()
 
     //led=rx;
     anc_duree=duree;
-    duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
-    duree=duree+deborde;
-
+    //duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
+    //duree=duree+deborde;
+    duree=TMR0+deborde;
+    
     deborde=0;
-    TMR0H=0;     // raz timer pour mesure créneau suivant
-    TMR0L=0;
+    TMR0=0;
+    //TMR0H=0;     // raz timer pour mesure créneau suivant
+    //TMR0L=0;
     
     NbreBits++;
     
@@ -387,44 +442,49 @@ void __interrupt(high_priority) ISR_high()
     }
     
     // silence fobloqf  
-    if ( (!bitSilence) && (!telegram) && ((duree>(silenceF-300)) && (duree<(silenceF+300))))  
+    if ( (!bitSilence) && (!telegram) && (duree>silenceF_M) && (duree<silenceF_P))   
     {
-      NbreBits=1;
+      NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-      // debug=4;
       if (debug==2) 
-      printf("Fobloqf");
+      printf("F");
       protocole=prot_fobloqf;
+      if (debugFobloqf) {debugBrut=HIGH;debugFobloqf=LOW;goto fin;}
       code=0;
       bitSilence=HIGH;
       bitDebut=LOW;
       telegram=LOW;
       goto fin;
     }
+    
     // début flobloqf
-    if ( (protocole==prot_fobloqf) && (bitSilence) && ((duree>(debutbitF-toleranceF)) && (duree<(debutbitF+toleranceF))))  
+    if ((protocole==prot_fobloqf) && (bitSilence) && (duree>debutbitF_M) && (duree<debutbitF_P))  
     { 
-      if (NbreBits!=45) {raz_bits();goto fin;}
+      if (debug==2) printf("S");
+      //printf("%d\r\n",NbreBits);
+        //if ((NbreBits<40) || (NbreBits>41)) {bitSilence=LOW;protocole=0;goto fin;}
+      if (NbreBits!=44) {bitSilence=LOW;protocole=0;goto fin;}
       NbreBits=0;
-      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-      //if (debug==2)   printf("Fobloqf");
-      //debug=4;goto fin;
-      bitDebut=LOW;
       protocole=prot_fobloqf;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+      
+      //debugBrut=1;goto fin;
+      bitDebut=LOW;
+      bitSilence=LOW;
+      NbreBitsMsg=0;
       telegram=HIGH;
       code=0;
       goto fin;
     }
   
     // silence cardin 
-    if ((!bitSilence) && (!telegram) && ((duree>(silenceD-toleranceD)) && (duree<(silenceD+toleranceD)))) 
+    if ((!bitSilence) && (!telegram) && (duree>silenceD_M) && (duree<silenceD_P)) 
     {
-      NbreBits=1;
+      NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
       if (debug==2) 
-      printf("Cardin=%lu\r\n",duree); 
-      //   goto fin;
+      printf("Cardin=%lu\r\n",duree);
       if (debugCardin) {debugBrut=HIGH;debugCardin=LOW;goto fin;}
       code=0;
       bitSilence=HIGH;
@@ -433,9 +493,8 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     } 
     // début cardin, après les 11 ou 12 crénaux de sync
-    if ((protocole==prot_cardin) && (bitSilence) && ((duree>(debutbitD-toleranceD)) && (duree<(debutbitD+toleranceD))))  
-    {
-      //nbreSync=NbreBits; 
+    if ((protocole==prot_cardin) && (bitSilence) && (duree>debutbitD_M) && (duree<debutbitD_P))  
+    { 
        // printf("%d\r\n",NbreBits);
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
@@ -450,7 +509,7 @@ void __interrupt(high_priority) ISR_high()
     }
     
     // silence nice flors
-    if ((!telegram) && ((duree>(silenceN-toleranceN)) && (duree<(silenceN+toleranceN))))  
+    if ((!telegram) && (duree>silenceN_M) && (duree<silenceN_P))  
     {
       NbreBits=1;
       bitDebut=HIGH;
@@ -463,7 +522,7 @@ void __interrupt(high_priority) ISR_high()
     }
    
     // silence - came     
-    if ((!telegram) &&(duree>(silenceC-200)) && (duree<(silenceC+200)))
+    if ((!telegram) && (duree>silenceC_M) && (duree<silenceC_P))
     {
       NbreBits=1;
       protocole=prot_came;
@@ -481,7 +540,7 @@ void __interrupt(high_priority) ISR_high()
     // Somfy : x silent bits and one start bit.
     // The start bit is preceded by x silence bits, we only check that the previous one is a silence one
     // and start bit is 1 (rx)
-    if ((anc_duree>(silenceS-toleranceS)) && (anc_duree<(silenceS+toleranceS)) && rx && (!telegram) && (duree>(debutbitS-toleranceS)) && (duree<(debutbitS+toleranceS)) )   
+    if ((anc_duree>silenceS_M) && (anc_duree<silenceS_P) && rx && (!telegram) && (duree>debutbitS_M) && (duree<debutbitS_P) )   
     {
       NbreBits=1;
       SilenceSomfy=HIGH;
@@ -504,20 +563,20 @@ void __interrupt(high_priority) ISR_high()
       if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
        
       // cas bit 1 -> bit 0  ou   bit 0 -> bit 1
-      if ((duree>(bit1S-toleranceS)) && (duree<(bit1S+toleranceS)))
+      if ((duree>bit1S_M) && (duree<bit1S_P))
       {
         Nb0=0;  
-        if (rx)
+        if (rx) // polarité du signal
         {
           //printf("0");
           NbreBitsMsg++;           
-          code=code*2;  
+          code=code<<1;  
         }
         else
         {
           //printf("1");
           NbreBitsMsg++;           
-          code=code*2;    // décaler à gauche sur 64 bits on peut utiliser aussi <<1
+          code=code<<1;    // décaler à gauche sur 64 bits on peut utiliser aussi <<1
           code=code | 1;  // bit 0 à 1 c'est un bit à 1
         }
         if (NbreBitsMsg==56) fin_somfy();
@@ -525,7 +584,7 @@ void __interrupt(high_priority) ISR_high()
       }
       
       // cas bit 0 -> bit 0  ou   bit 1 -> bit 1
-      if ((duree>(bit0S-toleranceS)) && (duree<(bit0S+toleranceS)))
+      if ((duree>bit0S_M) && (duree<bit0S_P))
       {
         Nb0++;   // incrémenter nombre de bits à 0 consécutifs
         if (Nb0==1) goto fin;   // si c'est le 1er ne rien faire
@@ -534,14 +593,14 @@ void __interrupt(high_priority) ISR_high()
         {
           //printf("B1");
           NbreBitsMsg++;           
-          code=code * 2;  // décaler à gauche sur 64 bits 
-          code=code | 1;  // bit 0 à 1 c'est un bit à 1
+          code=code<<1;  // décaler à gauche sur 64 bits 
+          code=code | 1;   // bit 0 à 1 c'est un bit à 1
         }
         else
         { 
           //printf("B0");
           NbreBitsMsg++;           
-          code=code * 2;  // décaler à gauche sur 64 bits
+          code=code<<1;  // décaler à gauche sur 64 bits
         }   
         if (NbreBitsMsg==56) fin_somfy();
         goto fin;
@@ -554,6 +613,7 @@ void __interrupt(high_priority) ISR_high()
     }  
     
     // cardin S449 ------------------------------
+    // ce lien concerne S466 pas S449 !
     // https://github.com/merbanan/rtl_433/blob/master/src/devices/cardin.c
     if (telegram && (protocole==prot_cardin))
     {
@@ -561,7 +621,7 @@ void __interrupt(high_priority) ISR_high()
       //if ((NbreBits-1)%8==0) printf(" ");
       if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
       //if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
-      if (duree>1200)
+      if (duree>coupureD)
       {
         if ((NbreBits+1) % 2==0) // bit impair : mémoriser son état - even bit : store it
         {
@@ -599,7 +659,7 @@ void __interrupt(high_priority) ISR_high()
         //code=code * 2;  // décaler à gauche  
         //if (NbreBits>=64) fin_cardin();
         //goto fin; //----------------
-        if ((NbreBits+1) % 2==0)   // bit impait
+        if ((NbreBits+1) % 2==0)   // bit impair
         {
           bitPrec=LOW;
         }
@@ -633,77 +693,42 @@ void __interrupt(high_priority) ISR_high()
     // Fobloqf ----------------------------------------------------------------------------
     if (telegram && (protocole==prot_fobloqf))
     {   
-        //printf("%d\r\n",duree);
-      if (telegram)
-      {  
-        if ((duree>(bit1F-toleranceF)) && (duree<(bit1F+toleranceF)))
-        {
-          //printf("1");
-          code=code * 2; // décaler à gauche
-          code=code | 1;
-          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
-          if (NbreBits==56) fin_fobloqf();
-          goto fin;
-          if (NbreBits % 2==0) // bit impair : mémoriser son état - even bit : store it
-          {
-            bitPrec=HIGH;
-          }
-          else
-          // évaluation sur bits pairs
-          {
-            if (bitPrec==LOW) 
-            {
-              NbreBitsMsg++;           
-              code=code * 2;  // décaler à gauche sur 64 bits
-              code=code | 1;  // bit 0 à 1
-            }
-            else 
-            {
-              NbreBits=0;raz_bits();
-              if (debug==1) 
-              {mesure_error[NbreBits]=Err_sym_bit;printf("EAA D=%u\r\n",duree);}  // erreur symétrie données
-            }
-          }
-          goto fin;
-        }
-        //if (telegram) printf("%d\r\n",duree);  
-        if ((duree>(bit0F-toleranceF)) && (duree<(bit0F+toleranceF)))
-        {
-          //printf("0");
-          code=code * 2;  // décaler à gauche 
-          if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
-          if (NbreBits==56) fin_fobloqf();
-          goto fin;
-          if (NbreBits % 2==0)
-          {
-            bitPrec=LOW;
-          }
-          else
-          // évaluation sur bits pairs
-          {
-            if (bitPrec==HIGH) 
-            {
-              NbreBitsMsg++;
-              code=code*2; // décaler à gauche
-            }
-            else 
-            {
-              NbreBits=0;raz_bits();
-              if (debug==1) 
-              {mesure_error[NbreBits]=Err_sym_bit;printf("EBA D=%u\r\n",duree);}  // erreur symétrie données
-            }
-          }
-          goto fin;
-        }
-        else
-        {
-          raz_bits();
-          nb=NbreBits;  // pour affichage
-          if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
-          if (debug==1) printf("EFA%d\r\n",NbreBits); // erreur bit inconnu dans les données
-          goto fin;
-        }       
-      }       
+      if ((duree>(bit1F-toleranceF)) && (duree<(bit1F+toleranceF)))
+      //if (duree>coupureF)
+      {
+        //printf("1");
+        //code=code << 1; // décaler à gauche
+        //code=code | 1;
+        code=code>>1;
+        code=code | 0x8000000000000000L ;   
+        if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
+        if (NbreBits==64) fin_fobloqf();  // 55 bits
+        goto fin;
+      }
+ 
+      if ((duree>(bit0F-toleranceF)) && (duree<(bit0F+toleranceF)))
+      //else
+      {
+        //printf("0");
+        //code=code << 1;  // décaler à gauche 
+        code=code>>1;
+        if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
+        if (NbreBits==64) fin_fobloqf();      
+        goto fin;
+      }
+      // extra bit de 1200µs
+      printf("%d ",duree);
+      if (NbreBits<150) mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0; 
+      if (NbreBits>=64) fin_fobloqf();   
+      goto fin;
+      //else
+      {
+        raz_bits();
+        nb=NbreBits;  // pour affichage
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
+        if (debug==1) printf("EFA%d\r\n",NbreBits); // erreur bit inconnu dans les données
+        goto fin;
+      }            
     }   
     
     // CAME ----------------------------------------------------------------------------
@@ -712,7 +737,7 @@ void __interrupt(high_priority) ISR_high()
       //printf("%d\r\n",duree);
       if (telegram)
       {
-        if ((duree>(bit1C-toleranceC)) && (duree<(bit1C+toleranceC)))
+        if ((duree>bit1C_M) && (duree<bit1C_P))
         {
           //printf("1");
           code=code * 2; // décaler à gauche
@@ -743,7 +768,7 @@ void __interrupt(high_priority) ISR_high()
           goto fin;
         }
         //if (telegram) printf("%d\r\n",duree);  
-        if ((duree>(bit0C-toleranceC)) && (duree<(bit0C+toleranceC)))
+        if ((duree>bit0C_M) && (duree<bit0C_P))
         {
           //printf("0");
           code=code * 2;  // décaler à gauche 
@@ -789,8 +814,8 @@ void __interrupt(high_priority) ISR_high()
        // printf("J");
         // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
       // found a start bit, might be one of the 2 firsts or the last
-      if ((duree>(debutbitN-toleranceN)) && (duree<(debutbitN+toleranceN))) 
-      { 
+      if ((duree>debutbitN_M) && (duree<debutbitN_P)) 
+      {   
         //if (debug==1) {printf("S%u",NbreBits);printf(" %d\r\n",duree);}
         // bit de fin, fin du message radio télécommande
         // end bit, end of radio remote message
@@ -844,7 +869,7 @@ void __interrupt(high_priority) ISR_high()
       if (tramebits)  // données 
       {
         //printf("D%d\r\n",NbreBits);
-        if ((duree>(bit1N-toleranceN)) && (duree<(bit1N+toleranceN)))
+        if ((duree>bit1N_M) && (duree<bit1N_P))
         {
           //Serial.print("1");
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}   
@@ -869,7 +894,7 @@ void __interrupt(high_priority) ISR_high()
           }
         }
         else  
-        if ((duree>(bit0N-toleranceN)) && (duree<(bit0N+toleranceN)))
+        if ((duree>bit0N_M) && (duree<bit0N_P))
         {
           //Serial.print("0");
           if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;} 
@@ -1341,18 +1366,18 @@ void affiche_enregistrement()
  
  
   printf("\r\n");
-  for (y=1;y<=20;y++)
+  for (y=1;y<=22;y++)
   {
     for (x=1;x<=9;x++)
     {
-      i=((y-1) % 20)+1  + ((x-1) * 20) - 1;   // -1 pour commencer en indice 0
+      i=((y-1) % 22)+1  + ((x-1) * 22) - 1;   // -1 pour commencer en indice 0
       if (i<=nb)
       {
         printf("%3d",i);
         ancduree=mesure_bits[i-1];
         duree=mesure_bits[i];
        // printf(" %5lu",duree);
-         printf(" %6lu",duree);
+         printf("%6lu",duree);
         
         if (protocole==0) printf("  ");  // mesure brute - raw data record
          
@@ -1416,11 +1441,9 @@ void affiche_enregistrement()
           else
           if ((duree>(debutbitF-toleranceF)) && (duree<(debutbitF+toleranceF))) printf(" D");
           else
-          if ((duree>(bit0D-toleranceF)) && (duree<(bit0D+toleranceF))) printf(" 0");
+          if (duree<coupureF) printf(" 0");
           else
-          if ((duree>(bit1D-toleranceF)) && (duree<(bit1D+toleranceF))) printf(" 1");  
-          else
-          printf(" ?");
+          printf(" 1");  
           if (mesure_error[i]!=0)  printf( " Err %d",mesure_error[i]);
         }
         printf("| ");
@@ -1454,11 +1477,11 @@ void UART_ExecuteCommand(char *command)
     if (debug>4) debug=0;
     printf("Debug %d ",debug);
     #if francais
-    if (debug==0) printf("pas de debug\r\n");
+    if (debug==0) {printf("pas de debug\r\n");debugCardin=LOW;}
     if (debug==1) printf("Affichages supplementaires et les erreurs\r\n");
     if (debug==2) printf("Affiche silence\r\n");
     if (debug==3) printf("Affiche les durees reçues en direct\r\n");
-    if (debug==4) {printf("Mode debug cardin\r\n");debugCardin=HIGH;debug=0;}
+    if (debug==4) {printf("Mode debug fobloqf\r\n");debugFobloqf=HIGH;debug=0;}
     #endif   
     #if english
     if (debug==0) printf("No debug\r\n");
@@ -1958,14 +1981,28 @@ uint32_t inverse24(int32_t mot)
   return r;
 }
 
-uint32_t miroir(uint32_t n)
+// miroire les bits d'un 32 bits : abcd.....z devient : z....dcba
+uint32_t miroir32(uint32_t n)
 {
-  n = ((n >> 1) & 0x55555555) | ((n << 1) & 0xaaaaaaaa);
-  n = ((n >> 2) & 0x33333333) | ((n << 2) & 0xcccccccc);
-  n = ((n >> 4) & 0x0f0f0f0f) | ((n << 4) & 0xf0f0f0f0);
-  n = ((n >> 8) & 0x00ff00ff) | ((n << 8) & 0xff00ff00);
-  n = ((n >> 16) & 0x0000ffff) | ((n << 16) & 0xffff0000);  
+  n = ((n>>1) & 0x55555555) | ((n<<1) & 0xaaaaaaaa);
+  n = ((n>>2) & 0x33333333) | ((n<<2) & 0xcccccccc);
+  n = ((n>>4) & 0x0f0f0f0f) | ((n<<4) & 0xf0f0f0f0);
+  n = ((n>>8) & 0x00ff00ff) | ((n<<8) & 0xff00ff00);
+  n = ((n>>16) & 0x0000ffff) | ((n<<16) & 0xffff0000); 
+  return n;
 }
+
+uint64_t miroir64(uint64_t n)
+{
+  n = ((n>>1) & 0x5555555555555555) | ((n<<1) & 0xaaaaaaaaaaaaaaaa);
+  n = ((n>>2) & 0x3333333333333333) | ((n<<2) & 0xcccccccccccccccc);
+  n = ((n>>4) & 0x0f0f0f0f0f0f0f0f) | ((n<<4) & 0xf0f0f0f0f0f0f0f0);
+  n = ((n>>8) & 0x00ff00ff00ff00ff) | ((n<<8) & 0xff00ff00ff00ff00);
+  n = ((n>>16) & 0x0000ffff0000ffff) | ((n<<16) & 0xffff0000ffff0000); 
+  n = ((n>>32) & 0x00000000ffffffff) | ((n<<32) & 0xffffffff00000000); 
+  return n;
+}
+
 
 bool decode_fobloqf()
 {
@@ -1973,7 +2010,11 @@ bool decode_fobloqf()
   // code à 64 bits, soit 4 octets 
     //if (debug==1) 
   Affiche(code);
+  printf(" Miroir=");
+  Affiche(miroir64(code));
+  
   printf("\r\n"); 
+  
   return 0;
   
   // test décode keyloq
@@ -1986,7 +2027,6 @@ bool decode_fobloqf()
   Affiche(temp);
   printf("\r\n");   
   return 0;   
-  
 }
 
 
@@ -1995,9 +2035,9 @@ bool decode_cardin()  // https://github.com/merbanan/rtl_433/blob/master/src/dev
   // pour le décodage de cardin S449, on ne se sert que de la partie haute 32 bits du code de 64 bits:
   // Ex : 20842A9B83B0A4D0 : série=00842A9B
   // Donc on ne tient pas compte de la partie rolling code (partie basse 32 bits du code de 64 bits)
-  // For cardin S449 decoding, we just handle with the high 32 bits of the 64 bits code :
+  // For cardin S449 decoding, we just handle the high 32 bits of the 64 bits code :
   // Ex : 20842A9B83B0A4D0 : serial=00842A9B
-  // so we don't take care about the rolling code (low 32 bits part of the 64 bits code)  
+  // so we don't care about the rolling code (low 32 bits part of the 64 bits code)  
   uint8_t temp; 
   // code à 64 bits, soit 8 octets , transmis LSB en premier
   // https://cargeek.live/docs/Sec_Analysis_Garage_Door_XXxiOwB.pdf
@@ -2029,6 +2069,7 @@ bool decode_cardin()  // https://github.com/merbanan/rtl_433/blob/master/src/dev
 }
 
 // décode somfy. renvoie HIGH si le chk est ok
+// Sends back HIGH if chk is ok.
 bool decode_somfy()
 {
   uint8_t chk;    
@@ -2127,7 +2168,7 @@ void decode_b06_nice()
   serial=serial + ((uint32_t)snbuf2 << 16L);
   serial=serial + ((uint32_t)snbuf3 << 24L);
   bouton=b0 & 0x0f;
-  repete=(b1 >> 4) ^ bouton ^ 0x0f;
+  repete=(b1>>4) ^ bouton ^ 0x0f;
   printf("NiceFlorS NumSer=");Affiche4(serial);   // numéro de série de la télécommande
   printf(",Bouton=%d",bouton);
   if (debug>=1)
@@ -2144,15 +2185,15 @@ uint64_t encode_quartets()    // type 64 bits
   uint64_t encoded;
   uint8_t b;  
   code=0;
-  code=((b6 << 0x4) & 0xF0) ;
+  code=((b6<<4) & 0xF0) ;
 
   code|=((((b5 & 0x0F) << 4) | ((b6 & 0xF0) >> 4)) << 8) & 0xff00;
   
   b=((b4 & 0x0F) << 4) + ((b5 & 0xF0) >> 4);
-  code = code + (b *0x10000) ;    // << 16
+  code=code + (b *0x10000) ;    // << 16
 
   b=(((b3 & 0x0F) << 4) & 0xF0) | (((b4 & 0xF0) >> 4) & 0x0F);
-  code= code + (b*0x1000000);    // << 24
+  code=code + (b*0x1000000);    // << 24
  
   // à partir d'ici, on ne peut pas décaler de plus de 32 bits, il faut utiliser la multiplication
   // De même le OU bitwise (encoder|=) ne marche pas en 64 bits, il faut utiliser + (commentaire pour arduino nano)
@@ -2174,8 +2215,8 @@ uint64_t encode_quartets()    // type 64 bits
 
 // renvoie le numéro de la télécommande "serialin" en eprom interne
 // si pas reconnue en epromint, renvoie 0
-// get the remote number (1-10) from serial from int eprom
-// if not found, sends 0
+// get the remote number (1-10) "serialin" from int eprom
+// if not found, sends back 0
 uint8_t num_telecommande_int(uint32_t serialin)
 {
   uint16_t index=0;
@@ -2215,6 +2256,7 @@ void traitementCode()
     consecutif=HIGH;
     if ((protocole==prot_niceflors) || (protocole==prot_somfy))
     {
+      // pour ces protocoles,
       // contrôler que l'index du code de la télécommande est plus grand que l'ancien
       // check if the new index code is greater than the previous one
       // indexcode > previous indexcode , so: indexcoderecu[n]<indexcode
@@ -2303,7 +2345,7 @@ void traitementCode()
     { 
       led=1;  // éteint la led  
       #if francais
-        printf("Telecommande déja stockée\r\n");
+        printf("Telecommande deja stockee\r\n");
       #endif
       #if english
         printf("Remote already stored\r\n");
@@ -2423,17 +2465,16 @@ int main(void)
   
   while(1)
   {
-    /*
-    // essai rts
+    
+    /* essai rts
     rts=1;
     __delay_ms(200);
     rts=0;
     __delay_ms(200);
-    */
-    
+        
     // essai cts
     //if (cts==1) led=1; else led=0;
-    
+    */
       
     if (!RB2) // bouton appuyé
     {
@@ -2465,7 +2506,13 @@ int main(void)
     // button short press
     if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
     {
-      tpsvalidetelecom=50000;     
+      tpsvalidetelecom=50000;
+      #if francais
+      printf("Attente nouvelle telecommande\r\n");
+      #endif
+      #if english
+      printf("Waiting for new remote\r\n");
+      #endif  
     }  
         
     if (tpsvalidetelecom!=0)
