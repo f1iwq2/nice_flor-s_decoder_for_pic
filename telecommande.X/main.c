@@ -210,11 +210,11 @@ To delete all remotes ;
 #define KeeLoq_NLF    0x3A5C742E  // clé de 32 bits
 #define bit(x,n) (((x)>>(n))&1)
 #define g5(x,a,b,c,d,e)	(bit(x,a)+bit(x,b)*2+bit(x,c)*4+bit(x,d)*8+bit(x,e)*16)
-// KEY for keeloq algorithme must be same as transmiter key, 64bit LSB-first
+// clé de l'agorithme keeloq 64bit LSB-first
 uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
 
 // CAME éléments radio / radio items
-// modulation HF AM-OOK (tout ou rien AM)
+// 433,920 MHz  modulation HF AM-OOK (tout ou rien AM)
 const uint16_t silenceC=29690;  // 14845 µs silent
 const uint16_t debutbitC=2660;  // 1280 µs start
 const uint16_t bit0C=640;       // 320 µs  
@@ -233,7 +233,7 @@ const uint16_t coupureC=(bit0C+bit1C)/2;
 
 
 // CARDIN nécessite un récepteur FM-FSK
-// requires a FM-FSK receiver
+// 433,920 MHz requires a FM-FSK receiver
 const uint16_t silenceD=33000;  // 34000 16520µs; 
 const uint16_t debutbitD=8020;  // 4000µs
 const uint16_t bit0D=850;       // 856 730 µs (officiel 400µs)   
@@ -251,7 +251,7 @@ const uint16_t bit1D_P=bit1D+toleranceD;
 const uint16_t coupureD=(bit0D+bit1D)/2;
 
 // Fobloqf pas encore traité, nécessite un récepteur FM-FSK
-// requires a FM-FSK receiver
+// 433,920 MHz requires a FM-FSK receiver
 const uint16_t silenceF=6800;   //3x3400µs silence
 const uint16_t debutbitF=3140;  // start 1570µs
 const uint16_t bit0F=790;       // 400 µs     
@@ -268,9 +268,8 @@ const uint16_t bit1F_M=bit1F-toleranceF;
 const uint16_t bit1F_P=bit1F+toleranceF;
 const uint16_t coupureF=(bit0F+bit1F)/2;
 
-
 // NiceFLors éléments radio / radio items
-// modulation HF AM-ASK (Amplitude shift keying)
+// 433,920 MHz modulation HF AM-ASK (Amplitude shift keying)
 const uint16_t silenceN=37776;   // 18888 µs silent
 const uint16_t debutbitN=2979;   // 1500 µs start
 const uint16_t bit0N=958;        // 500 µs  
@@ -288,6 +287,7 @@ const uint16_t bit1N_P=bit1N+toleranceN;
 const uint16_t coupureN=(bit0N+bit1N)/2;
 
 // Somfy RTS
+// 433,420 MHz ASK (portée réduite si on utilise un récepteur 433,920 MHz "tolérant", mais ne marche pas sur tous les récepteurs)
 const uint16_t silenceS=5084;   // 2416 µs silent
 const uint16_t debutbitS=9600;  // 4550 µs start
 const uint16_t bit0S=1317;      // 604 µs
@@ -441,8 +441,10 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     }
     
-    // silence fobloqf  
-    if ( (!bitSilence) && (!telegram) && (duree>silenceF_M) && (duree<silenceF_P))   
+    // silence fobloqf  - inhibé
+    // Si vous voulez déverrouiller fobloqf, simplement enlever "LOW &&"
+    // if you want to unlock fobloqf, just remove the "LOW &&"
+    if ( LOW && (!bitSilence) && (!telegram) && (duree>silenceF_M) && (duree<silenceF_P))   
     {
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
@@ -717,7 +719,7 @@ void __interrupt(high_priority) ISR_high()
         goto fin;
       }
       // extra bit de 1200µs
-      printf("%d ",duree);
+      if (debug==1) printf("%d ",duree);
       if (NbreBits<150) mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0; 
       if (NbreBits>=64) fin_fobloqf();   
       goto fin;
