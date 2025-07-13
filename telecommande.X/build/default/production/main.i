@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 191 "main.c"
+# 204 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 192 "main.c" 2
+# 205 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,8 +21018,8 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 193 "main.c" 2
-# 214 "main.c"
+# 206 "main.c" 2
+# 227 "main.c"
 uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
 
 
@@ -21096,6 +21096,7 @@ const uint16_t bit1N_P=bit1N+toleranceN;
 const uint16_t coupureN=(bit0N+bit1N)/2;
 
 
+
 const uint16_t silenceS=5084;
 const uint16_t debutbitS=9600;
 const uint16_t bit0S=1317;
@@ -21143,11 +21144,12 @@ static uint8_t command[(8U)];
 static uint8_t index=0;
 static uint8_t readMessage;
 _Bool recu=0,bitDebut=0,bitSilence=0,bitPrec=0,AncBp,telegram=0,tramebits=0;
-_Bool aff_enr=0,rx,SilenceSomfy,consecutif,debugCardin,debugFobloqf,debugBrut;
+_Bool aff_enr=0,rx,SilenceSomfy,consecutif,debugCardin,debugFobloqf,debugBrut,
+              modeProg=0;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t valt0;
 uint16_t indexCodeRecu[20 +1];
-# 349 "main.c"
+# 364 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21184,6 +21186,12 @@ void fin_fobloqf()
   recu=1;
 }
 
+void fin_niceflors()
+{
+  raz_bits();
+  nb=NbreBits;
+  recu=1;
+}
 
 
 
@@ -21241,6 +21249,8 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       aff_enr=1;
       goto fin;
     }
+
+
 
 
     if ( 0 && (!bitSilence) && (!telegram) && (duree>silenceF_M) && (duree<silenceF_P))
@@ -21518,7 +21528,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         goto fin;
       }
 
-      if (debug==1) printf("%d ",duree);
+      printf("%d ",duree);
       if (NbreBits<150) mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       if (NbreBits>=64) fin_fobloqf();
       goto fin;
@@ -21625,12 +21635,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           bitDebut=0;bitSilence=0;
           mesure_bits[NbreBits]=duree;
           mesure_error[NbreBits]=0;
-          nb=NbreBits;
-          telegram=0;
-          bitDebut=0;
-          tramebits=0;
-          bitSilence=0;
-          recu=1;
+          fin_niceflors();
           goto fin;
         }
         if ((NbreBits==2) | (NbreBits==3))
@@ -21659,11 +21664,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         }
 
 
-
         raz_bits();
-        nb=NbreBits;
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
-        if (debug==1) printf("EZ%u\r\n",NbreBits);
         goto fin;
       }
 
@@ -21775,13 +21776,13 @@ uint8_t nlf(uint8_t d)
 
   for (r=0;r<nrounds;r++)
   {
-    nlf_input=(((data >> 30) & 0x1) << 4) | (((data >> 25) & 0x1) << 3) | (((data >> 19) & 0x1) << 2) | (((data >> 8) & 0x1) << 1) | (data & 0x1);
+    nlf_input=(((data>>30) & 0x1) << 4) | (((data>>25) & 0x1) << 3) | (((data>>19) & 0x1) << 2) | (((data>>8) & 0x1) << 1) | (data & 0x1);
 
     o=nlf(nlf_input);
-    ki=(uint16_t)(15 - r) % 64;
-    k=key[ki / 8] >> (ki % 8);
-    x=k^(data >> 31)^(data >> 15)^o;
-    data=(data << 1) | x & 1;
+    ki=(uint16_t)(15-r) % 64;
+    k=key[ki/8] >> (ki % 8);
+    x=k^(data>>31)^(data >> 15)^o;
+    data=(data<<1) | x & 1;
   }
   return data;
 }
@@ -21792,6 +21793,7 @@ void menu()
 
    printf("       ** MENU **\n\r\n\r");
    printf("?....Affiche ce menu\r\n");
+   printf("0....Force le mode debug 0\r\n");
    printf("1....Change mode debug \r\n");
    printf("2....UART9600/230400 bauds\r\n");
    printf("3....Envoyer a l'eprom ext le fichier 128Ko de codes NiceFlorS (protocole Xmodem CRC)\r\n");
@@ -21804,7 +21806,7 @@ void menu()
    printf("A....Verifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des telecommandes connues\r\n");
-# 1030 "main.c"
+# 1046 "main.c"
    printf("\r\n");
 
    printf("Votre choix suivi de ENTREE\r\n");
@@ -22014,7 +22016,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 1251 "main.c"
+# 1267 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -22130,7 +22132,6 @@ void affiche_enregistrement()
   if (protocole==prot_fobloqf) printf(" Protocole Fobloqf");
   if (protocole==prot_niceflors) printf(" Protocole NiceFlorS");
 
-
   printf("\r\n");
   for (y=1;y<=22;y++)
   {
@@ -22237,13 +22238,20 @@ void UART_ExecuteCommand(char *command)
     menu();
   }
   else
-  if(strcmp(command,"1") == 0)
+  if(strcmp(command,"0")==0)
+  {
+    debug=0;debugFobloqf=0;debugCardin=0;
+    debugBrut=0;
+    printf("Debug 0\r\n");
+  }
+  else
+  if(strcmp(command,"1")==0)
   {
     debug++;
     if (debug>4) debug=0;
     printf("Debug %d ",debug);
 
-    if (debug==0) {printf("pas de debug\r\n");debugCardin=0;}
+    if (debug==0) {printf("Pas de debug\r\n");debugCardin=0;}
     if (debug==1) printf("Affichages supplementaires et les erreurs\r\n");
     if (debug==2) printf("Affiche silence\r\n");
     if (debug==3) printf("Affiche les durees reçues en direct\r\n");
@@ -22257,7 +22265,7 @@ void UART_ExecuteCommand(char *command)
 
   }
   else
-  if(strcmp(command,"2") == 0)
+  if(strcmp(command,"2")==0)
   {
     pvitesse++;
     if (pvitesse==2) pvitesse=0;
@@ -22266,7 +22274,7 @@ void UART_ExecuteCommand(char *command)
     if (pvitesse==1) {printf("pour debug\r\n");SPBRGH1=0x00;SPBRG1=0x44;}
   }
   else
-  if (strcmp(command,"3") == 0)
+  if (strcmp(command,"3")==0)
   {
 
     if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
@@ -22276,78 +22284,78 @@ void UART_ExecuteCommand(char *command)
 
 
 
-   recoit_xmodem(1);
- }
- else
- if (strcmp(command,"4") == 0)
- {
+    recoit_xmodem(1);
+  }
+  else
+  if (strcmp(command,"4")==0)
+  {
 
-   if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
-   printf("Dans TeraTerm, selectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
-
-
-
-
-
-   recoit_xmodem(2);
- }
- else
-
- if (strcmp(command,"5") == 0)
- {
-   affiche_enregistrement();
- }
- else
- if(strcmp(command,"6") == 0)
- {
-   INTCONbits.GIE=0;
-
-   printf("Derniere erreur : ");
+    if (pvitesse!=0) printf("Utilisez la vitesse de 9600 bauds pour utiliser Xmodem\r\n");
+    printf("Dans TeraTerm, selectionner le fichier 256o de codes en protocole Xmdem CRC dans les 20s\r\n");
 
 
 
 
 
+    recoit_xmodem(2);
+  }
+  else
 
-   switch (erreur)
-   {
-     case 0: {printf("Aucune");break;}
-     case 1: {printf("Timeout trame %d",trame);break;}
-     case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
-     case 3: {printf("Erreur complementation numero paquet");break;}
-     case 4: {printf("Timeout sur numero de paquet");break;}
-     case 5: {printf("Timeout sur numero de paquet complemente");break;}
-     case 6: {printf("Timeout donnees");break;}
-     case 7: {printf("Erreur crc");break;}
-     case 8: {printf("Erreur ecriture EPROM ext");break;}
-     default: printf(" %d",erreur);
-   }
-# 1576 "main.c"
-   printf(" Derniere erreur I2C=%d",erreurI2C);
+  if (strcmp(command,"5")==0)
+  {
+    affiche_enregistrement();
+  }
+  else
+  if(strcmp(command,"6")==0)
+  {
+    INTCONbits.GIE=0;
+
+    printf("Derniere erreur : ");
 
 
 
 
-   printf("\r\n");
-   INTCONbits.GIE=1;
- }
- else
- if (strcmp(command,"7") == 0)
- {
-   INTCONbits.GIE=0;
-   printf("n° paquet=%d\r\n",pak);
-   printf("n° paquet compl=%d\r\n",pakcom);
-   printf("Valeur compt=%d\r\n",compt);
 
-   for (i=1;i<=130;i++)
-   {
-     printf("%d:",i);
-     printf("%d,",bufferRx[i]);
-   }
-   printf("\r\n");
-   printf("Crc calcule=%x\r\n",crc);
-   printf("Crc recu=%x\r\n",crcrecu);
-   INTCONbits.GIE=1;
+
+    switch (erreur)
+    {
+      case 0: {printf("Aucune");break;}
+      case 1: {printf("Timeout trame %d",trame);break;}
+      case 2: {printf("Pas recu SOH (1) trame %d",trame);break;}
+      case 3: {printf("Erreur complementation numero paquet");break;}
+      case 4: {printf("Timeout sur numero de paquet");break;}
+      case 5: {printf("Timeout sur numero de paquet complemente");break;}
+      case 6: {printf("Timeout donnees");break;}
+      case 7: {printf("Erreur crc");break;}
+      case 8: {printf("Erreur ecriture EPROM ext");break;}
+      default: printf(" %d",erreur);
+    }
+# 1598 "main.c"
+    printf(" Derniere erreur I2C=%d",erreurI2C);
+
+
+
+
+    printf("\r\n");
+    INTCONbits.GIE=1;
+  }
+  else
+  if (strcmp(command,"7") == 0)
+  {
+    INTCONbits.GIE=0;
+    printf("n° paquet=%d\r\n",pak);
+    printf("n° paquet compl=%d\r\n",pakcom);
+    printf("Valeur compt=%d\r\n",compt);
+
+    for (i=1;i<=130;i++)
+    {
+      printf("%d:",i);
+      printf("%d,",bufferRx[i]);
+    }
+    printf("\r\n");
+    printf("Crc calcule=%x\r\n",crc);
+    printf("Crc recu=%x\r\n",crcrecu);
+    INTCONbits.GIE=1;
   }
   else
   if (strcmp(command,"8") == 0)
@@ -22399,7 +22407,7 @@ void UART_ExecuteCommand(char *command)
       i=i+128;
       for (j=0;j<=127;j++)
       {
-        chk=chk ^ i2cread[j];
+        chk=chk^i2cread[j];
       }
     }
     lit_eprom_ext(0);
@@ -22437,7 +22445,7 @@ void UART_ExecuteCommand(char *command)
         _delay((unsigned long)((100)*(64000000U/4000000.0)));
       }
       j=j+128;
-      }
+    }
     INTCONbits.GIE=1;
   }
   else
@@ -22465,7 +22473,7 @@ void UART_ExecuteCommand(char *command)
   else
   if (strcmp(command,"K") == 0)
   {
-# 1729 "main.c"
+# 1751 "main.c"
   }
 
   else
@@ -22788,9 +22796,9 @@ _Bool decode_cardin()
   if (temp==1) bouton=4;
   if (temp==2) bouton=1;
   if (temp==4) bouton=2;
-  if (temp==8) bouton=2;
-
-
+  if (temp==8) bouton=3;
+  if (temp==0xd) bouton=9;
+  modeProg=bouton==9;
   return 0;
 
 
@@ -22835,13 +22843,13 @@ _Bool decode_somfy()
   if (debug==1)
   {
     printf("Decodage:\r\n");
-    printf("b0=%x\r\n",b0);
-    printf("b1=%x\r\n",b1);
-    printf("b2=%x\r\n",b2);
-    printf("b3=%x\r\n",b3);
-    printf("b4=%x\r\n",b4);
-    printf("b5=%x\r\n",b5);
-    printf("b6=%x\r\n",b6);
+    printf("b0=%x",b0);
+    printf(" b1=%x",b1);
+    printf(" b2=%x",b2);
+    printf(" b3=%x",b3);
+    printf(" b4=%x",b4);
+    printf(" b5=%x",b5);
+    printf(" b6=%x\r\n",b6);
   }
 
 
@@ -22855,6 +22863,9 @@ _Bool decode_somfy()
   chk=chk & 0x0f;
 
   bouton=(b1>>4) & 0x0f;
+
+  modeProg=bouton==8;
+
   indexcode=(b2<<8)+b3;
   serial=(uint64_t)b4<<16;
   serial=serial | ((uint64_t)b5<<8);
@@ -22870,7 +22881,7 @@ _Bool decode_somfy()
     if ((b0 & 0xf0)!=0xa0) printf(" Erreur\r\n");
     printf("\r\n");
     printf("Compteur=0x%x\r\n",b0 & 0x0f);
-    printf("Bouton=%x\r\n",bouton);
+    printf("Bouton=0x%x\r\n",bouton);
     printf("Chk=%x\r\n",b1 & 0x0f);
     printf("Code=0x%x\r\n",indexcode);
     printf("Serial=0x");Affiche4(serial);printf("\r\n");
@@ -22958,11 +22969,15 @@ uint64_t encode_quartets()
 
 uint8_t num_telecommande_int(uint32_t serialin)
 {
+  uint8_t n;
   uint16_t index=0;
   uint32_t serialEprom=0;
 
 
   if (protocole==prot_niceflors) serialin=serialin | ((uint32_t)bouton<<28);
+
+
+  if (protocole==prot_somfy) serialin=serialin | ((uint32_t)bouton<<28);
 
 
   if (protocole==prot_cardin) serialin=serialin | ((uint32_t)bouton<<28);
@@ -22980,13 +22995,78 @@ uint8_t num_telecommande_int(uint32_t serialin)
 }
 
 
+void stocke_telecommande()
+{
+    uint8_t n;
+  uint32_t ep;
+
+  i=0;
+  do
+  {
+    ep=(uint32_t)lit_eprom_int(0x100+(i*4));
+    ep=ep+((uint32_t)lit_eprom_int(0x101+(i*4)) << 8);
+    ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
+    ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
+    i++;
+  } while ((ep!=0xffffffff) & (i<20));
+  i--;
+  if (i>=20 +1)
+  {
+
+    printf("Plus de place\r\n");
+
+
+
+
+    return;
+  }
+
+
+
+  ecrit_eprom_int(0x100+(i*4),serial & 0xff);
+  ecrit_eprom_int(0x101+(i*4),serial>>8);
+  ecrit_eprom_int(0x102+(i*4),serial>>16);
+
+
+
+
+
+  if (protocole==prot_niceflors) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
+  else
+
+
+
+  if (protocole==prot_cardin) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
+  else
+
+
+
+  if (protocole==prot_somfy) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
+
+  else
+    ecrit_eprom_int(0x103+(i*4),serial>>24);
+
+  printf("Telecommande ");Affiche4(serial);printf(" ajoutee\r\n");
+  for (i=0;i<10;i++)
+  {
+    _delay((unsigned long)((50)*(64000000U/4000.0)));
+    RC0=0;
+    _delay((unsigned long)((50)*(64000000U/4000.0)));
+    RC0=1;
+  }
+  n=num_telecommande_int(serial);
+  if (n>0) indexCodeRecu[n]=indexcode;
+  _delay((unsigned long)((1000)*(64000000U/4000.0)));
+}
+
+
+
 
 
 
 void traitementCode()
 {
   uint8_t n;
-  uint32_t ep;
   n=num_telecommande_int(serial);
   printf(" T%d",n);
 
@@ -23027,58 +23107,27 @@ void traitementCode()
   printf("\r\n");
 
 
+  if (modeProg)
+  {
+    modeProg=0;
+
+    printf("Appuyer sur le bouton de la telecommande a memoriser\r\n");
+
+
+
+
+    tpsvalidetelecom=50000;
+    return;
+  }
+
+
 
   if (tpsvalidetelecom!=0)
   {
     tpsvalidetelecom=0;
     if (n==0)
     {
-
-      i=0;
-      do
-      {
-        ep=(uint32_t)lit_eprom_int(0x100+(i*4));
-        ep=ep+((uint32_t)lit_eprom_int(0x101+(i*4)) << 8);
-        ep=ep+((uint32_t)lit_eprom_int(0x102+(i*4)) << 16);
-        ep=ep+((uint32_t)lit_eprom_int(0x103+(i*4)) << 24);
-        i++;
-      } while ((ep!=0xffffffff) & (i<20));
-      i--;
-      if (i>=20 +1)
-      {
-
-        printf("Plus de place\r\n");
-
-
-
-
-        return;
-      }
-      ecrit_eprom_int(0x100+(i*4),serial & 0xff);
-      ecrit_eprom_int(0x101+(i*4),serial>>8);
-      ecrit_eprom_int(0x102+(i*4),serial>>16);
-
-
-      if (protocole==prot_niceflors) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
-      else
-
-
-      if (protocole==prot_cardin) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));
-
-      else
-        ecrit_eprom_int(0x103+(i*4),serial>>24);
-
-      printf("Telecommande ");Affiche4(serial);printf(" ajoutee\r\n");
-      for (i=0;i<10;i++)
-      {
-        _delay((unsigned long)((50)*(64000000U/4000.0)));
-        RC0=0;
-        _delay((unsigned long)((50)*(64000000U/4000.0)));
-        RC0=1;
-      }
-      n=num_telecommande_int(serial);
-      if (n>0) indexCodeRecu[n]=indexcode;
-      _delay((unsigned long)((1000)*(64000000U/4000.0)));
+      stocke_telecommande();
     }
     else
     {
@@ -23095,13 +23144,14 @@ void traitementCode()
 }
 
 
+
 int main(void)
 {
   SYSTEM_Initialize();
   RA3=0;
   RA5=1;
   erreur=0;
-# 2383 "main.c"
+# 2447 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -23186,7 +23236,7 @@ int main(void)
 
   while(1)
   {
-# 2478 "main.c"
+# 2542 "main.c"
     if (!RB2)
     {
       _delay((unsigned long)((1)*(64000000U/4000.0)));
@@ -23230,8 +23280,14 @@ int main(void)
     {
       tpsvalidetelecom--;
       if ((tpsvalidetelecom % 1000)==0) RC0=!RC0;
-      if (tpsvalidetelecom==0) RC0=1;
+      if (tpsvalidetelecom==0)
+      {
+        modeProg=0;
+        printf("Abandon memorisation\r\n");
+        RC0=1;
+      }
     }
+
 
     AncBp=RB2;
     if (RB2) tpsbouton=0;
@@ -23270,7 +23326,8 @@ int main(void)
       {
         if (decode_somfy()==1)
         {
-          printf("Somfy     Serial=");Affiche4(serial);
+          printf("Somfy RTS Serial=");Affiche4(serial);
+          printf(" Bouton=%x",bouton);
           traitementCode();
         }
       }
@@ -23278,7 +23335,10 @@ int main(void)
       {
         decode_cardin();
         printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
-        printf(" Bouton=%d",bouton);
+        printf(" Bouton=");
+        if (bouton<=4) printf("%x ",bouton);
+          else printf("P ");
+
         traitementCode();
       }
       if (protocole==prot_fobloqf)

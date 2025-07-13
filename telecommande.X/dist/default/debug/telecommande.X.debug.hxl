@@ -1,7 +1,7 @@
 ### HEXMate logfile and output summary ###
 
 ### Command-line arguments ###
- C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o
+ C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o
  -Odist/default/debug\telecommande.X.debug.hex
  -logfile=dist/default/debug\telecommande.X.debug.hxl
  -addressing=1
@@ -9,19 +9,19 @@
 
 ### Memory Usage ###
  Input file ranges:
-  0h - 5h		(C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o)
-  8h - 9337h		(C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o)
-  F454h - FFFEh		(C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o)
-  300000h - 30000Dh		(C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o)
+  0h - 5h		(C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o)
+  8h - 9433h		(C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o)
+  F3D4h - FFFEh		(C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o)
+  300000h - 30000Dh		(C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o)
  Unused ranges:
   6h - 7h
-  9338h - F453h
+  9434h - F3D3h
   FFFFh - 2FFFFFh
 
 ### Hex Memory Map ###
  Legend:
   -- = Unused memory
-  H1 = Input file             (C:\Users\frederic.sol\AppData\Local\Temp\xcAspkg.\driver_tmp_3.o)
+  H1 = Input file             (C:\Users\moua\AppData\Local\Temp\xcAsb8s.\driver_tmp_3.o)
 ----------------------------------------------------------
          | 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 ----------------------------------------------------------
@@ -2380,9 +2380,33 @@
 00009300 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 00009310 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 00009320 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
-00009330 | H1 H1 H1 H1 H1 H1 H1 H1 -- -- -- -- -- -- -- --
+00009330 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009340 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009350 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009360 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009370 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009380 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009390 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093A0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093B0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093C0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093D0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093E0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+000093F0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009400 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009410 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009420 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+00009430 | H1 H1 H1 H1 -- -- -- -- -- -- -- -- -- -- -- --
 ----------------------------------------------------------
-0000F450 | -- -- -- -- H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F3D0 | -- -- -- -- H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F3E0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F3F0 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F400 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F410 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F420 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F430 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F440 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
+0000F450 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F460 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F470 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1
 0000F480 | H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1 H1

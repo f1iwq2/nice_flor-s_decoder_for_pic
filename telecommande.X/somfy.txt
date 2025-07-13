@@ -1,0 +1,86 @@
+Somfy télécommande Telis blanche----------------------------
+Numéro de série identique pour tous les boutons, le code bouton est actualisé
+Serial is the same for all of the buttons, button code is valid
+
+Appui sur bouton monte volet
+00AA89973F4E4D77
+Decodage:
+b0=aa b1=23 b2=1e b3=a8 b4=71 b5=3 b6=3a
+Chk calc=0
+Entete=0xaa
+Compteur=0xa
+Bouton=0x2
+Chk=3
+Code=0x1ea8
+Serial=0x0071033A
+Somfy     Serial=0071033A T0
+
+Appui sur bouton stop volet
+00AABBA51D6C6F55
+Decodage:
+b0=aa b1=11 b2=1e b3=b8 b4=71 b5=3 b6=3a
+Chk calc=0
+Entete=0xaa
+Compteur=0xa
+Bouton=0x1
+Chk=1
+Code=0x1eb8
+Serial=0x0071033A
+Somfy     Serial=0071033A Bouton=1 T0
+
+Appui sur bouton descente volet
+00A0E9F759282B11
+Decodage:
+b0=a0 b1=49 b2=1e b3=ae b4=71 b5=3 b6=3a
+Chk calc=0
+Entete=0xa0
+Compteur=0x0
+Bouton=0x4
+Chk=9
+Code=0x1eae
+Serial=0x0071033A
+Somfy     Serial=0071033A T0
+
+Appui sur bouton prog arrière
+00AC213F95E4E7DD
+Decodage:
+b0=ac b1=8d b2=1e b3=aa b4=71 b5=3 b6=3a
+Chk calc=0
+Entete=0xac
+Compteur=0xc
+Bouton=0x8
+Chk=d
+Code=0x1eaa
+Serial=0x0071033A
+Somfy     Serial=0071033A T0
+
+
+Somfy télécommande noire keytis ----------------------------------
+Numéro de série spécifique pour chaque bouton, et le code bouton est toujours 0xF
+The serial is specific for each button, and the button code is always 0xF
+
+Bouton droit 
+00A45A588FCEFE11
+Decodage:
+b0=a4 b1=fe b2=2 b3=d7 b4=41 b5=30 b6=ef
+Chk calc=0
+Entete=0xa4
+Compteur=0x4
+Bouton=0xf
+Chk=e
+Code=0x2d7
+Serial=0x004130EF
+Somfy     Serial=004130EF T0
+
+Bouton gauche
+00A45A514C78CB77
+Decodage:
+b0=a4 b1=fe b2=b b3=1d b4=34 b5=b3 b6=bc
+Chk calc=0
+Entete=0xa4
+Compteur=0x4
+Bouton=0xf
+Chk=e
+Code=0xb1d
+Serial=0x0034B3BC
+Somfy     Serial=0034B3BC T0
