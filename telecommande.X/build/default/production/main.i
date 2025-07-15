@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 204 "main.c"
+# 212 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 205 "main.c" 2
+# 213 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,8 +21018,8 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 206 "main.c" 2
-# 227 "main.c"
+# 214 "main.c" 2
+# 235 "main.c"
 uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
 
 
@@ -21047,7 +21047,7 @@ const uint16_t silenceD=33000;
 const uint16_t debutbitD=8020;
 const uint16_t bit0D=850;
 const uint16_t bit1D=1600;
-const uint16_t toleranceD=250;
+const uint16_t toleranceD=300;
 
 const uint16_t silenceD_M=silenceD-toleranceD;
 const uint16_t silenceD_P=silenceD+toleranceD;
@@ -21114,12 +21114,25 @@ const uint16_t bit1S_P=bit1S+toleranceS;
 const uint16_t coupureS=(bit0S+bit1S)/2;
 
 
+const uint16_t silenceV=677;
+const uint16_t debutbitV=18820;
+const uint16_t bit32=677;
+const uint16_t bit96=1900;
+const uint16_t toleranceV=40;
+
+const uint16_t silenceV_M=silenceV-toleranceV;
+const uint16_t silenceV_P=silenceV+toleranceV;
+const uint16_t debutbitV_M=debutbitV-toleranceV;
+const uint16_t debutbitV_P=debutbitV+toleranceV;
+const uint16_t coupureV=(bit32+bit96)/2;
+
 
 const uint8_t prot_niceflors=1;
 const uint8_t prot_came=2;
 const uint8_t prot_cardin=3;
 const uint8_t prot_somfy=4;
 const uint8_t prot_fobloqf=5;
+const uint8_t prot_1527=6;
 
 
 const uint8_t Err_wrong_range_bit=1;
@@ -21136,7 +21149,7 @@ uint8_t bufferRx[130] ={};
 uint32_t mesure_bits[200];
 uint8_t mesure_error[200];
 uint8_t compteur,timeout,erreur,erreurI2C,repete,BoutonActif=0;
-uint8_t rien,Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
+uint8_t Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
 uint16_t compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
 uint64_t code,tpsvalidetelecom,serial;
 uint32_t duree=0,deborde=0,anc_duree,i,trame,tpsbouton;
@@ -21147,9 +21160,8 @@ _Bool recu=0,bitDebut=0,bitSilence=0,bitPrec=0,AncBp,telegram=0,tramebits=0;
 _Bool aff_enr=0,rx,SilenceSomfy,consecutif,debugCardin,debugFobloqf,debugBrut,
               modeProg=0;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
-uint16_t valt0;
 uint16_t indexCodeRecu[20 +1];
-# 364 "main.c"
+# 384 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21180,6 +21192,13 @@ void fin_somfy()
 }
 
 void fin_fobloqf()
+{
+  raz_bits();
+  nb=NbreBits;
+  recu=1;
+}
+
+void fin_1527()
 {
   raz_bits();
   nb=NbreBits;
@@ -21222,6 +21241,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
     NbreBits++;
+
 
 
 
@@ -21289,20 +21309,46 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
-    if ((!bitSilence) && (!telegram) && (duree>silenceD_M) && (duree<silenceD_P))
+
+    if (!telegram && (duree>silenceV_M) && (duree<silenceV_P))
     {
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-      protocole=prot_cardin;
-      if (debug==2)
-      printf("Cardin=%lu\r\n",duree);
-      if (debugCardin) {debugBrut=1;debugCardin=0;goto fin;}
+
+
+
+
+      protocole=prot_1527;
+
       code=0;
       bitSilence=1;
       bitDebut=0;
       telegram=0;
       goto fin;
     }
+
+
+    if ((protocole==prot_1527) && bitSilence)
+    {
+      if ((duree>debutbitV_M) && (duree<debutbitV_P))
+      {
+        if (NbreBits!=1) {bitSilence=0;protocole=0;goto fin;}
+        protocole=prot_1527;
+        mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+
+
+
+        NbreBits=0;
+        bitDebut=0;
+        bitSilence=0;
+        NbreBitsMsg=0;
+        telegram=1;
+        code=0;
+        goto fin;
+      }
+      else bitSilence=0;
+    }
+
 
     if ((protocole==prot_cardin) && (bitSilence) && (duree>debutbitD_M) && (duree<debutbitD_P))
     {
@@ -21429,7 +21475,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     if (telegram && (protocole==prot_cardin))
     {
 
-
       if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
 
       if (duree>coupureD)
@@ -21469,7 +21514,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
-
         if ((NbreBits+1) % 2==0)
         {
           bitPrec=0;
@@ -21499,6 +21543,63 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
       nb=NbreBits;
       raz_bits();
       goto fin;
+    }
+
+
+    if (telegram && (protocole==prot_1527))
+    {
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
+      if (duree>coupureV)
+      {
+        if ((NbreBits+1) % 2==0)
+        {
+          bitPrec=1;
+        }
+        else
+
+        {
+          if (bitPrec==0)
+          {
+            NbreBitsMsg++;
+            code=code >> 1;
+            if (NbreBitsMsg>=24) fin_1527();
+          }
+          else
+          {
+            mesure_error[NbreBits]=Err_sym_bit;
+            if (debug==1) printf("EVA=%u\r\n",duree);
+            nb=NbreBits;
+            NbreBits=0;raz_bits();
+          }
+        }
+        goto fin;
+      }
+      else
+      {
+        if ((NbreBits+1) % 2==0)
+        {
+          bitPrec=0;
+        }
+        else
+
+        {
+          if (bitPrec==1)
+          {
+            NbreBitsMsg++;
+            code=code>>1;
+            code=code | 0x8000000000000000L ;
+            if (NbreBitsMsg>=24) fin_1527();
+          }
+          else
+          {
+            mesure_error[NbreBits]=Err_sym_bit;
+            if (debug==1) printf("EVB=%u\r\n",duree);
+            nb=NbreBits;
+            NbreBits=0;raz_bits();
+          }
+        }
+        goto fin;
+      }
     }
 
 
@@ -21617,7 +21718,6 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
         }
       }
     }
-
 
 
     if (protocole==prot_niceflors)
@@ -21806,7 +21906,7 @@ void menu()
    printf("A....Verifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des telecommandes connues\r\n");
-# 1046 "main.c"
+# 1154 "main.c"
    printf("\r\n");
 
    printf("Votre choix suivi de ENTREE\r\n");
@@ -22016,7 +22116,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 1267 "main.c"
+# 1375 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -22330,7 +22430,7 @@ void UART_ExecuteCommand(char *command)
       case 8: {printf("Erreur ecriture EPROM ext");break;}
       default: printf(" %d",erreur);
     }
-# 1598 "main.c"
+# 1706 "main.c"
     printf(" Derniere erreur I2C=%d",erreurI2C);
 
 
@@ -22473,7 +22573,7 @@ void UART_ExecuteCommand(char *command)
   else
   if (strcmp(command,"K") == 0)
   {
-# 1751 "main.c"
+# 1859 "main.c"
   }
 
   else
@@ -22731,25 +22831,32 @@ uint32_t inverse24(int32_t mot)
 
 uint32_t miroir32(uint32_t n)
 {
-  n = ((n>>1) & 0x55555555) | ((n<<1) & 0xaaaaaaaa);
-  n = ((n>>2) & 0x33333333) | ((n<<2) & 0xcccccccc);
-  n = ((n>>4) & 0x0f0f0f0f) | ((n<<4) & 0xf0f0f0f0);
-  n = ((n>>8) & 0x00ff00ff) | ((n<<8) & 0xff00ff00);
-  n = ((n>>16) & 0x0000ffff) | ((n<<16) & 0xffff0000);
+  n=((n>>1) & 0x55555555) | ((n<<1) & 0xaaaaaaaa);
+  n=((n>>2) & 0x33333333) | ((n<<2) & 0xcccccccc);
+  n=((n>>4) & 0x0f0f0f0f) | ((n<<4) & 0xf0f0f0f0);
+  n=((n>>8) & 0x00ff00ff) | ((n<<8) & 0xff00ff00);
+  n=((n>>16) & 0x0000ffff) | ((n<<16) & 0xffff0000);
   return n;
 }
 
 uint64_t miroir64(uint64_t n)
 {
-  n = ((n>>1) & 0x5555555555555555) | ((n<<1) & 0xaaaaaaaaaaaaaaaa);
-  n = ((n>>2) & 0x3333333333333333) | ((n<<2) & 0xcccccccccccccccc);
-  n = ((n>>4) & 0x0f0f0f0f0f0f0f0f) | ((n<<4) & 0xf0f0f0f0f0f0f0f0);
-  n = ((n>>8) & 0x00ff00ff00ff00ff) | ((n<<8) & 0xff00ff00ff00ff00);
-  n = ((n>>16) & 0x0000ffff0000ffff) | ((n<<16) & 0xffff0000ffff0000);
-  n = ((n>>32) & 0x00000000ffffffff) | ((n<<32) & 0xffffffff00000000);
+  n=((n>>1) & 0x5555555555555555) | ((n<<1) & 0xaaaaaaaaaaaaaaaa);
+  n=((n>>2) & 0x3333333333333333) | ((n<<2) & 0xcccccccccccccccc);
+  n=((n>>4) & 0x0f0f0f0f0f0f0f0f) | ((n<<4) & 0xf0f0f0f0f0f0f0f0);
+  n=((n>>8) & 0x00ff00ff00ff00ff) | ((n<<8) & 0xff00ff00ff00ff00);
+  n=((n>>16) & 0x0000ffff0000ffff) | ((n<<16) & 0xffff0000ffff0000);
+  n=((n>>32) & 0x00000000ffffffff) | ((n<<32) & 0xffffffff00000000);
   return n;
 }
 
+_Bool decode_1527()
+{
+  code=code>>40;
+  Affiche4(code);
+  serial=code;
+  return 0;
+}
 
 _Bool decode_fobloqf()
 {
@@ -22886,7 +22993,6 @@ _Bool decode_somfy()
     printf("Code=0x%x\r\n",indexcode);
     printf("Serial=0x");Affiche4(serial);printf("\r\n");
   }
-
   return (chk==0);
 }
 
@@ -22997,7 +23103,7 @@ uint8_t num_telecommande_int(uint32_t serialin)
 
 void stocke_telecommande()
 {
-    uint8_t n;
+  uint8_t n;
   uint32_t ep;
 
   i=0;
@@ -23144,14 +23250,13 @@ void traitementCode()
 }
 
 
-
 int main(void)
 {
   SYSTEM_Initialize();
   RA3=0;
   RA5=1;
   erreur=0;
-# 2447 "main.c"
+# 2560 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -23233,10 +23338,9 @@ int main(void)
 
   RA3=1;
 
-
   while(1)
   {
-# 2542 "main.c"
+# 2654 "main.c"
     if (!RB2)
     {
       _delay((unsigned long)((1)*(64000000U/4000.0)));
@@ -23253,7 +23357,7 @@ int main(void)
 
 
 
-        for (crc=0x100;crc<=0x127;crc++)
+        for (crc=0x100;crc<=0x100+(4*20);crc++)
         {
           ecrit_eprom_int(crc,0xff);
         }
@@ -23347,6 +23451,12 @@ int main(void)
         decode_fobloqf();
 
 
+      }
+      if (protocole==prot_1527)
+      {
+        printf("EV1527=");
+        decode_1527();
+        traitementCode();
       }
 
       NbreBits=0;
