@@ -60,8 +60,7 @@ Internal EEPROM mapping:
  0x118       : 7
  0x11C       : 8
  0x120       : 9
- 0x124       ; 
- 
+ 0x124       ; 10
  0x128       ; 11
  0x12c       ; 12 
  .....
@@ -170,7 +169,7 @@ Cardin    Serial=0063F2DA=6550234 Bouton=2
 6550234 est le numéro de série de la télécommande en décimal, écrit sur son l'étiquette.
 6550234 is the remote serial number in decimal, printed on the tag of the remote.
 
---------------------------------------------------
+---------------------------------------------------
 Protocole FoBloqf (FM) de rfsolutions.co.uk
 utiliser le récepteur Dickert HQFM433P-50
 Utilise un Keeloq - pas finalisé
@@ -210,7 +209,7 @@ This is useful if the receiver is recessed and the button to add a new remote co
 */
 
 #include "mcc_generated_files/system/system.h"
-#include <string.h>
+#include "string.h"
 #include "stdlib.h"
 
 #define debugxmodem 0
@@ -225,14 +224,15 @@ This is useful if the receiver is recessed and the button to add a new remote co
 #define MAX_COMMAND_LEN       (8U)
 #define LINEFEED_CHAR         ((uint8_t)'\n')
 #define CARRIAGERETURN_CHAR   ((uint8_t)'\r')
-#define EpromI2C 0xA0 >>1     // Adresse I2C - BO en bit 1 (avant décalage) pour le bloc 0/1
+#define Eprom24lc1026 0xA0 >>1     // Adresse I2C - BO en bit 1 (avant décalage) pour le bloc 0/1
+#define Eprom24wc16 0xA0 >>1
 #define maxtel  20       // nombre de télécommandes maxi
 
 #define KeeLoq_NLF    0x3A5C742E  // clé de 32 bits
 #define bit(x,n) (((x)>>(n))&1)
 #define g5(x,a,b,c,d,e)	(bit(x,a)+bit(x,b)*2+bit(x,c)*4+bit(x,d)*8+bit(x,e)*16)
 // clé de l'agorithme keeloq 64bit LSB-first
-uint8_t key[] = { 0x56, 0x4a, 0xbc, 0x07, 0x57, 0x1e, 0x62, 0x94 };
+uint8_t key[] = {0x56,0x4a,0xbc,0x07,0x57,0x1e,0x62,0x94};
 
 // CAME éléments radio / radio items
 // 433,920 MHz  modulation HF AM-OOK (tout ou rien AM)
@@ -259,7 +259,7 @@ const uint16_t silenceD=33000;  // 34000 16520µs;
 const uint16_t debutbitD=8020;  // 4000µs
 const uint16_t bit0D=850;       // 856 730 µs (officiel 400µs)   
 const uint16_t bit1D=1600;      // 1560 500 µs (officiel=800µs)
-const uint16_t toleranceD=300;  // 250 grande dispersion sur cardin
+const uint16_t toleranceD=350;  // 250 grande dispersion sur cardin
 // calculées:
 const uint16_t silenceD_M=silenceD-toleranceD;
 const uint16_t silenceD_P=silenceD+toleranceD;
@@ -346,7 +346,7 @@ const uint8_t  prot_somfy=4;
 const uint8_t  prot_fobloqf=5;
 const uint8_t  prot_1527=6;
 
-// erreurs
+// erreurs chronogramme
 const uint8_t Err_wrong_range_bit=1; // 1=bit mal placé  2=erreur de symétrie  3=longueur inconnue bit 
 const uint8_t Err_sym_bit=2;        
 const uint8_t Err_bit_duration=3;
@@ -365,11 +365,11 @@ uint8_t       Rx_prec,waitCounter,pak,pakcom,pvitesse,bouton;
 uint16_t      compt,crc,crcrecu,indexcode,dureeS,dureeStart1;
 uint64_t      code,tpsvalidetelecom,serial;
 uint32_t      duree=0,deborde=0,anc_duree,i,trame,tpsbouton;
-static uint8_t command[MAX_COMMAND_LEN];
-static uint8_t index=0;
-static uint8_t readMessage;
-bool          recu=LOW,bitDebut=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-bool          aff_enr=LOW,rx,SilenceSomfy,consecutif,debugCardin,debugFobloqf,debugBrut,
+uint8_t       command[MAX_COMMAND_LEN];
+uint8_t       index=0;
+uint8_t       readMessage;
+_Bool         recu=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
+_Bool         aff_enr=LOW,rx,consecutif,debugCardin,debugFobloqf,debugBrut,
               modeProg=LOW;
 uint16_t      NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à maxtel
@@ -384,7 +384,6 @@ uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à max
 void raz_bits()
 {
   telegram=LOW;
-  bitDebut=LOW;
   tramebits=LOW;
   bitSilence=LOW;  
 }
@@ -492,23 +491,23 @@ void __interrupt(high_priority) ISR_high()
     // silence fobloqf  - inhibé
     // Si vous voulez déverrouiller fobloqf, simplement enlever "LOW &&"
     // if you want to unlock fobloqf, just remove the "LOW &&"
-    if ( LOW && (!bitSilence) && (!telegram) && (duree>silenceF_M) && (duree<silenceF_P))   
+    if ( LOW && (!bitSilence) && (duree>silenceF_M) && (duree<silenceF_P))   
     {
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       if (debug==2) 
       printf("F");
       protocole=prot_fobloqf;
+      
       if (debugFobloqf) {debugBrut=HIGH;debugFobloqf=LOW;goto fin;}
       code=0;
       bitSilence=HIGH;
-      bitDebut=LOW;
       telegram=LOW;
       goto fin;
     }
     
     // début flobloqf
-    if ((protocole==prot_fobloqf) && (bitSilence) && (duree>debutbitF_M) && (duree<debutbitF_P))  
+    if ((bitSilence) && (protocole==prot_fobloqf) && (duree>debutbitF_M) && (duree<debutbitF_P))  
     { 
       if (debug==2) printf("S");
       //printf("%d\r\n",NbreBits);
@@ -519,17 +518,15 @@ void __interrupt(high_priority) ISR_high()
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       
       //debugBrut=1;goto fin;
-      bitDebut=LOW;
-      bitSilence=LOW;
       NbreBitsMsg=0;
       telegram=HIGH;
       code=0;
       goto fin;
     }
-  
+   
     // silence EV1527
-    //if ( (!bitSilence) && (!telegram) && (duree>silenceV_M) && (duree<silenceV_P))   
-    if (!telegram && (duree>silenceV_M) && (duree<silenceV_P))   
+    if ( (!bitSilence) && (duree>silenceV_M) && (duree<silenceV_P))   
+    //if (!telegram && (duree>silenceV_M) && (duree<silenceV_P))   
     {
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
@@ -541,11 +538,10 @@ void __interrupt(high_priority) ISR_high()
       //if (debugFobloqf) {debugBrut=HIGH;debugFobloqf=LOW;goto fin;}
       code=0;
       bitSilence=HIGH;
-      bitDebut=LOW;
       telegram=LOW;
       goto fin;
     }
-       
+     
     // début EV1527
     if ((protocole==prot_1527) && bitSilence)
     {
@@ -556,10 +552,7 @@ void __interrupt(high_priority) ISR_high()
         mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       
         //debugBrut=HIGH;goto fin;
-        
         NbreBits=0;
-        bitDebut=LOW;
-        bitSilence=LOW;
         NbreBitsMsg=0;
         telegram=HIGH;
         code=0;
@@ -568,45 +561,60 @@ void __interrupt(high_priority) ISR_high()
       else bitSilence=LOW; 
     }  
   
+     // silence cardin 
+    if ((!bitSilence) && (duree>silenceD_M) && (duree<silenceD_P)) 
+    {
+      NbreBits=0;
+      mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
+      protocole=prot_cardin;
+      if (debug==2) 
+      printf("Cardin=%lu\r\n",duree);
+      if (debugCardin) {debugBrut=HIGH;debugCardin=LOW;goto fin;}
+      code=0;
+      bitSilence=HIGH;
+      goto fin;
+    } 
+    
     // début cardin, après les 11 ou 12 crénaux de sync
-    if ((protocole==prot_cardin) && (bitSilence) && (duree>debutbitD_M) && (duree<debutbitD_P))  
+    if ((bitSilence) && (duree>debutbitD_M) && (duree<debutbitD_P))  
+    //if ((protocole==prot_cardin) && (duree>debutbitD_M) && (duree<debutbitD_P))
+    //if ( (duree>debutbitD_M) && (duree<debutbitD_P))
     { 
-       // printf("%d\r\n",NbreBits);
+      //printf("%d\r\n",NbreBits);
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
       //if (debug==2) 
           //printf("S%d",duree);
       NbreBitsMsg=0;
-      bitDebut=LOW;
       telegram=HIGH;
       code=0;
       goto fin;
     }
+    //if (protocole==prot_cardin) printf("C");
     
     // silence nice flors
-    if ((!telegram) && (duree>silenceN_M) && (duree<silenceN_P))  
+    if ((!bitSilence) && (duree>silenceN_M) && (duree<silenceN_P))  
     {
       NbreBits=1;
-      bitDebut=HIGH;
+      bitSilence=HIGH;
       dureeS=duree;
       if (debug==2) printf("NiceFS=%u\r\n",duree);
       protocole=prot_niceflors;
       code=0;
-      bitSilence=HIGH;
       goto fin;
     }
    
     // silence - came     
-    if ((!telegram) && (duree>silenceC_M) && (duree<silenceC_P))
+    if ((!bitSilence) && (duree>silenceC_M) && (duree<silenceC_P))
     {
       NbreBits=1;
       protocole=prot_came;
       mesure_bits[NbreBits]=duree;
       if (debug==2) printf("came");
+      bitSilence=HIGH;
       telegram=HIGH; 
       code=0;
-      bitSilence=LOW;
       goto fin;
     }
     
@@ -616,10 +624,10 @@ void __interrupt(high_priority) ISR_high()
     // Somfy : x silent bits and one start bit.
     // The start bit is preceded by x silence bits, we only check that the previous one is a silence one
     // and start bit is 1 (rx)
-    if ((anc_duree>silenceS_M) && (anc_duree<silenceS_P) && rx && (!telegram) && (duree>debutbitS_M) && (duree<debutbitS_P) )   
+    if ((anc_duree>silenceS_M) && (anc_duree<silenceS_P) && rx && (!bitSilence) && (duree>debutbitS_M) && (duree<debutbitS_P) )   
     {
       NbreBits=1;
-      SilenceSomfy=HIGH;
+      bitSilence=HIGH;
       protocole=prot_somfy;
       if (debug==2) printf("Somfy=%u\r\n",duree);
       mesure_bits[NbreBits]=duree;
@@ -694,7 +702,8 @@ void __interrupt(high_priority) ISR_high()
     if (telegram && (protocole==prot_cardin))
     {
       // 1  
-      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
+        //printf("%d\r\n",NbreBits);
+        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
       //if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
       if (duree>coupureD)
       {
@@ -710,9 +719,7 @@ void __interrupt(high_priority) ISR_high()
             NbreBitsMsg++;           
             code=code >> 1;  // décaler à droite sur 64 bits 
             code=code | 0x8000000000000000L ;
-           
             if (NbreBitsMsg>=64) fin_cardin();
-            //code=code | 1;  // bit 0 à 1
           }
           else 
           {
@@ -848,7 +855,7 @@ void __interrupt(high_priority) ISR_high()
         goto fin;
       }
       // extra bit de 1200µs
-      printf("%d ",duree);
+      printf("X%d ",duree);
       if (NbreBits<150) mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0; 
       if (NbreBits>=64) fin_fobloqf();   
       goto fin;
@@ -863,7 +870,7 @@ void __interrupt(high_priority) ISR_high()
     }   
     
     // CAME ----------------------------------------------------------------------------
-    if (protocole==prot_came)
+    if ((protocole==prot_came) && (telegram))
     {   
       //printf("%d\r\n",duree);
       if (telegram)
@@ -939,10 +946,10 @@ void __interrupt(high_priority) ISR_high()
     }   
         
     // -------------------------------------------------------------------   
-    if (protocole==prot_niceflors)
+    if (protocole==prot_niceflors) 
     {
-       // printf("J");
-        // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
+      // printf("J");
+      // trouvé bit début (ou fin), peut être l'un des deux débuts ou le dernier
       // found a start bit, might be one of the 2 firsts or the last
       if ((duree>debutbitN_M) && (duree<debutbitN_P)) 
       {   
@@ -951,7 +958,7 @@ void __interrupt(high_priority) ISR_high()
         // end bit, end of radio remote message
         if (NbreBits==108)
         {     
-          bitDebut=LOW;bitSilence=LOW;     
+          bitSilence=LOW;     
           mesure_bits[NbreBits]=duree;
           mesure_error[NbreBits]=0;  
           fin_niceflors();
@@ -1069,15 +1076,15 @@ uint8_t lit_eprom_int(uint16_t adresse)
 }
  
 // https://github.com/marc-invalid/chipwhisperer-marc/blob/master/doc/marc/keeloq/keeloq_algorithm/keeloq_algorithm.md   
-// applique l'algo keyloq à data avec la clé key 
+// applique l'algo keyloq standard à data avec la clé key 
 uint32_t KeeLoq_Decrypt(uint64_t data, const uint64_t key) 
- {
-   uint32_t x = data, r;
-   for (r = 0; r < 528; r++) 
-   {
-      x = (x<<1)^bit(x,31)^bit(x,15)^(uint32_t)bit(key,(15-r)&63)^bit(KeeLoq_NLF,g5(x,0,8,19,25,30));
-   }
-   return x;
+{
+  uint32_t x = data, r;
+  for (r = 0; r < 528; r++) 
+  {
+    x=(x<<1)^bit(x,31)^bit(x,15)^(uint32_t)bit(key,(15-r)&63)^bit(KeeLoq_NLF,g5(x,0,8,19,25,30));
+  }
+  return x;
  }
  
 // https://github.com/liyanboy74/arduino-rolling-code-keeloq-receiver/blob/main/main/keeloq.c
@@ -1105,7 +1112,6 @@ uint8_t nlf(uint8_t d)
   }
   return data;
 }
-
 
 void menu()
 {
@@ -1143,7 +1149,7 @@ void menu()
    printf("7....Bytes received from xmodem\r\n");
    printf("8....Display 200 first bytes of external EPROM\r\n");
    printf("9....Display internal EPROM\r\n");
-   printf("A....Check ext checksum eprom\r\n");
+   printf("A....Checksum ext eprom\r\n");
    printf("B....Display ext 64Kb eprom (long) by 128 range bytes\r\n");
    printf("C....List of known remotes\r\n");   
    #if debugxmodem
@@ -1163,10 +1169,10 @@ void menu()
 // écriture directe uart
 void UART_WriteByte(uint8_t b)
 {
-   while(!UART1.IsTxReady())
-   {
-   };
-   UART1.Write(b);
+  while(!UART1.IsTxReady())
+  {
+  };
+  UART1.Write(b);
 }
 
 // écrit le bloc de 128 octets dans l'eprom externe à l'adresse
@@ -1181,12 +1187,9 @@ void ecrit_bloc_eprom_ext(uint32_t adresse)
   i2cdata[0]=adresse >> 8; // adresse haute
   i2cdata[1]=adresse & 0xff; // adresse basse  
   // copier les données du bloc lu de xmodem dans le buffer i2c
-  for (i=1;i<=128;i++)
-  {
-    i2cdata[i+1]=bufferRx[i];    
-  }
+  for (i=1;i<=128;i++) i2cdata[i+1]=bufferRx[i];    
    
-  if (I2C1_Host.Write(EpromI2C | mask,i2cdata,130))  
+  if (I2C1_Host.Write(Eprom24lc1026 | mask,i2cdata,130))  
   {  
     waitCounter = 100; // This value depends on the system clock, I2C clock and data length                                                                                    
     while (I2C1_Host.IsBusy())
@@ -1202,18 +1205,9 @@ void ecrit_bloc_eprom_ext(uint32_t adresse)
     I2C_ERROR_BUS_COLLISION*/
     erreurI2C=I2C1_Host.ErrorGet();
    
-    if (erreurI2C == I2C_ERROR_NONE)
-    {
-      // Write operation is successful
-    }
-    else
-    {
-      // Error handling
-     erreur=8;
-    }
+    if (erreurI2C!=I2C_ERROR_NONE) {printf("Erreur écriture i2c\r\n");erreur=8;}
   }	
 }
-
 
 // envoie 'C' pour x_modem et attend 30s un caractère de l'uart
 // send 'C' for x-modem and wait 30s for a char from uart
@@ -1285,7 +1279,7 @@ uint16_t calccrc(int count)
 // write a byte to internal eprom
 void ecrit_eprom_int(uint16_t adresse,uint8_t valeur)
 {
-  bool ancgie=INTCONbits.GIE;
+  _Bool ancgie=INTCONbits.GIE;
   EEADRH=adresse >> 8;  // adresse haute
   EEADR=adresse & 0xff; // adresse basse
   EEDATA=valeur;        // valeur à écrire
@@ -1310,10 +1304,7 @@ void ecrit_eprom_int(uint16_t adresse,uint8_t valeur)
 // write 128 butes to the internal eprom
 void ecrit_bloc_eprom_int(uint16_t adresse)
 {
-  for (i=1;i<=128;i++)
-  {    
-    ecrit_eprom_int(adresse+i-1,bufferRx[i]);
-  }
+  for (i=1;i<=128;i++) ecrit_eprom_int(adresse+i-1,bufferRx[i]); 
 }
 
 // erreur survenue dans le protocole xmodem
@@ -1333,7 +1324,7 @@ void recoit_xmodem(int mode)
 {
    uint8_t b,ancienpak,delta;
    uint16_t padr;
-   bool demande=HIGH;
+   _Bool demande=HIGH;
    
    led=1;  // éteint la led
    ancienpak=0;padr=0;pak=0;pakcom=0;
@@ -1406,6 +1397,28 @@ void recoit_xmodem(int mode)
    led=0;     
 }
 
+/*
+// lit une eprom 24CW16 ou 24LC16
+void lit_eprom_ext_24wc16(uint16_t adresse)
+{
+  uint16_t mask;
+  mask=(adresse & 0xFF00) >> 7;
+  i2cdata[0]=(uint8_t)(adresse & 0xFF); // adresse basse
+  I2C1_Host.WriteRead(Eprom24wc16 | mask,i2cdata,1,i2cread,1);
+  int err;  
+  waitCounter = 1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
+  while ( I2C1_Host.IsBusy())
+  {
+    I2C1_Host.Tasks();
+    waitCounter--; 
+    __delay_ms(1);
+  }
+  err=I2C1_Host.ErrorGet();
+  if (err=!I2C_ERROR_NONE) printf("erreur I2C WriteRead=%d\r\n",err);
+ 
+}*/
+    
+
 // lit un octet l'eprom (lecture aléatoire - random read) à l'adresse adresse, met la valeur dans i2cread[0]
 // read 1 byte from ext eprom, data is stored in i2cread[0]
 void lit_eprom_ext(uint32_t adresse)
@@ -1417,7 +1430,7 @@ void lit_eprom_ext(uint32_t adresse)
   i2cdata[0]=(uint8_t)(adresse >> 8); // adresse haute
   i2cdata[1]=(uint8_t)(adresse & 0xff); // adresse basse  
     
-  I2C1_Host.WriteRead(EpromI2C | mask,i2cdata,2,i2cread,1);
+  I2C1_Host.WriteRead(Eprom24lc1026 | mask,i2cdata,2,i2cread,1);
   int err;  
   waitCounter = 1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
   while ( I2C1_Host.IsBusy())
@@ -1427,15 +1440,7 @@ void lit_eprom_ext(uint32_t adresse)
     __delay_ms(1);
   }
   err=I2C1_Host.ErrorGet();
-  if (  err == I2C_ERROR_NONE)
-  {
-    // WriteRead operation is successful
-  }
-  else
-  {
-    printf("erreur I2C WriteRead=%d\r\n",err);
-    // Error handling
-  }
+  if (err!=I2C_ERROR_NONE) printf("erreur I2C WriteRead=%d\r\n",err);
 }
 
 // lit "nombre" octet l'eprom ext (lecture séquentielle - sequential read) à l'adresse adresse, met la valeur dans i2cread[]
@@ -1449,7 +1454,7 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
   i2cdata[0]=(uint8_t)(adresse >> 8); // adresse haute
   i2cdata[1]=(uint8_t)(adresse & 0xff); // adresse basse  
     
-  I2C1_Host.WriteRead(EpromI2C | mask,i2cdata,2,i2cread,nombre);
+  I2C1_Host.WriteRead(Eprom24lc1026 | mask,i2cdata,2,i2cread,nombre);
   int err;  
   waitCounter=1000; // This value depends on the system clock, I2C clock and data length.                                                                                          
   while (I2C1_Host.IsBusy())
@@ -1457,17 +1462,9 @@ void lit_bloc_eprom_ext(uint32_t adresse,uint8_t nombre)
     I2C1_Host.Tasks();
     waitCounter--; 
     // __delay_ms(1);   fonctionne sans 
-   }
-   err=I2C1_Host.ErrorGet();
-   if (err==I2C_ERROR_NONE)
-   {
-     // WriteRead operation is successful
-   }
-   else
-   {
-     printf("erreur I2C WriteRead=%d\r\n",err);
-    // Error handling
-   }
+  }
+  err=I2C1_Host.ErrorGet();
+  if (err!=I2C_ERROR_NONE) printf("erreur I2C WriteRead=%d\r\n",err);
 }
 
 // affiche l'enregistrement reçu sous forme de tableau
@@ -1575,7 +1572,7 @@ void affiche_enregistrement()
     printf("\r\n");
   }
   raz_bits();
-  INTCONbits.GIE=1; // remet l'acquisition radio / reenable radio acquisition
+  INTCONbits.GIE=1; // revalide l'acquisition radio / reenable radio acquisition
 }
 
 // affiche un nombre en 32 bits en hexa
@@ -1842,6 +1839,18 @@ void UART_ExecuteCommand(char *command)
     } while (i<maxtel); 
     i--;   
   }
+  /*
+  else
+  if (strcmp(command,"D") == 0)
+  {
+    for (i=0;i<1024;i++)
+    {
+      lit_eprom_ext_24wc16(i);
+      printf("%3x=",i);
+      printf("%2x  ",i2cread[0]);
+      if (((i+1) % 16)==0) printf("\r\n");
+    }
+  }*/
   else
   if (strcmp(command,"K") == 0)
   {
@@ -1921,7 +1930,7 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
   i2cdata[1]=adresse & 0xff; // adresse basse  
   i2cdata[2]=valeur; // octet à écrire  
   
-  if (I2C1_Host.Write(EpromI2C,i2cdata,3))  
+  if (I2C1_Host.Write(Eprom24lc1026,i2cdata,3))  
   {  
     waitCounter = 100; // This value depends on the system clock, I2C clock and data length.                                                                                          
     while (I2C1_Host.IsBusy())
@@ -1936,16 +1945,7 @@ void ecrit_eprom_ext(uint32_t adresse,uint8_t valeur)
     I2C_ERROR_BUS_COLLISION*/
     err=I2C1_Host.ErrorGet();
    
-    if (err==I2C_ERROR_NONE)
-    {
-      // Write operation is successful
-      // printf("écrit ok\r\n");
-    }
-    else
-    {
-      // Error handling
-      printf("erreur I2C Write=%d\r\n",err);
-    }
+    if (err!=I2C_ERROR_NONE) printf("erreur I2C Write=%d\r\n",err);
   }
 }
 
@@ -1968,7 +1968,7 @@ void Affiche(uint64_t codex)
   printf("%08lX",p);
 }
 
-bool code_b0b6_nice_valide()
+_Bool code_b0b6_nice_valide()
 {
   return !((b1==0) | (b1==255) | (b0==0) | (b0==0xf));
 }
@@ -1976,7 +1976,7 @@ bool code_b0b6_nice_valide()
 // décode le code 64 bits de la télécommande en 7 octets dans b0-b6
 // decode "code" 64 bits from remote to 7 bytes b0-b6
 // (remise des quartets dans l'ordre)
-bool decode_nice_b0b6()     // type 64 bits
+_Bool decode_nice_b0b6()     // type 64 bits
 {
   uint64_t decoded;
   int64_t pr;
@@ -2012,7 +2012,7 @@ bool decode_nice_b0b6()     // type 64 bits
   pr=decoded;
   b6=b6 | ((pr >>4) & 0x0F); 
 
-  bool ok=code_b0b6_nice_valide();
+  _Bool ok=code_b0b6_nice_valide();
   
   if (debug>=1)
   {
@@ -2032,7 +2032,7 @@ bool decode_nice_b0b6()     // type 64 bits
 // takes 7s to find if the code to be found is at 0x1FFFE (last address)
 uint16_t trouve_code_nice(uint16_t c)
 {
-  bool trouve=LOW;  
+  _Bool trouve=LOW;  
   uint16_t cr;  
   uint32_t i;
   uint8_t j;
@@ -2059,7 +2059,7 @@ uint16_t trouve_code_nice(uint16_t c)
 // find "c" code in ext eprom, using algorithm previous code
 uint16_t trouve_code_algo_nice(uint16_t c) // trouver l'adresse de encode dans l'eprom ext
 {
-  bool trouve;
+  _Bool trouve;
   uint8_t bal_telecom=1,increment;   // index télécommande de 1 à 10
   uint16_t i,lu_ext;
   //printf("trouver %x\r\n",c);
@@ -2100,6 +2100,7 @@ uint16_t inverse16(int16_t mot)
   return r;
 }
 
+/*
 // AABBCC -> CCBBAA
 uint32_t inverse24(int32_t mot)
 {
@@ -2108,7 +2109,7 @@ uint32_t inverse24(int32_t mot)
   r=r | (mot & 0xff00);  // milieu inchangé
   r=r | ((mot & 0xffL) << 16); // faible vers fort
   return r;
-}
+}*/
 
 // miroire les bits d'un 32 bits : abcd.....z devient : z....dcba
 uint32_t miroir32(uint32_t n)
@@ -2132,7 +2133,7 @@ uint64_t miroir64(uint64_t n)
   return n;
 }
 
-bool decode_1527()
+_Bool decode_1527()
 {
   code=code>>40;  // réaligner à droite
   Affiche4(code);
@@ -2140,7 +2141,7 @@ bool decode_1527()
   return 0;
 }
 
-bool decode_fobloqf()
+_Bool decode_fobloqf()
 {
   uint32_t temp;
   // code à 64 bits, soit 4 octets 
@@ -2166,7 +2167,7 @@ bool decode_fobloqf()
 }
 
 
-bool decode_cardin()  
+_Bool decode_cardin()  
 {
   // pour le décodage de cardin S449, on ne se sert que de la partie haute 32 bits du code de 64 bits:
   // Ex : 20842A9B83B0A4D0 : série=00842A9B
@@ -2186,7 +2187,7 @@ bool decode_cardin()
   if (temp==2) bouton=1; 
   if (temp==4) bouton=2;
   if (temp==8) bouton=3;
-  if (temp==0xd) bouton=9;  // programmation
+  if (temp==0xd) bouton=9;  // bouton programmation
   modeProg=bouton==9;
   return 0;
   
@@ -2204,9 +2205,9 @@ bool decode_cardin()
   return 0;
 }
 
-// décode somfy. renvoie HIGH si le chk est ok
-// Sends back HIGH if chk is ok.
-bool decode_somfy()
+// décode somfy rts. renvoie HIGH si le chk est ok
+// returns HIGH if chk is ok.
+_Bool decode_somfy()
 {
   uint8_t chk;    
   
@@ -2430,9 +2431,8 @@ void stocke_telecommande()
   // si somfy stocker le bouton dans le quartet de poids fort
   // bouton prog somfy=8
   if (protocole==prot_somfy) ecrit_eprom_int(0x103+(i*4),(serial>>24) | (bouton <<4));   // poids fort
-   
-  else
-    ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
+    else
+      ecrit_eprom_int(0x103+(i*4),serial>>24);   // poids fort
      
   printf("Telecommande ");Affiche4(serial);printf(" ajoutee\r\n");
   for (i=0;i<10;i++)
@@ -2587,11 +2587,11 @@ int main(void)
         | (1 << _T0CON_TMR0ON_POSN); // TMR0ON enabled
    
   #ifdef francais
-  UART1_WriteString("Recepteur telecommande Nice FLOR-s / CAME / Somfy RTS\r\n");
+  UART1_WriteString("Recepteur telecommande Nice FLOR-s / CAME / Somfy RTS / EV1527\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
   #endif  
   #ifdef english
-  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME / Somfy RTS\r\n");
+  UART1_WriteString("Remote receiver for Nice FLOR-s / CAME / Somfy RTS / EV1527\r\n");
   UART1_WriteString("F1IWQ 2025\r\n");
   #endif  
    
@@ -2605,7 +2605,7 @@ int main(void)
     __delay_ms(100);
     led=0;
     __delay_ms(100);
-   led=1;
+    led=1;
   }
    
   debug=0 ; 
@@ -2706,7 +2706,7 @@ int main(void)
     AncBp=RB2;   
     if (RB2) tpsbouton=0;  
         
-    if (!recu) UART_ProcessCommand();
+    if (!recu) UART_ProcessCommand();  // si pas reçu télécommande, traiter l'uart - if not remote received, process uart
      
     if (aff_enr) affiche_enregistrement();
      
@@ -2770,7 +2770,7 @@ int main(void)
       }
           
       NbreBits=0;
-      __delay_ms(1000);
+      //__delay_ms(1000);
       INTCONbits.GIE=1;      // valide les IRQ
     } 
   }    

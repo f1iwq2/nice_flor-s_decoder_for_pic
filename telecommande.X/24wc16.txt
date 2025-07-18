@@ -1,0 +1,65 @@
+contenu de l'eprom 24wc16 de la carte chinoise
+  0=2e    1=e0    2=c4    3=bf    4=4d    5=27    6=11    7=c4    8=72    9=4e    a=af    b=72    c=bb    d=dd    e=68    f=11
+ 10=83   11=5a   12=5a   13= 6   14=36   15=fc   16=fc   17=ab   18=d5   19=39   1a= 9   1b=95   1c=e0   1d=83   1e=97   1f=68
+ 20=44   21=bf   22=21   23=8c   24=1e   25=c8   26=b8   27=72   28=ad   29=14   2a=d6   2b=e9   2c=72   2d=21   2e=8b   2f=d7
+ 30=ff   31=65   32=9c   33=fb   34=c9   35= 3   36=57   37=9e   38=63   39=aa   3a=3a   3b=40   3c= 5   3d=56   3e=e0   3f=3d
+ 40=cf   41=a3   42=11   43=fd   44=a8   45=44   46=fe   47=27   48=96   49=7f   4a=2b   4b=c2   4c=63   4d=98   4e=84   4f=5e
+ 50= 9   51=6c   52=d7   53=10   54=32   55=d1   56=4d   57=ea   58=ec   59= 6   5a=70   5b=b9   5c=55   5d=3b   5e=ba   5f=85
+ 60=90   61=4d   62=ee   63=38   64=f7   65=2a   66=5b   67=c1   68=2a   69=93   6a=84   6b=5f   6c=cd   6d=f4   6e=31   6f=a2
+ 70=75   71=bb   72= 8   73=e6   74=4c   75=17   76=a6   77=7c   78=19   79=60   7a=d3   7b= 5   7c=b2   7d=8e   7e=6f   7f=d9
+ 80=4a   81=dd   82=b0   83= 7   84=29   85=b0   86=ee   87=79   88=f6   89=43   8a= 3   8b=94   8c=8f   8d=16   8e=d5   8f=aa
+ 90=31   91=e2   92=cd   93=38   94=9c   95=55   96=77   97=ce   98=5b   99=2c   9a=a4   9b=fb   9c=62   9d=8f   9e=18   9f=61
+ a0=1d   a1=61   a2=46   a3=ba   a4=b4   a5=dd   a6=d9   a7=80   a8=c8   a9=16   aa=3f   ab=49   ac=73   ad=a8   ae=e0   af=77
+ b0=ab   b1=94   b2=f1   b3=5f   b4=62   b5= e   b6=8c   b7=f3   b8= 5   b9=eb   ba=5a   bb=25   bc=9e   bd=32   be=27   bf=cc
+ c0=d7   c1=1d   c2=2d   c3=f8   c4=8e   c5=db   c6=43   c7=85   c8=60   c9=a6   ca=f6   cb=3f   cc=b9   cd=70   ce=1a   cf=43
+ d0=a1   d1=c4   d2=92   d3=57   d4=38   d5=62   d6=e5   d7=bc   d8=5b   d9= 1   da= c   db=ea   dc=c4   dd=9e   de=7f   df=29
+ e0=7a   e1=23   e2=b6   e3=1f   e4=49   e5=e0   e6=10   e7=76   e8=9c   e9=4a   ea=cb   eb=a1   ec=e7   ed=8d   ee=2d   ef=d8
+ f0= f   f1=f9   f2=61   f3=c4   f4=a3   f5=95   f6=de   f7= b   f8=f5   f9=3c   fa=32   fb=57   fc=58   fd=62   fe=84   ff=be
+100= 0  101= 0  102= 0  103= 0  104= 0  105= 0  106= 0  107= 0  108= 0  109= 0  10a= 0  10b= 0  10c= 0  10d=3c  10e= 0  10f= 0
+110= 0  111= 0  112= 0  113= 0  114= 0  115= 0  116= 0  117= 0  118= 0  119= 0  11a= 0  11b= 0  11c= 0  11d= 0  11e=3d  11f= 0
+120= 0  121= 0  122= 0  123= 0  124= 0  125= 0  126= 0  127= 0  128= 0  129= 0  12a= 0  12b= 0  12c= 0  12d= 0  12e= 0  12f=3e
+130= 0  131= 0  132= 0  133= 0  134= 0  135= 0  136= 0  137= 0  138= 0  139= 0  13a= 0  13b= 0  13c= 0  13d= 0  13e= 0  13f= 0
+140=3f  141= 0  142= 0  143= 0  144= 0  145= 0  146= 0  147= 0  148= 0  149= 0  14a= 0  14b= 0  14c= 0  14d= 0  14e= 0  14f= 0
+150= 0  151=48  152=2f  153=b6  154= 2  155=39  156=d4  157=d8  158=c4  159=d6  15a= 0  15b= 0  15c= 0  15d= 0  15e= 0  15f= 0
+160= 0  161= 0  162=58  163=d0  164=49  165=63  166=29  167=c9  168=29  169=aa  16a=67  16b= 0  16c= 0  16d= 0  16e= 0  16f= 0
+170= 0  171= 0  172= 0  173=68  174=73  175=33  176=cb  177=32  178=2d  179=ea  17a=a5  17b=e5  17c= 0  17d= 0  17e= 0  17f= 0
+180= 0  181= 0  182= 0  183= 0  184=ff  185=ff  186=ff  187=ff  188=ff  189=ff  18a=ff  18b=ff  18c=ff  18d=ff  18e=ff  18f=ff
+190=ff  191=ff  192=ff  193=ff  194=ff  195=ff  196=ff  197=ff  198=ff  199=ff  19a=ff  19b=ff  19c=ff  19d=ff  19e=ff  19f=ff
+1a0=ff  1a1=ff  1a2=ff  1a3=ff  1a4=ff  1a5=ff  1a6=ff  1a7=ff  1a8=ff  1a9=ff  1aa=ff  1ab=ff  1ac=ff  1ad=ff  1ae=ff  1af=ff
+1b0=ff  1b1=ff  1b2=ff  1b3=ff  1b4=ff  1b5=ff  1b6=ff  1b7=ff  1b8=ff  1b9=ff  1ba=ff  1bb=ff  1bc=ff  1bd=ff  1be=ff  1bf=ff
+1c0=ff  1c1=ff  1c2=ff  1c3=ff  1c4=ff  1c5=ff  1c6=ff  1c7=ff  1c8=ff  1c9=ff  1ca=ff  1cb=ff  1cc=ff  1cd=ff  1ce=ff  1cf=ff
+1d0=ff  1d1=ff  1d2=ff  1d3=ff  1d4=ff  1d5=ff  1d6=ff  1d7=ff  1d8=ff  1d9=ff  1da=ff  1db=ff  1dc=ff  1dd=ff  1de=ff  1df=ff
+1e0=ff  1e1=ff  1e2=ff  1e3=ff  1e4=ff  1e5=ff  1e6=ff  1e7=ff  1e8=ff  1e9=ff  1ea=ff  1eb=ff  1ec=ff  1ed=ff  1ee=ff  1ef=ff
+1f0=ff  1f1=ff  1f2=ff  1f3=ff  1f4=ff  1f5=ff  1f6=ff  1f7=ff  1f8=ff  1f9=ff  1fa=ff  1fb=ff  1fc=ff  1fd=ff  1fe=ff  1ff=ff
+200=ff  201=ff  202=ff  203=ff  204=ff  205=ff  206=ff  207=ff  208=ff  209=ff  20a=ff  20b=ff  20c=ff  20d=ff  20e=ff  20f=ff
+210=ff  211=ff  212=ff  213=ff  214=ff  215=ff  216=ff  217=ff  218=ff  219=ff  21a=ff  21b=ff  21c=ff  21d=ff  21e=ff  21f=ff
+220=ff  221=ff  222=ff  223=ff  224=ff  225=ff  226=ff  227=ff  228=ff  229=ff  22a=ff  22b=ff  22c=ff  22d=ff  22e=ff  22f=ff
+230=ff  231=ff  232=ff  233=ff  234=ff  235=ff  236=ff  237=ff  238=ff  239=ff  23a=ff  23b=ff  23c=ff  23d=ff  23e=ff  23f=ff
+240=ff  241=ff  242=ff  243=ff  244=ff  245=ff  246=ff  247=ff  248=ff  249=ff  24a=ff  24b=ff  24c=ff  24d=ff  24e=ff  24f=ff
+250=ff  251=ff  252=ff  253=ff  254=ff  255=ff  256=ff  257=ff  258=ff  259=ff  25a=ff  25b=ff  25c=ff  25d=ff  25e=ff  25f=ff
+260=ff  261=ff  262=ff  263=ff  264=ff  265=ff  266=ff  267=ff  268=ff  269=ff  26a=ff  26b=ff  26c=ff  26d=ff  26e=ff  26f=ff
+270=ff  271=ff  272=ff  273=ff  274=ff  275=ff  276=ff  277=ff  278=ff  279=ff  27a=ff  27b=ff  27c=ff  27d=ff  27e=ff  27f=ff
+280=ff  281=ff  282=ff  283=ff  284=ff  285=ff  286=ff  287=ff  288=ff  289=ff  28a=ff  28b=ff  28c=ff  28d=ff  28e=ff  28f=ff
+290=ff  291=ff  292=ff  293=ff  294=ff  295=ff  296=ff  297=ff  298=ff  299=ff  29a=ff  29b=ff  29c=ff  29d=ff  29e=ff  29f=ff
+2a0=ff  2a1=ff  2a2=ff  2a3=ff  2a4=ff  2a5=ff  2a6=ff  2a7=ff  2a8=ff  2a9=ff  2aa=ff  2ab=ff  2ac=ff  2ad=ff  2ae=ff  2af=ff
+2b0=ff  2b1=ff  2b2=ff  2b3=ff  2b4=ff  2b5=ff  2b6=ff  2b7=ff  2b8=ff  2b9=ff  2ba=ff  2bb=ff  2bc=ff  2bd=ff  2be=ff  2bf=ff
+2c0=ff  2c1=ff  2c2=ff  2c3=ff  2c4=ff  2c5=ff  2c6=ff  2c7=ff  2c8=ff  2c9=ff  2ca=ff  2cb=ff  2cc=ff  2cd=ff  2ce=ff  2cf=ff
+2d0=ff  2d1=ff  2d2=ff  2d3=ff  2d4=ff  2d5=ff  2d6=ff  2d7=ff  2d8=ff  2d9=ff  2da=ff  2db=ff  2dc=ff  2dd=ff  2de=ff  2df=ff
+2e0=ff  2e1=ff  2e2=ff  2e3=ff  2e4=ff  2e5=ff  2e6=ff  2e7=ff  2e8=ff  2e9=ff  2ea=ff  2eb=ff  2ec=ff  2ed=ff  2ee=ff  2ef=ff
+2f0=ff  2f1=ff  2f2=ff  2f3=ff  2f4=ff  2f5=ff  2f6=ff  2f7=ff  2f8=ff  2f9=ff  2fa=ff  2fb=ff  2fc=ff  2fd=ff  2fe=ff  2ff=ff
+300=ff  301=ff  302=ff  303=ff  304=ff  305=ff  306=ff  307=ff  308=ff  309=ff  30a=ff  30b=ff  30c=ff  30d=ff  30e=ff  30f=ff
+310=ff  311=ff  312=ff  313=ff  314=ff  315=ff  316=ff  317=ff  318=ff  319=ff  31a=ff  31b=ff  31c=ff  31d=ff  31e=ff  31f=ff
+320=ff  321=ff  322=ff  323=ff  324=ff  325=ff  326=ff  327=ff  328=ff  329=ff  32a=ff  32b=ff  32c=ff  32d=ff  32e=ff  32f=ff
+330=ff  331=ff  332=ff  333=ff  334=ff  335=ff  336=ff  337=ff  338=ff  339=ff  33a=ff  33b=ff  33c=ff  33d=ff  33e=ff  33f=ff
+340= 3  341=ff  342=f4  343= 0  344= 7  345=a4  346= 5  347= 1  348=23  349=45  34a=67  34b=89  34c= 6  34d=a5  34e= 4  34f=ff
+350=ff  351=ff  352=ff  353= 8  354=a7  355= 6  356=49  357=53  358=53  359=55  35a=45  35b=52  35c= 3  35d= 1  35e=50  35f= 0
+360= 7  361=a4  362= 5  363=ff  364=ff  365=ff  366=ff  367=ff  368= 6  369=a5  36a= 4  36b=ff  36c=ff  36d=ff  36e=ff  36f= 8
+370=a7  371= 6  372=54  373=50  374=53  375=32  376=20  377=20  378= 3  379= 0  37a=78  37b= 0  37c= 7  37d=a4  37e= 5  37f= 0
+380= 0  381= 0  382= 0  383= 0  384= 6  385=a5  386= 4  387= 0  388= 0  389= 0  38a= 0  38b= 8  38c=a7  38d= 6  38e=43  38f=4e
+390=53  391=20  392=20  393=20  394= 3  395= 0  396=94  397= 0  398= 7  399=a4  39a= 5  39b=ff  39c=ff  39d=ff  39e=ff  39f=ff
+3a0= 6  3a1=a5  3a2= 4  3a3=c2  3a4=8d  3a5=e5  3a6= a  3a7= 8  3a8=a7  3a9= 6  3aa=53  3ab=52  3ac=47  3ad=20  3ae=20  3af=20
+3b0= 3  3b1= 0  3b2=74  3b3= 0  3b4= 7  3b5=a4  3b6= 5  3b7=ff  3b8=ff  3b9=ff  3ba=ff  3bb=ff  3bc= 6  3bd=a5  3be= 4  3bf=ff
+3c0=ff  3c1=ff  3c2=ff  3c3= 8  3c4=a7  3c5= 6  3c6=43  3c7=46  3c8=49  3c9=20  3ca=20  3cb=20  3cc= 3  3cd= 0  3ce=55  3cf= 0
+3d0= 7  3d1=a4  3d2= 5  3d3=ff  3d4=ff  3d5=ff  3d6=ff  3d7=ff  3d8= 6  3d9=a5  3da= 4  3db=ff  3dc=ff  3dd=ff  3de=ff  3df= 8
+3e0=a7  3e1= 6  3e2=4d  3e3=54  3e4=56  3e5=20  3e6=20  3e7=20  3e8= 3  3e9= 1  3ea=1c  3eb= 0  3ec= 7  3ed=a4  3ee= 5  3ef=ff
+3f0=ff  3f1=ff  3f2=ff  3f3=ff  3f4= 6  3f5=a5  3f6= 4  3f7=ff  3f8=ff  3f9=ff  3fa=ff  3fb= 8  3fc=a7  3fd= 6  3fe=45  3ff=55
