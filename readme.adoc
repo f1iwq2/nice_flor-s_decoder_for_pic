@@ -1,7 +1,7 @@
-Nice flor-s / Came / CARDIN S449 / Somfy RTS / EV1527 remote decoder receiver for pic
-=====================================================================================
+Nice flor-s / Came / CARDIN S449 / Somfy RTS / EV1527 /PT2260 remote decoder receiver for pic
+=============================================================================================
 
-Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME, EV1527, Cardin S449 et Somfy RTS.
+Programme pic pour décoder les protocoles des télécommandes Nice-florS, CAME, EV1527, PT2260, Cardin S449 et Somfy RTS.
 Fobloqs n'est pas terminé.
 Le projet est composé d'un PIC 18F26K80 à 16 MHz (x4 par pll = 64 MHz)
 L'eprom interne contient le fichier ki.bin ainsi que les télécommandes apprises.

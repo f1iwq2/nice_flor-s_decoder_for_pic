@@ -1,6 +1,6 @@
 /* 
 programme décodeur télécommande protocole NICE FLOR-S / CAME / Somfy RTS / EV1527
-NICE FLOR-S / CAME / Somfy protocol receiver remote control decoder program
+NICE FLOR-S / CAME / Somfy RTS / EV1527 protocol receiver remote control decoder program
 MPLAB X IDE v6.25
    
 Processeur pic 18F26K80 
@@ -30,23 +30,14 @@ Config dans MCC:
   
 UART :             230400    115200      9600
 SPBRGH1/SPBRG1 = 0x00/0x44  0x00/0x8A  0x06/0x82
-la vitesse de 230400 est presque ok pour le debug, en dessous, on mesure mal
+la vitesse de 230400 est presque ok pour le debug, en dessous, on mesure mal avec l'affichage
 éviter d'utiliser l'UART pendant l'acquisition du signal radio même en 230400 bauds, ca fausse l'acquisition.
 
-A speed of 230400 is nearly ok for debugging ; below this speed, the measurement is poor.
+A speed of 230400 is nearly ok for debugging ; below this speed, the measurement is poor with display on.
 Avoid using the UART during radio signal acquisition, even at 230400 baud, as this will distort the acquisition.
  
 Bus I2C à 400 kHz
 EPROM 24LC1026 = 2x64Ko: Adresse I2C 1010 A2 A1 B RW  = 1010 0000 = 0xA0  
-
-Le contenu de l'eprom des codes nice flor-s est ici:
-the eprom-codes nice flor-s is here:
-https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/codes.h
-ou dans ce projet : codes.bin
-
-En eprom interne / in internal eprom
-un bloc de 256 octets : nice_flor_s_table_ki[256]
-ki.bin
  
 Plan d'adressage de l'eeprom interne:
 Internal EEPROM mapping:
@@ -70,7 +61,8 @@ Internal EEPROM mapping:
 Récepteurs testés / Tested receivers :
 modulations ASK et OOK / both ASK and OOK
 RFM210LCF 
-RBX6 
+RXB6 : 
+RXB8 : 315 MHz
 RX500                   ASK   -108dBm
 RFM02 (chip CMT2210LC)  OOK only
 
@@ -88,6 +80,16 @@ Quite sophisticated protocol, requires a 65535 words decoding table and a 256 by
 fonctionne avec les récepteurs RXB6 / works with receivers : RXB6 & RFM210LCF
 https://github.com/Jev1337/NiceFlor-Encoder/tree/main
 
+Le contenu de l'eprom des codes nice flor-s est ici:
+the eprom-codes nice flor-s is here: (inverted words)
+https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/codes.h
+ou dans ce projet : codes.bin
+
+En eprom interne / in internal eprom
+un bloc de 256 octets : nice_flor_s_table_ki[256]
+ki.bin 
+ 
+ description du code:
   code roulant de 52 bits / 52 bits rolling code
   1 bit silence de 18500 µs (37 x 500µs)
   2 bits début de 1500 µs  (3 x 500 µs)
@@ -129,7 +131,7 @@ EB=2500  : erreur B de symétrie dans les données (rencontré 1000/1000 au lieu de
 
 Décodage correct / correct decoding :
 NumSer=0295C827,Bouton=1 T1 ok  <-- télécommande 1 reconnue car enregistrée / remote 1 recognized
-NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 reçue signfie inconnue / remote 0 means unknown
+NumSer=027588B4,Bouton=2 T0     <-- télécommande 0 reçue signifie inconnue / remote 0 means unknown
 
 documentation télécommandes:
 https://www.cliffsnotes.com/study-notes/23860179 
@@ -137,7 +139,7 @@ https://www.cliffsnotes.com/study-notes/23860179
 Pour Nice flors: pour lire les 128ko de l'eprom ext (quand on cherche le code de décodage), il faut jusque 7s , trop long pour un décodage.
 donc on utilise l'ancien code transmis (par télécommande) pour "prévoir" le suivant qui est incrémenté de 1, qui doit
 se trouver dans les 128 octets suivants.
-For nice flors: reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
+About nice flors: reading the 128kB of the ext eprom (when fetching the decoding code) takes up to 7s, too long for decoding.
 So we use the previous transmitted code (per remote) to "predict" the next one, which is incremented by 1, 
 and have to be inside the next 128 ones.
   
@@ -170,15 +172,16 @@ Cardin    Serial=0063F2DA=6550234 Bouton=2
 6550234 is the remote serial number in decimal, printed on the tag of the remote.
 
 ---------------------------------------------------
-Protocole FoBloqf (FM) de rfsolutions.co.uk
+Protocole FoBloqf (FM) de rfsolutions.co.uk non documenté
 utiliser le récepteur Dickert HQFM433P-50
 Utilise un Keeloq - pas finalisé
 utiliser le récepteur Dickert HQFM433P-50
--------------------------------------------------- 
- 
-Protocole EV RT1527 FP1527 (télécommande AK-FS02A)
+Utilise un extra bit
+
+--------------------------------------------------  
+Protocole EV RT1527 FP1527 (télécommande AK-FS02A) : code fixe à 24 bits
 https://w.electrodragon.com/w/images/7/7b/RT1527E.pdf
-Entete / numéro de série à 20 bits / D0 D1 D2 D3
+Entete / numéro de série à 20 bits / D0 D1 D2 D3 (boutons)
 Sync  = Haut (1) pendant 32 cycles, Bas (0) pendant 991 cycles
 Bit 0 = Haut (1) pendant 32 cycles, Bas (0) pendant 96 cycles
 Bit 1 = Haut (1) pendant 96 cycles, Bas (0) pendant 32 cycles
@@ -189,10 +192,11 @@ Pour apprendre une nouvelle télécommande :
   appui court sur le bouton (la led clignote) et activer la télécommande dans les 5s.
 Pour supprimer toutes les télécommandes :
   appui long de 5s : la led s'allume 3s.
+
 To learn a new remote :
   short press (led is blinking) then press on remote button within 5s.
 To delete all remotes ;
-  5s long press : led light for 3s.
+  5s long press : led lights up for 3s.
 
 Les télécommandes Somfy (certaines) et Cardin ont un bouton de programmation qui permettent de mémoriser
 un bouton d'une télécommande déja connue à un récepteur associé. Ce programme utilise cette fonction,
@@ -200,10 +204,10 @@ mais prend en compte tout signal suivant se présentant et peut constituer une fa
 Cette fonctionnalité peut être dévalidée.
 Ceci est utile si le récepteur est encastré et on ne peut pas appuyer sur le bouton d'ajout d'une nouvelle télécommande.
 (modeProg).
-Some Somfy remotes and Cardin have a programm button that allows to memorize un known button remote to an 
+Some Somfy and Cardin remotes have a programm button that allows to memorize un known button remote to an 
 already linked receiver. This program uses this feature, but also takes into account any subsequent signal that may appear,
 and might be a security failure. This feature can be disabled.
-This is useful if the receiver is recessed and the button to add a new remote control can't ne pressed.
+This is useful if the receiver is recessed and the button to add a new remote control can't be pressed.
  
 
 */
@@ -219,11 +223,11 @@ This is useful if the receiver is recessed and the button to add a new remote co
 #define led     RC0     // sortie
 #define rts     RC1     // sortie - not used : UART protocole rts/cts - vers CTS PC : bloque l'envoi du PC
 #define cts     RC2     // entrée - not used : UART protocole rts/cts - de PC : bloque l'envoi vers le PC
-#define enable  RA3     // enable récepteur HM-R-433
+#define enable  RA3     // enable récepteur HM-R-433 ou autre qui ont une entrée enable
 #define rel1    RA5     // commande bobine du relais / relay coil command
-#define MAX_COMMAND_LEN       (8U)
-#define LINEFEED_CHAR         ((uint8_t)'\n')
-#define CARRIAGERETURN_CHAR   ((uint8_t)'\r')
+#define MAX_COMMAND_LEN       8U
+#define LINEFEED_CHAR         (uint8_t)'\n'
+#define CARRIAGERETURN_CHAR   (uint8_t)'\r'
 #define Eprom24lc1026 0xA0 >>1     // Adresse I2C - BO en bit 1 (avant décalage) pour le bloc 0/1
 #define Eprom24wc16 0xA0 >>1
 #define maxtel  20       // nombre de télécommandes maxi
@@ -251,7 +255,6 @@ const uint16_t bit0C_P=bit0C+toleranceC;
 const uint16_t bit1C_M=bit1C-toleranceC; 
 const uint16_t bit1C_P=bit1C+toleranceC;
 const uint16_t coupureC=(bit0C+bit1C)/2;
-
 
 // CARDIN nécessite un récepteur FM-FSK
 // 433,920 MHz requires a FM-FSK receiver
@@ -326,17 +329,27 @@ const uint16_t bit1S_P=bit1S+toleranceS;
 const uint16_t coupureS=(bit0S+bit1S)/2;
 
 // EV1527 RT1527 FP1527
-const uint16_t silenceV=677;
-const uint16_t debutbitV=18820;   
-const uint16_t bit32=677;  
-const uint16_t bit96=1900; 
-const uint16_t toleranceV=40;
+const uint16_t silenceV=30160; 
+const uint16_t bit32=1080;  // 540µs
+const uint16_t bit96=1900;  // 2840µs
+const uint16_t toleranceV=100;
 // calculées:
 const uint16_t silenceV_M=silenceV-toleranceV;
 const uint16_t silenceV_P=silenceV+toleranceV;
-const uint16_t debutbitV_M=debutbitV-toleranceV;
-const uint16_t debutbitV_P=debutbitV+toleranceV;
 const uint16_t coupureV=(bit32+bit96)/2;
+
+// SCT2260 PT2260
+const uint16_t silenceT=677;
+const uint16_t debutbitT=18820;   
+const uint16_t bit1T=677;  
+const uint16_t bit0T=1900; 
+const uint16_t toleranceT=40;
+// calculées:
+const uint16_t silenceT_M=silenceT-toleranceV;
+const uint16_t silenceT_P=silenceT+toleranceV;
+const uint16_t debutbitT_M=debutbitT-toleranceV;
+const uint16_t debutbitT_P=debutbitT+toleranceV;
+const uint16_t coupureT=(bit1T+bit0T)/2;
 
 // protocoles
 const uint8_t  prot_niceflors=1;
@@ -368,8 +381,8 @@ uint32_t      duree=0,deborde=0,anc_duree,i,trame,tpsbouton;
 uint8_t       command[MAX_COMMAND_LEN];
 uint8_t       index=0;
 uint8_t       readMessage;
-_Bool         recu=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW;
-_Bool         aff_enr=LOW,rx,consecutif,debugCardin,debugFobloqf,debugBrut,
+_Bool         recu=LOW,bitSilence=LOW,bitPrec=LOW,AncBp,telegram=LOW,tramebits=LOW,
+              aff_enr=LOW,rx,consecutif,debugCardin,debugFobloqf,debugBrut,
               modeProg=LOW;
 uint16_t      NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t      indexCodeRecu[maxtel+1];  // codes recus des télécommandes 1 à maxtel
@@ -447,7 +460,7 @@ void __interrupt(high_priority) ISR_high()
   {        
     rx=!RB4; //PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
 
-    //led=rx;
+    led=rx;
     anc_duree=duree;
     //duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
     //duree=duree+deborde;
@@ -459,9 +472,7 @@ void __interrupt(high_priority) ISR_high()
     //TMR0L=0;
     
     NbreBits++;
-    
-    //if (protocole!=0) printf("%d",protocole);
-    
+      
     // ------traitement signal télécommande -----
     if (debug==3)  // test des transitions du signal brut debugage de bas niveau - test for raw transitions signal. low level debugging
     {
@@ -488,7 +499,7 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     }
     
-    // silence fobloqf  - inhibé
+    // silence fobloqf  - inhibé car non fonctionnel
     // Si vous voulez déverrouiller fobloqf, simplement enlever "LOW &&"
     // if you want to unlock fobloqf, just remove the "LOW &&"
     if ( LOW && (!bitSilence) && (duree>silenceF_M) && (duree<silenceF_P))   
@@ -530,38 +541,18 @@ void __interrupt(high_priority) ISR_high()
     {
       NbreBits=0;
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-      //if (debug==2) 
-      //printf("S%d",duree);
-      //printf("S");
-      //goto fin;
+      if (debug==2) 
+      printf("S",duree);
       protocole=prot_1527;
-      //if (debugFobloqf) {debugBrut=HIGH;debugFobloqf=LOW;goto fin;}
+    // debugBrut=HIGH;goto fin;
       code=0;
       bitSilence=HIGH;
-      telegram=LOW;
+      NbreBitsMsg=0;
+      telegram=HIGH;
       goto fin;
     }
-     
-    // début EV1527
-    if ((protocole==prot_1527) && bitSilence)
-    {
-      if ((duree>debutbitV_M) && (duree<debutbitV_P)) 
-      { 
-        if (NbreBits!=1) {bitSilence=LOW;protocole=0;goto fin;}
-        protocole=prot_1527;
-        mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
-      
-        //debugBrut=HIGH;goto fin;
-        NbreBits=0;
-        NbreBitsMsg=0;
-        telegram=HIGH;
-        code=0;
-        goto fin;
-      }
-      else bitSilence=LOW; 
-    }  
-  
-     // silence cardin 
+
+    // silence cardin 
     if ((!bitSilence) && (duree>silenceD_M) && (duree<silenceD_P)) 
     {
       NbreBits=0;
@@ -585,13 +576,12 @@ void __interrupt(high_priority) ISR_high()
       mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;
       protocole=prot_cardin;
       //if (debug==2) 
-          //printf("S%d",duree);
+      //    printf("S%d",duree);
       NbreBitsMsg=0;
       telegram=HIGH;
       code=0;
       goto fin;
     }
-    //if (protocole==prot_cardin) printf("C");
     
     // silence nice flors
     if ((!bitSilence) && (duree>silenceN_M) && (duree<silenceN_P))  
@@ -663,7 +653,7 @@ void __interrupt(high_priority) ISR_high()
           code=code<<1;    // décaler à gauche sur 64 bits on peut utiliser aussi <<1
           code=code | 1;  // bit 0 à 1 c'est un bit à 1
         }
-        if (NbreBitsMsg==56) fin_somfy();
+        if (NbreBitsMsg>=56) fin_somfy();
         goto fin;
       }
       
@@ -686,7 +676,7 @@ void __interrupt(high_priority) ISR_high()
           NbreBitsMsg++;           
           code=code<<1;  // décaler à gauche sur 64 bits
         }   
-        if (NbreBitsMsg==56) fin_somfy();
+        if (NbreBitsMsg>=56) fin_somfy();
         goto fin;
       }
       // erreur durée hors tolérance
@@ -702,8 +692,8 @@ void __interrupt(high_priority) ISR_high()
     if (telegram && (protocole==prot_cardin))
     {
       // 1  
-        //printf("%d\r\n",NbreBits);
-        if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
+      //printf("%d\r\n",NbreBits);
+      if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
       //if ((duree>(bit1D-toleranceD)) && (duree<(bit1D+toleranceD)))
       if (duree>coupureD)
       {
@@ -763,8 +753,8 @@ void __interrupt(high_priority) ISR_high()
         }
         goto fin; 
       } 
-      //if (debug==1) 
-      printf("E%d\r\n",duree);
+      if (debug==1) 
+        printf("E%d\r\n",duree);
       if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=Err_bit_duration;}
       nb=NbreBits;
       raz_bits();
@@ -774,6 +764,7 @@ void __interrupt(high_priority) ISR_high()
     // EV1527 ------------------------------
     if (telegram && (protocole==prot_1527))
     {
+      //printf("N%d",NbreBitsMsg);
       if (NbreBits<200) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
       if (duree>coupureV)
       {
@@ -786,7 +777,8 @@ void __interrupt(high_priority) ISR_high()
         {
           if (bitPrec==LOW) 
           {
-            NbreBitsMsg++;           
+            NbreBitsMsg++;  
+            //printf("0");
             code=code >> 1;  // décaler à droite sur 64 bits           
             if (NbreBitsMsg>=24) fin_1527();
           }
@@ -812,6 +804,7 @@ void __interrupt(high_priority) ISR_high()
           if (bitPrec==HIGH) 
           {
             NbreBitsMsg++;
+            //printf("1");
             code=code>>1; // décaler à droite
             code=code | 0x8000000000000000L ;
             if (NbreBitsMsg>=24) fin_1527();
@@ -855,7 +848,7 @@ void __interrupt(high_priority) ISR_high()
         goto fin;
       }
       // extra bit de 1200µs
-      printf("X%d ",duree);
+      if (debug==1) printf("X%d ",duree);
       if (NbreBits<150) mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0; 
       if (NbreBits>=64) fin_fobloqf();   
       goto fin;
@@ -1093,7 +1086,7 @@ uint8_t nlf(uint8_t d)
   return (((uint32_t)(KeeLoq_NLF) >> d) & 0x1);
 }
 
-// entrée/sortie dans data
+
  uint64_t KeeLoq_Decrypt2(uint8_t *key, uint64_t data, const uint16_t nrounds) 
  {
   uint32_t x;
@@ -1398,6 +1391,7 @@ void recoit_xmodem(int mode)
 }
 
 /*
+// Si on remplace l'eprom par une 24CW16....
 // lit une eprom 24CW16 ou 24LC16
 void lit_eprom_ext_24wc16(uint16_t adresse)
 {
@@ -1419,7 +1413,7 @@ void lit_eprom_ext_24wc16(uint16_t adresse)
 }*/
     
 
-// lit un octet l'eprom (lecture aléatoire - random read) à l'adresse adresse, met la valeur dans i2cread[0]
+// lit un octet de l'eprom ext (lecture aléatoire - random read) à l'adresse adresse, met la valeur dans i2cread[0]
 // read 1 byte from ext eprom, data is stored in i2cread[0]
 void lit_eprom_ext(uint32_t adresse)
 {
@@ -2197,7 +2191,7 @@ _Bool decode_cardin()
   printf(" Decode1=");Affiche(tempH);
   
   tempH=code;
-  KeeLoq_Decrypt2(key, tempH, 528);
+  tempH=KeeLoq_Decrypt2(key, tempH, 528);
   printf(" Decode2=");
   Affiche(tempH);
   printf("\r\n");
@@ -2290,8 +2284,7 @@ void decode_b06_nice()
   indexcode=trouve_code_algo_nice(encode);  // index de encode dans l'eprom ext, qui doit être > que le code précédent
    
   // https://github.com/Jev1337/NiceFlor-Encoder/blob/main/C%20Version/ArduinoC/ArduinoC.ino
-  //printf("Le code %x a été trouvé en index ",encode);
-  //printf("%d\r\n",code);
+  //printf("Le code %x a été trouvé en index ",encode);printf("%d\r\n",code);
   ki=lit_eprom_int(indexcode & 0xff);
   //printf("encode=%x\r\n",encode);
   ki=ki ^ (encode & 0xff);
