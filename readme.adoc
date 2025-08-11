@@ -42,5 +42,6 @@ The projet a été inspiré par :
 This project was inspired from :
 https://github.com/Jev1337/NiceFlor-Encoder
 
+image::photo.jpg[]
 image::telecommande.jpg[]
 
