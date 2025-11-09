@@ -1,6 +1,7 @@
 /* 
+04/11/2025
 programme décodeur télécommande protocole NICE FLOR-S / CAME / Somfy RTS / EV1527
-NICE FLOR-S / CAME / Somfy RTS / EV1527 protocol receiver remote control decoder program
+NICE FLOR-decode_b06_niceS / CAME / Somfy RTS / EV1527 protocol receiver remote control decoder program
 MPLAB X IDE v6.25
    
 Processeur pic 18F26K80 
@@ -16,7 +17,7 @@ allow pickit5 to select memory
 preserve eprom memory
 memory range : 0-3ff
  
-liaison UART : 9600,n,8,1 / 230240,n,8,1
+liaison UART : 9600,n,8,1 / 230400,n,8,1
 Config dans MCC: 
  UART :
  aync_noninverted_sync_inverted
@@ -186,7 +187,16 @@ Sync  = Haut (1) pendant 32 cycles, Bas (0) pendant 991 cycles
 Bit 0 = Haut (1) pendant 32 cycles, Bas (0) pendant 96 cycles
 Bit 1 = Haut (1) pendant 96 cycles, Bas (0) pendant 32 cycles
 transmission LSB en premier (décaler à droite à la réception)
+
 --------------------------------------------------
+Protocole SCT2260
+code fixe de 12 bits
+chronogramme :
+1 silence de 15100 µs
+court long  court long  = bit 0
+long  court long  court = bit 1
+court long  long  court = bit flottant
+ 
  
 Pour apprendre une nouvelle télécommande : 
   appui court sur le bouton (la led clignote) et activer la télécommande dans les 5s.
@@ -204,7 +214,7 @@ mais prend en compte tout signal suivant se présentant et peut constituer une fa
 Cette fonctionnalité peut être dévalidée.
 Ceci est utile si le récepteur est encastré et on ne peut pas appuyer sur le bouton d'ajout d'une nouvelle télécommande.
 (modeProg).
-Some Somfy and Cardin remotes have a programm button that allows to memorize un known button remote to an 
+Some Somfy and Cardin remotes have a programm button that allows to memorize unknown button remote to an 
 already linked receiver. This program uses this feature, but also takes into account any subsequent signal that may appear,
 and might be a security failure. This feature can be disabled.
 This is useful if the receiver is recessed and the button to add a new remote control can't be pressed.
@@ -339,17 +349,15 @@ const uint16_t silenceV_P=silenceV+toleranceV;
 const uint16_t coupureV=(bit32+bit96)/2;
 
 // SCT2260 PT2260
-const uint16_t silenceT=677;
-const uint16_t debutbitT=18820;   
-const uint16_t bit1T=677;  
-const uint16_t bit0T=1900; 
+const uint16_t silenceT=15100*2;     // 15112
+const uint16_t syncT=silenceT/31;  // 487
+const uint16_t bit128=silenceT/31; // 487
+const uint16_t bit384=bit128*3;    // 1461
 const uint16_t toleranceT=40;
 // calculées:
-const uint16_t silenceT_M=silenceT-toleranceV;
-const uint16_t silenceT_P=silenceT+toleranceV;
-const uint16_t debutbitT_M=debutbitT-toleranceV;
-const uint16_t debutbitT_P=debutbitT+toleranceV;
-const uint16_t coupureT=(bit1T+bit0T)/2;
+const uint16_t silenceT_M=silenceT-toleranceT;
+const uint16_t silenceT_P=silenceT+toleranceT;
+const uint16_t coupureT=(bit128+bit384)/2;
 
 // protocoles
 const uint8_t  prot_niceflors=1;
@@ -358,6 +366,7 @@ const uint8_t  prot_cardin=3;
 const uint8_t  prot_somfy=4;
 const uint8_t  prot_fobloqf=5;
 const uint8_t  prot_1527=6;
+const uint8_t  prot_2260=7;
 
 // erreurs chronogramme
 const uint8_t Err_wrong_range_bit=1; // 1=bit mal placé  2=erreur de symétrie  3=longueur inconnue bit 
@@ -402,6 +411,13 @@ void raz_bits()
 }
 
 void fin_came()
+{
+  raz_bits();
+  nb=NbreBits;
+  recu=HIGH;
+}
+
+void fin_2260()
 {
   raz_bits();
   nb=NbreBits;
@@ -460,7 +476,7 @@ void __interrupt(high_priority) ISR_high()
   {        
     rx=!RB4; //PORTB;  // lire le port B, même si on utilise pas la valeur B4 / read portB even if we don't need the B4 value
 
-    led=rx;
+    //led=rx;
     anc_duree=duree;
     //duree=((uint32_t)TMR0H<<8)+(uint32_t)TMR0L;  // car duree est uint32_t
     //duree=duree+deborde;
@@ -552,6 +568,25 @@ void __interrupt(high_priority) ISR_high()
       goto fin;
     }
 
+    // silence SCT2260
+    if ((!bitSilence) && (duree>silenceT_M) && (duree<silenceT_P))
+    {
+      NbreBits=0;
+      mesure_bits[NbreBits]=duree;
+      mesure_error[NbreBits]=0;
+      if (debug==2) 
+      {
+        printf("SCT",duree);
+      }
+      protocole=prot_2260;
+      //debugBrut=HIGH;goto fin;
+      code=0;
+      bitSilence=HIGH;
+      NbreBitsMsg=0;
+      telegram=HIGH;
+      goto fin;
+    }
+    
     // silence cardin 
     if ((!bitSilence) && (duree>silenceD_M) && (duree<silenceD_P)) 
     {
@@ -631,7 +666,7 @@ void __interrupt(high_priority) ISR_high()
     // SOMFY RTS ----------------------------------------------------------------------------
     // le codage radio du protocole somfy est manchester: changement sur fronts
     // somfy radio coding is manchester : check edges
-    if ((protocole==prot_somfy) & telegram)
+    if ((protocole==prot_somfy) && telegram)
     {
       //printf(" %d",NbreBits);
       if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}  
@@ -820,7 +855,51 @@ void __interrupt(high_priority) ISR_high()
         goto fin; 
       } 
     }
-      
+    
+    // SCT2260 ------------------------------
+    if (telegram && (protocole==prot_2260)) 
+    {
+      //Serial.println(NbreBitsMsg);
+      if (NbreBits<200) 
+      {
+        mesure_bits[NbreBits]=duree;
+        mesure_error[NbreBits]=0;
+      }
+    
+      if ((NbreBits % 4)==0)  // tous les 4 bits évaluer
+      {
+        //Serial.print("P");Affiche64(code);Serial.println();
+        // court long  court long  = 0
+        // long  court long  court = 1
+        // court long  long  court = flottant
+        if (mesure_bits[NbreBits-3]<coupureT) 
+        {
+          if ((mesure_bits[NbreBits-2]>coupureT) && (mesure_bits[NbreBits-1]<coupureT) && (mesure_bits[NbreBits]>coupureT)) 
+          { // bit à 0
+            NbreBitsMsg++;
+            //Serial.print("0");
+            code=code>>1;  // décaler à droite
+            if (NbreBitsMsg>=12) fin_2260();
+          }
+          if ((mesure_bits[NbreBits-2]>coupureT) && (mesure_bits[NbreBits-1]>coupureT) && (mesure_bits[NbreBits]<coupureT)) 
+          { // flottant
+            NbreBitsMsg++;
+            //Serial.print("x");
+            code=code>>1;  // décaler à droite
+            if (NbreBitsMsg>=12) fin_2260();
+          }
+        }
+        else if ((mesure_bits[NbreBits-2]<coupureT) && (mesure_bits[NbreBits-1]>coupureT) && (mesure_bits[NbreBits]<coupureT)) 
+        { // bit à 1
+          NbreBitsMsg++;
+          //Serial.printf("1");
+          code=code>>1;  // décaler à droite
+          code=code | 0x80000000L;  // allumer le bit le plus à gauche sur 32 bits
+          if (NbreBitsMsg>=12) fin_2260();
+        }  
+      }
+    }
+   
     // Fobloqf ----------------------------------------------------------------------------
     if (telegram && (protocole==prot_fobloqf))
     {   
@@ -957,7 +1036,7 @@ void __interrupt(high_priority) ISR_high()
           fin_niceflors();
           goto fin;
         }
-        if ((NbreBits==2) | (NbreBits==3)) // on a eu le silence
+        if ((NbreBits==2) || (NbreBits==3)) // on a eu le silence
         {
           if (NbreBits==2)
           {         
@@ -1184,12 +1263,11 @@ void ecrit_bloc_eprom_ext(uint32_t adresse)
    
   if (I2C1_Host.Write(Eprom24lc1026 | mask,i2cdata,130))  
   {  
-    waitCounter = 100; // This value depends on the system clock, I2C clock and data length                                                                                    
+    waitCounter=10; // This value depends on the system clock, I2C clock and data length                                                                                    
     while (I2C1_Host.IsBusy())
     {
       I2C1_Host.Tasks();
-      //__delay_ms(12);        // attente écriture eprom
-      __delay_ms(5);
+      __delay_ms(1);
       waitCounter--;              
     }
     /*I2C_ERROR_NONE,         *< No error 
@@ -1208,7 +1286,7 @@ uint8_t attend_rx_30()
 {
   uint32_t Compte=200000; //  15000=16s
   EUSART1_Read();          // vide le tampon Rx UART
-  while ((PIR1bits.RC1IF==0) && (Compte!=0))
+  while ((PIR1bits.RC1IF==0) && (Compte!=0))  // si un caractère est pas dispo à l'uart
   {  
     __delay_us(50);
     Compte--;
@@ -1316,14 +1394,16 @@ void erreur_xmodem(uint8_t num)
 void recoit_xmodem(int mode)
 {
    uint8_t b,ancienpak,delta;
-   uint16_t padr;
+   uint16_t padr,derniere;
    _Bool demande=HIGH;
    
    led=1;  // éteint la led
    ancienpak=0;padr=0;pak=0;pakcom=0;
    INTCONbits.GIE=0;      // interdit les irq
-    __delay_ms(500);
-    
+   __delay_ms(500);
+   if (mode==1) derniere=1024; //1024 paquets de 128 octets pour stocker les 128Ko du fichier
+   if (mode==2) derniere=2;   
+   erreur=0;
    trame=0;
    do
    {
@@ -1384,8 +1464,11 @@ void recoit_xmodem(int mode)
      UART_WriteByte(6);
      led=!led;
    }  //while (b!=0x4);  // EOT  : fin de transmission
-    while (trame<1024);
-     
+   while (trame<derniere);
+   __delay_ms(1000);
+   if (erreur!=0) printf("Transfert ok\r\n");
+   
+   
    INTCONbits.GIE=1;      // valide les irq
    led=0;     
 }
@@ -1477,6 +1560,7 @@ void affiche_enregistrement()
   if (protocole==prot_cardin) printf(" Protocole Cardin S449");
   if (protocole==prot_fobloqf) printf(" Protocole Fobloqf");
   if (protocole==prot_niceflors) printf(" Protocole NiceFlorS");
+  if (protocole==prot_2260) printf(" Protocole SCT2260");
  
   printf("\r\n");
   for (y=1;y<=22;y++)
@@ -1694,10 +1778,10 @@ void UART_ExecuteCommand(char *command)
     #endif 
      
     #if francais
-    printf(" Derniere erreur I2C=%d",erreurI2C);
+    printf(" - Derniere erreur I2C=%d",erreurI2C);
     #endif
     #if english
-    printf(" Last I2C error=%d",erreurI2C);
+    printf(" - Last I2C error=%d",erreurI2C);
     #endif
     printf("\r\n");
     INTCONbits.GIE=1;
@@ -1877,7 +1961,7 @@ void UART_ProcessCommand(void)
   if(UART1.IsRxReady())
   {
     readMessage=UART1.Read();
-    if ( (readMessage!=LINEFEED_CHAR) & (readMessage != CARRIAGERETURN_CHAR) ) 
+    if ( (readMessage!=LINEFEED_CHAR) && (readMessage != CARRIAGERETURN_CHAR) ) 
     {
       command[index++]=readMessage;
       if (index>MAX_COMMAND_LEN) index=0;
@@ -2130,6 +2214,14 @@ uint64_t miroir64(uint64_t n)
 _Bool decode_1527()
 {
   code=code>>40;  // réaligner à droite
+  Affiche4(code);
+  serial=code;
+  return 0;
+}
+
+_Bool decode_2260() 
+{
+  code=code >> 20;  // réaligner à droite 2260
   Affiche4(code);
   serial=code;
   return 0;
@@ -2469,10 +2561,10 @@ void traitementCode()
       printf(" ok");
       // coller le relais 1 seconde
       // relay 1 second on
-      rel1=0;
+      rel1=1;
       led=0;
       __delay_ms(1000);
-      rel1=1;
+      rel1=0;
       led=1;
     }
     else 
@@ -2529,7 +2621,7 @@ int main(void)
 {
   SYSTEM_Initialize();
   enable=0;
-  rel1=1;   // relais non collé
+  rel1=0;   // relais non collé
   erreur=0;
     
   // If using interrupts in PIC18 High/Low Priority Mode you need to enable the Global High and Low Interrupts 
@@ -2568,7 +2660,7 @@ int main(void)
     
   pvitesse=1;
   if (pvitesse==0) {SPBRGH1=0x06;SPBRG1=0x82;}  // 9600 bauds pour transfert xmodem
-  if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;}  // 240200
+  if (pvitesse==1) {SPBRGH1=0x00;SPBRG1=0x44;}  // 240400
     
   // réglage de la prédivision par (2)=8 du timer 0 ce qui permet de mesurer le signal NiceFlorS de 18888µs
   // predevider by (2)=8
@@ -2672,7 +2764,7 @@ int main(void)
       
     // Appui court du bouton
     // button short press
-    if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
+    if ((!AncBp) && (RB2) && (tpsbouton>200) && (tpsbouton<1000))
     {
       tpsvalidetelecom=50000;
       #if francais
@@ -2705,7 +2797,7 @@ int main(void)
      
     // télégramme radio reçu de la télécommande depuis routine IOC, le décoder
     // radio remote received from IOC routine, start decoding
-    if (recu)
+    if (recu && (code!=0))
     {
       recu=LOW;
       INTCONbits.GIE=0;      // interdit les IRQ pour éviter interférence avec la variable durée pendant l'affichage
@@ -2741,29 +2833,47 @@ int main(void)
       if (protocole==prot_cardin)
       {
         decode_cardin();
-        printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
-        printf(" Bouton=");
-        if (bouton<=4) printf("%x ",bouton);
-          else printf("P ");
+        if (serial!=0)
+        {
+          printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
+          printf(" Bouton=");
+          if (bouton<=4) printf("%x ",bouton);
+            else printf("P ");
         
-        traitementCode();
+          traitementCode();
+        }
       }
       if (protocole==prot_fobloqf)
       { 
-        printf("Fobloqf=");
+        printf("Fobloqf    Serial=");
         decode_fobloqf();
+        if (serial!=0)
+        {
         //if (decode_fobloqf()==HIGH) printf("Fobloqf      code=");Affiche(code);
         //traitementCode();
+        }
       }
       if (protocole==prot_1527)
       { 
-        printf("EV1527=");
-        decode_1527();
-        traitementCode();
+        printf("EV1527     Serial=");
+        if (serial!=0)
+        {
+          decode_1527();
+          traitementCode();
+        }
+      }
+      
+      if (protocole==prot_2260) 
+      {
+        printf("SCT2260     Serial=");
+        decode_2260();
+        if (serial!=0)
+        {
+          traitementCode();
+        }
       }
           
       NbreBits=0;
-      //__delay_ms(1000);
       INTCONbits.GIE=1;      // valide les IRQ
     } 
   }    

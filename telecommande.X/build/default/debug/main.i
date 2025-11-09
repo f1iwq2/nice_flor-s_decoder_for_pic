@@ -7,7 +7,7 @@
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/language_support.h" 1 3
 # 2 "<built-in>" 2
 # 1 "main.c" 2
-# 215 "main.c"
+# 225 "main.c"
 # 1 "./mcc_generated_files/system/system.h" 1
 # 39 "./mcc_generated_files/system/system.h"
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include/xc.h" 1 3
@@ -20960,7 +20960,7 @@ void TMR0_Tasks(void);
 
 
 void SYSTEM_Initialize(void);
-# 216 "main.c" 2
+# 226 "main.c" 2
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 1 3
 # 25 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/string.h" 3
 # 1 "C:\\Program Files\\Microchip\\xc8\\v3.00\\pic\\include\\c99/bits/alltypes.h" 1 3
@@ -21018,8 +21018,8 @@ size_t strxfrm_l (char *restrict, const char *restrict, size_t, locale_t);
 
 
 void *memccpy (void *restrict, const void *restrict, int, size_t);
-# 217 "main.c" 2
-# 239 "main.c"
+# 227 "main.c" 2
+# 249 "main.c"
 uint8_t key[] = {0x56,0x4a,0xbc,0x07,0x57,0x1e,0x62,0x94};
 
 
@@ -21123,17 +21123,15 @@ const uint16_t silenceV_P=silenceV+toleranceV;
 const uint16_t coupureV=(bit32+bit96)/2;
 
 
-const uint16_t silenceT=677;
-const uint16_t debutbitT=18820;
-const uint16_t bit1T=677;
-const uint16_t bit0T=1900;
+const uint16_t silenceT=15100*2;
+const uint16_t syncT=silenceT/31;
+const uint16_t bit128=silenceT/31;
+const uint16_t bit384=bit128*3;
 const uint16_t toleranceT=40;
 
-const uint16_t silenceT_M=silenceT-toleranceV;
-const uint16_t silenceT_P=silenceT+toleranceV;
-const uint16_t debutbitT_M=debutbitT-toleranceV;
-const uint16_t debutbitT_P=debutbitT+toleranceV;
-const uint16_t coupureT=(bit1T+bit0T)/2;
+const uint16_t silenceT_M=silenceT-toleranceT;
+const uint16_t silenceT_P=silenceT+toleranceT;
+const uint16_t coupureT=(bit128+bit384)/2;
 
 
 const uint8_t prot_niceflors=1;
@@ -21142,6 +21140,7 @@ const uint8_t prot_cardin=3;
 const uint8_t prot_somfy=4;
 const uint8_t prot_fobloqf=5;
 const uint8_t prot_1527=6;
+const uint8_t prot_2260=7;
 
 
 const uint8_t Err_wrong_range_bit=1;
@@ -21170,7 +21169,7 @@ _Bool recu=0,bitSilence=0,bitPrec=0,AncBp,telegram=0,tramebits=0,
               modeProg=0;
 uint16_t NbreBits,NbreBitsMsg,nb,Nb0;
 uint16_t indexCodeRecu[20 +1];
-# 397 "main.c"
+# 406 "main.c"
 void raz_bits()
 {
   telegram=0;
@@ -21179,6 +21178,13 @@ void raz_bits()
 }
 
 void fin_came()
+{
+  raz_bits();
+  nb=NbreBits;
+  recu=1;
+}
+
+void fin_2260()
 {
   raz_bits();
   nb=NbreBits;
@@ -21237,7 +21243,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
   {
     rx=!RB4;
 
-    RC0=rx;
+
     anc_duree=duree;
 
 
@@ -21330,6 +21336,25 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
+    if ((!bitSilence) && (duree>silenceT_M) && (duree<silenceT_P))
+    {
+      NbreBits=0;
+      mesure_bits[NbreBits]=duree;
+      mesure_error[NbreBits]=0;
+      if (debug==2)
+      {
+        printf("SCT",duree);
+      }
+      protocole=prot_2260;
+
+      code=0;
+      bitSilence=1;
+      NbreBitsMsg=0;
+      telegram=1;
+      goto fin;
+    }
+
+
     if ((!bitSilence) && (duree>silenceD_M) && (duree<silenceD_P))
     {
       NbreBits=0;
@@ -21408,7 +21433,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
 
 
 
-    if ((protocole==prot_somfy) & telegram)
+    if ((protocole==prot_somfy) && telegram)
     {
 
       if (NbreBits<150) {mesure_bits[NbreBits]=duree;mesure_error[NbreBits]=0;}
@@ -21599,6 +21624,50 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
     }
 
 
+    if (telegram && (protocole==prot_2260))
+    {
+
+      if (NbreBits<200)
+      {
+        mesure_bits[NbreBits]=duree;
+        mesure_error[NbreBits]=0;
+      }
+
+      if ((NbreBits % 4)==0)
+      {
+
+
+
+
+        if (mesure_bits[NbreBits-3]<coupureT)
+        {
+          if ((mesure_bits[NbreBits-2]>coupureT) && (mesure_bits[NbreBits-1]<coupureT) && (mesure_bits[NbreBits]>coupureT))
+          {
+            NbreBitsMsg++;
+
+            code=code>>1;
+            if (NbreBitsMsg>=12) fin_2260();
+          }
+          if ((mesure_bits[NbreBits-2]>coupureT) && (mesure_bits[NbreBits-1]>coupureT) && (mesure_bits[NbreBits]<coupureT))
+          {
+            NbreBitsMsg++;
+
+            code=code>>1;
+            if (NbreBitsMsg>=12) fin_2260();
+          }
+        }
+        else if ((mesure_bits[NbreBits-2]<coupureT) && (mesure_bits[NbreBits-1]>coupureT) && (mesure_bits[NbreBits]<coupureT))
+        {
+          NbreBitsMsg++;
+
+          code=code>>1;
+          code=code | 0x80000000L;
+          if (NbreBitsMsg>=12) fin_2260();
+        }
+      }
+    }
+
+
     if (telegram && (protocole==prot_fobloqf))
     {
       if ((duree>(bit1F-toleranceF)) && (duree<(bit1F+toleranceF)))
@@ -21734,7 +21803,7 @@ void __attribute__((picinterrupt(("high_priority")))) ISR_high()
           fin_niceflors();
           goto fin;
         }
-        if ((NbreBits==2) | (NbreBits==3))
+        if ((NbreBits==2) || (NbreBits==3))
         {
           if (NbreBits==2)
           {
@@ -21901,7 +21970,7 @@ void menu()
    printf("A....Verifie checksum eprom ext\r\n");
    printf("B....Lit les 64Ko de l'eprom ext (long) par bloc de 128 octets\r\n");
    printf("C....Liste des telecommandes connues\r\n");
-# 1153 "main.c"
+# 1232 "main.c"
    printf("\r\n");
 
    printf("Votre choix suivi de ENTREE\r\n");
@@ -22096,7 +22165,7 @@ void recoit_xmodem(int mode)
        if (timeout) {erreur_xmodem(4);return;}
 
        if (ancienpak==255) ancienpak=-1;
-# 1359 "main.c"
+# 1438 "main.c"
        pakcom=attend_rx();
        if (timeout) {erreur_xmodem(5);return;}
        if (pak!=255-pakcom) {UART_WriteByte(0x15);goto refaire;}
@@ -22130,7 +22199,7 @@ void recoit_xmodem(int mode)
    INTCONbits.GIE=1;
    RC0=0;
 }
-# 1418 "main.c"
+# 1497 "main.c"
 void lit_eprom_ext(uint32_t adresse)
 {
   uint32_t mask;
@@ -22193,6 +22262,7 @@ void affiche_enregistrement()
   if (protocole==prot_cardin) printf(" Protocole Cardin S449");
   if (protocole==prot_fobloqf) printf(" Protocole Fobloqf");
   if (protocole==prot_niceflors) printf(" Protocole NiceFlorS");
+  if (protocole==prot_2260) printf(" Protocole SCT2260");
 
   printf("\r\n");
   for (y=1;y<=22;y++)
@@ -22392,7 +22462,7 @@ void UART_ExecuteCommand(char *command)
       case 8: {printf("Erreur ecriture EPROM ext");break;}
       default: printf(" %d",erreur);
     }
-# 1697 "main.c"
+# 1777 "main.c"
     printf(" Derniere erreur I2C=%d",erreurI2C);
 
 
@@ -22532,11 +22602,11 @@ void UART_ExecuteCommand(char *command)
     } while (i<20);
     i--;
   }
-# 1848 "main.c"
+# 1928 "main.c"
   else
   if (strcmp(command,"K") == 0)
   {
-# 1862 "main.c"
+# 1942 "main.c"
   }
 
   else
@@ -22555,7 +22625,7 @@ void UART_ProcessCommand(void)
   if(UART1.IsRxReady())
   {
     readMessage=UART1.Read();
-    if ( (readMessage!=(uint8_t)'\n') & (readMessage != (uint8_t)'\r') )
+    if ( (readMessage!=(uint8_t)'\n') && (readMessage != (uint8_t)'\r') )
     {
       command[index++]=readMessage;
       if (index>8U) index=0;
@@ -22771,7 +22841,7 @@ uint16_t inverse16(int16_t mot)
   r=r | ((mot & 0xff) << 8) ;
   return r;
 }
-# 2109 "main.c"
+# 2189 "main.c"
 uint32_t miroir32(uint32_t n)
 {
   n=((n>>1) & 0x55555555) | ((n<<1) & 0xaaaaaaaa);
@@ -22796,6 +22866,14 @@ uint64_t miroir64(uint64_t n)
 _Bool decode_1527()
 {
   code=code>>40;
+  Affiche4(code);
+  serial=code;
+  return 0;
+}
+
+_Bool decode_2260()
+{
+  code=code >> 20;
   Affiche4(code);
   serial=code;
   return 0;
@@ -23135,10 +23213,10 @@ void traitementCode()
       printf(" ok");
 
 
-      RA5=0;
+      RA5=1;
       RC0=0;
       _delay((unsigned long)((1000)*(64000000U/4000.0)));
-      RA5=1;
+      RA5=0;
       RC0=1;
     }
     else
@@ -23195,9 +23273,9 @@ int main(void)
 {
   SYSTEM_Initialize();
   RA3=0;
-  RA5=1;
+  RA5=0;
   erreur=0;
-# 2553 "main.c"
+# 2641 "main.c"
   ANCON0=0;
   ANCON1=0;
 
@@ -23281,7 +23359,7 @@ int main(void)
 
   while(1)
   {
-# 2647 "main.c"
+# 2735 "main.c"
     if (!RB2)
     {
       _delay((unsigned long)((1)*(64000000U/4000.0)));
@@ -23310,7 +23388,7 @@ int main(void)
 
 
 
-    if ((!AncBp) & (RB2) & (tpsbouton>200) & (tpsbouton<1000))
+    if ((!AncBp) && (RB2) && (tpsbouton>200) && (tpsbouton<1000))
     {
       tpsvalidetelecom=50000;
 
@@ -23343,7 +23421,7 @@ int main(void)
 
 
 
-    if (recu)
+    if (recu && (code!=0))
     {
       recu=0;
       INTCONbits.GIE=0;
@@ -23379,29 +23457,47 @@ int main(void)
       if (protocole==prot_cardin)
       {
         decode_cardin();
-        printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
-        printf(" Bouton=");
-        if (bouton<=4) printf("%x ",bouton);
-          else printf("P ");
+        if (serial!=0)
+        {
+          printf("Cardin    Serial=");Affiche4(serial);printf("=%lu",(uint32_t)serial);
+          printf(" Bouton=");
+          if (bouton<=4) printf("%x ",bouton);
+            else printf("P ");
 
-        traitementCode();
+          traitementCode();
+        }
       }
       if (protocole==prot_fobloqf)
       {
-        printf("Fobloqf=");
+        printf("Fobloqf    Serial=");
         decode_fobloqf();
+        if (serial!=0)
+        {
 
 
+        }
       }
       if (protocole==prot_1527)
       {
-        printf("EV1527=");
-        decode_1527();
-        traitementCode();
+        printf("EV1527     Serial=");
+        if (serial!=0)
+        {
+          decode_1527();
+          traitementCode();
+        }
+      }
+
+      if (protocole==prot_2260)
+      {
+        printf("SCT2260     Serial=");
+        decode_2260();
+        if (serial!=0)
+        {
+          traitementCode();
+        }
       }
 
       NbreBits=0;
-
       INTCONbits.GIE=1;
     }
   }
